@@ -1,0 +1,30 @@
+#taxonomy_header {
+    text-align: center;
+    font-size: 24px;
+}
+
+html, body {
+    overflow-x: hidden;      /* Allow horizontal scroll */
+    overflow-y: hidden;    /* Disable vertical scroll */
+    height: 100%;          /* Prevent default body height issues */
+    margin: 0;             /* Remove default margin */
+    padding: 0;
+    white-space: nowrap;   /* Prevent content from wrapping to next line */
+    padding-left: 8px;
+}
+
+#traceRow {
+    display: inline-block;
+    white-space: nowrap;
+    height: 100vh;
+    margin: 0;
+}
+
+.chart-div
+{
+    display: inline-block;
+    margin: 2px;
+    vertical-align: top;
+    width: fit-content;
+    padding: 0;
+}
