@@ -111,7 +111,7 @@ void MorphologyLineRenderer::buildRenderObject(const CellMorphology& cellMorphol
             mv::Vector3f position = cellMorphology.positions.at(i);
             float radius = cellMorphology.radii.at(i);
 
-            if (cellMorphology.types.at(i) == 1) // Soma
+            if (cellMorphology.types.at(i) == (int) CellMorphology::Type::Soma)
             {
                 somaPosition = position;
                 somaRadius = radius;
@@ -127,12 +127,19 @@ void MorphologyLineRenderer::buildRenderObject(const CellMorphology& cellMorphol
             int id = cellMorphology.idMap.at(cellMorphology.ids[i]);
             int parent = cellMorphology.idMap.at(cellMorphology.parents[i]);
 
+            int type = cellMorphology.types[id];
+
+            if (type == (int) CellMorphology::Type::Axon)
+                continue;
+
+            float radius = cellMorphology.radii[id];
+
             lineSegments.segments.push_back(cellMorphology.positions[parent]);
             lineSegments.segments.push_back(cellMorphology.positions[id]);
-            lineSegments.segmentRadii.push_back(cellMorphology.radii[id]);
-            lineSegments.segmentRadii.push_back(cellMorphology.radii[id]);
-            lineSegments.segmentTypes.push_back(cellMorphology.types[id]);
-            lineSegments.segmentTypes.push_back(cellMorphology.types[id]);
+            lineSegments.segmentRadii.push_back(radius);
+            lineSegments.segmentRadii.push_back(radius);
+            lineSegments.segmentTypes.push_back(type);
+            lineSegments.segmentTypes.push_back(type);
         }
     }
     catch (std::out_of_range& oor)
