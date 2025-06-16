@@ -26,6 +26,8 @@ public:
 
     virtual void render(int index, float t) override;
 
+    void showAxons(bool enabled);
+
     void setRowWidth(float rowWidth) { _maxRowWidth = rowWidth; }
 
     void getCellMetadataLocations(std::vector<float>& locations);
@@ -40,4 +42,6 @@ private:
     float _maxRowWidth; // Maximum width that can be filled by displayed cells, if exceeded, next cells are rendered below
 
     LRUCache<QString, CellRenderObject> _cellCache;
+
+    bool _showAxons = true;
 };

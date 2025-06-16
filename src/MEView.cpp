@@ -62,9 +62,11 @@ void MEView::init()
 
     _primaryToolbarAction.addAction(&_settingsAction.getLineRendererButton());
     _primaryToolbarAction.addAction(&_settingsAction.getRealRendererButton());
+    _primaryToolbarAction.addAction(&_settingsAction.getShowAxonsToggle());
 
     connect(&_settingsAction.getLineRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::LINE); });
     connect(&_settingsAction.getRealRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::REAL); });
+    connect(&_settingsAction.getShowAxonsToggle(), &ToggleAction::toggled, this, [this](bool toggled) { _morphologyWidget->showAxons(toggled); });
 
     // Load webpage
     _ephysWidget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");

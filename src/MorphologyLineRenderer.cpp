@@ -66,6 +66,11 @@ void MorphologyLineRenderer::render(int index, float t)
     _lineShader.release();
 }
 
+void MorphologyLineRenderer::showAxons(bool enabled)
+{
+    _showAxons = enabled;
+}
+
 void MorphologyLineRenderer::getCellMetadataLocations(std::vector<float>& locations)
 {
     float depthRange = _scene->getCortexStructure().getMaxDepth() - _scene->getCortexStructure().getMinDepth();

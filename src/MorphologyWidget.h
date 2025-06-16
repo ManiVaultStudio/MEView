@@ -34,6 +34,7 @@ public:
         _renderMode = renderMode;
     }
 
+    void showAxons(bool enabled);
     void setRowWidth(float rowWidth);
     void uploadMorphologies();
 

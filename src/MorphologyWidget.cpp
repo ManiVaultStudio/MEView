@@ -51,6 +51,11 @@ MorphologyWidget::~MorphologyWidget()
 
 }
 
+void MorphologyWidget::showAxons(bool enabled)
+{
+    _lineRenderer.showAxons(enabled);
+}
+
 void MorphologyWidget::setRowWidth(float rowWidth)
 {
     _lineRenderer.setRowWidth(rowWidth);
