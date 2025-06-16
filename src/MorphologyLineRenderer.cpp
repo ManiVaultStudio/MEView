@@ -2,6 +2,8 @@
 
 #include "CellMorphologyData/CellMorphology.h"
 
+#define TEMP_MARGIN 1000
+
 void MorphologyLineRenderer::init()
 {
     initializeOpenGLFunctions();
@@ -46,7 +48,7 @@ void MorphologyLineRenderer::render(int index, float t)
         
         //qDebug() << "YOffset" << yOffset;
         _modelMatrix.setToIdentity();
-        _modelMatrix.translate(1000 + xOffset, depthRange + cellRenderObject.somaPosition.y, 0);
+        _modelMatrix.translate(TEMP_MARGIN + xOffset, depthRange + cellRenderObject.somaPosition.y, 0);
         _modelMatrix.rotate(t, 0, 1, 0);
         _modelMatrix.translate(-somaPosition.x, -somaPosition.y, -somaPosition.z);
 
@@ -86,7 +88,7 @@ void MorphologyLineRenderer::getCellMetadataLocations(std::vector<float>& locati
         QMatrix4x4 viewMatrix;
         viewMatrix.scale(1.0f / depthRange);
         QMatrix4x4 modelMatrix;
-        modelMatrix.translate(1000 + xOffset, 0, 0);
+        modelMatrix.translate(TEMP_MARGIN + xOffset, 0, 0);
         QVector4D v = _projMatrix * viewMatrix * modelMatrix * QVector4D(0, 0, 0, 1);
         locations[i] = (v.x() / v.w()) * 0.5f + 0.5f;
 
