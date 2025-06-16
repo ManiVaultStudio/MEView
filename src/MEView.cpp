@@ -61,7 +61,7 @@ void MEView::init()
     layout->setContentsMargins(0, 0, 0, 0);
 
     _primaryToolbarAction.addAction(&_settingsAction.getLineRendererButton());
-    _primaryToolbarAction.addAction(&_settingsAction.getRealRendererButton());
+    //_primaryToolbarAction.addAction(&_settingsAction.getRealRendererButton());
     _primaryToolbarAction.addAction(&_settingsAction.getShowAxonsToggle());
 
     connect(&_settingsAction.getLineRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::LINE); });
@@ -72,7 +72,7 @@ void MEView::init()
     _ephysWidget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
 
     layout->setContentsMargins(0, 0, 0, 0);
-    //layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
+    layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
     layout->addWidget(_ephysWidget, 50);
     layout->addWidget(_morphologyWidget, 70);
 

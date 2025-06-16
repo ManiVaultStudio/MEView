@@ -129,7 +129,8 @@ void MorphologyLineRenderer::buildRenderObject(const CellMorphology& cellMorphol
 
             int type = cellMorphology.types[id];
 
-            if (type == (int) CellMorphology::Type::Axon)
+            // Hide axons if so indicated
+            if (!_showAxons && type == (int)CellMorphology::Type::Axon)
                 continue;
 
             float radius = cellMorphology.radii[id];
