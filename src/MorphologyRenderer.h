@@ -57,8 +57,6 @@ protected:
 protected:
     Scene* _scene;
 
-    CellRenderObject _morphologyView;
-
     QMatrix4x4 _projMatrix;
     QMatrix4x4 _viewMatrix;
     QMatrix4x4 _modelMatrix;

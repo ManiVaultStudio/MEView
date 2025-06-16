@@ -174,6 +174,4 @@ void MorphologyLineRenderer::buildRenderObject(const CellMorphology& cellMorphol
     cellRenderObject.ranges = range;
     cellRenderObject.maxExtent = maxExtent;
     cellRenderObject.cellTypeColor = cellMorphology.cellTypeColor;
-
-    _morphologyView = cellRenderObject;
 }

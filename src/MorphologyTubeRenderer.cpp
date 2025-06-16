@@ -77,8 +77,8 @@ void MorphologyTubeRenderer::render(int index, float t)
     CellRenderObject& cellRenderObject = _cellRenderObjects[index];
 
     _projMatrix.setToIdentity();
-    mv::Vector3f somaPosition = _morphologyView.somaPosition;
-    float maxExtent = _morphologyView.maxExtent / 1.5f;
+    mv::Vector3f somaPosition = cellRenderObject.somaPosition;
+    float maxExtent = cellRenderObject.maxExtent / 1.5f;
 
     _projMatrix.ortho(-maxExtent * _aspectRatio, maxExtent * _aspectRatio, -maxExtent, maxExtent, -maxExtent, maxExtent);
 
@@ -90,8 +90,8 @@ void MorphologyTubeRenderer::render(int index, float t)
     _shader.uniformMatrix4f("projMatrix", _projMatrix.constData());
     _shader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
 
-    glBindVertexArray(_morphologyView.vao);
-    glDrawArrays(GL_TRIANGLES, 0, _morphologyView.numVertices);
+    glBindVertexArray(cellRenderObject.vao);
+    glDrawArrays(GL_TRIANGLES, 0, cellRenderObject.numVertices);
     glBindVertexArray(0);
 
     _shader.release();
