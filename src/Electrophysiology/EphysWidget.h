@@ -4,8 +4,6 @@
 
 #include "Scene.h"
 
-#include "TraceRenderer.h"
-
 class EphysView;
 
 class EphysWidget : public mv::gui::OpenGLWidget
@@ -27,6 +25,4 @@ private:
     bool isInitialized = false;
 
     Scene* _scene;
-
-    TraceRenderer _traceRenderer;
 };

@@ -13,8 +13,8 @@
 using namespace mv;
 
 EphysWidget::EphysWidget(EphysView* plugin, Scene* scene) :
-    _scene(scene),
-    _traceRenderer(scene)
+    _scene(scene)
+    //_traceRenderer(scene)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::ClickFocus);
@@ -43,7 +43,7 @@ void EphysWidget::onWidgetInitialized()
 {
     initializeOpenGLFunctions();
 
-    _traceRenderer.init();
+    //_traceRenderer.init();
 
     // Start timer
     QTimer* updateTimer = new QTimer();
@@ -55,7 +55,7 @@ void EphysWidget::onWidgetInitialized()
 
 void EphysWidget::onWidgetResized(int w, int h)
 {
-    _traceRenderer.resize(w, h);
+    //_traceRenderer.resize(w, h);
 }
 
 void EphysWidget::onWidgetRendered()
@@ -63,7 +63,7 @@ void EphysWidget::onWidgetRendered()
     glClearColor(1, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    _traceRenderer.render();
+    //_traceRenderer.render();
 
     QPainter painter(this);
 

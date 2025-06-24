@@ -28,13 +28,15 @@ public:
     float maxExtent = 0;
     mv::Vector3f somaPosition;
     mv::Vector3f cellTypeColor;
+
+    GLuint traceVAO = 0; // Trace vao
 };
 
 class MorphologyRenderer : protected QOpenGLFunctions_3_3_Core
 {
 public:
-    MorphologyRenderer(Scene* scene) :
-        _scene(scene),
+    MorphologyRenderer() :
+        _scene(Scene::getInstance()),
         _aspectRatio(1),
         quadVao(0)
     {
@@ -45,9 +47,9 @@ public:
     void resize(int w, int h, int xMargin, int yMargin);
     void update(float t);
 
-    virtual void render(int index, float t) = 0;
+    virtual void render(float t) = 0;
 
-    void buildRenderObjects();
+    void buildRenderObjects(const std::vector<Cell>& cells);
 
     int getNumRenderObjects() { return (int) _cellRenderObjects.size(); }
 
@@ -55,7 +57,7 @@ protected:
     virtual void buildRenderObject(const CellMorphology& cellMorphology, CellRenderObject& cellRenderObject) = 0;
 
 protected:
-    Scene* _scene;
+    Scene& _scene;
 
     QMatrix4x4 _projMatrix;
     QMatrix4x4 _viewMatrix;

@@ -16,11 +16,11 @@ using namespace mv;
 
 int M_MARGIN = 48;
 
-MorphologyWidget::MorphologyWidget(MEView* plugin, Scene* scene) :
+MorphologyWidget::MorphologyWidget(MEView* plugin) :
     _renderMode(RenderMode::LINE),
-    _scene(scene),
-    _lineRenderer(scene),
-    _tubeRenderer(scene),
+    _scene(Scene::getInstance()),
+    _lineRenderer(),
+    _tubeRenderer(),
     _layerDrawing(this)
 {
     setMouseTracking(true);
@@ -56,18 +56,13 @@ void MorphologyWidget::showAxons(bool enabled)
     _lineRenderer.showAxons(enabled);
 }
 
-void MorphologyWidget::setRowWidth(float rowWidth)
-{
-    _lineRenderer.setRowWidth(rowWidth);
-}
-
 void MorphologyWidget::uploadMorphologies()
 {
     if (!isInitialized)
         return;
 
     makeCurrent();
-    _lineRenderer.buildRenderObjects();
+    //_lineRenderer.buildRenderObjects();
 }
 
 void MorphologyWidget::onWidgetInitialized()
@@ -109,12 +104,12 @@ void MorphologyWidget::onWidgetRendered()
 
     int chartWidth = width() - M_MARGIN * 2;
 
-    _layerDrawing.setDepthRange(_scene->getCortexStructure().getMinDepth(), _scene->getCortexStructure().getMaxDepth());
-    _layerDrawing.drawAxes(painter, _scene);
+    _layerDrawing.setDepthRange(_scene.getCortexStructure().getMinDepth(), _scene.getCortexStructure().getMaxDepth());
+    _layerDrawing.drawAxes(painter);
 
-    mv::Dataset<CellMorphologies> morphologyDataset = _scene->getMorphologyDataset();
+    mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
     const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
-    mv::Dataset<Text> cellMetadata = _scene->getCellMetadataDataset();
+    mv::Dataset<Text> cellMetadata = _scene.getCellMetadataDataset();
 
     const auto& selectionIndices = morphologyDataset->getSelectionIndices();
     std::vector<uint32_t> sortedSelectionIndices = selectionIndices;
@@ -158,9 +153,9 @@ void MorphologyWidget::onWidgetRendered()
 
     switch (_renderMode)
     {
-    case RenderMode::LINE: _lineRenderer.render(0, t); break;
-    case RenderMode::REAL: _tubeRenderer.render(0, t); break;
-    default: _lineRenderer.render(0, t);
+    case RenderMode::LINE: _lineRenderer.render(t); break;
+    case RenderMode::REAL: _tubeRenderer.render(t); break;
+    default: _lineRenderer.render(t);
     }
 
     painter.endNativePainting();

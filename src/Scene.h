@@ -3,9 +3,19 @@
 #include <PointData/PointData.h>
 #include <TextData/TextData.h>
 #include <CellMorphologyData/CellMorphologyData.h>
+#include <EphysData/EphysData.h>
 
 #include <QHash>
 #include <QString>
+
+class Cell
+{
+public:
+    QString cellId;
+    QString cluster;
+    const CellMorphology* morphology;
+    const Experiment* ephysTraces;
+};
 
 class CortexStructure
 {
@@ -26,21 +36,41 @@ public:
 class Scene
 {
 public:
+    static Scene& getInstance()
+    {
+        static Scene instance;
+        return instance;
+    }
+private: // Private constructor
     Scene();
+public: // Delete copy constructors
+    Scene(Scene const&) = delete;
+    void operator=(Scene const&) = delete;
 
+public:
     bool hasAllRequiredDatasets();
 
     mv::Dataset<CellMorphologies>&      getMorphologyDataset()              { return _morphologyDataset; }
     mv::Dataset<Points>&                getMorphologyFeatureDataset()       { return _morphologyFeatureDataset; }
-    mv::Dataset<Text>&                  getCellMetadataDataset()            { return _cellMetadataDataset; }
     const CortexStructure&              getCortexStructure()                { return _cortexStructure; }
+
+    mv::Dataset<EphysExperiments>&   getEphysTraces() { return _ephysTraces; }
+
+    mv::Dataset<Text>& getCellMetadataDataset() { return _cellMetadataDataset; }
 
     void offerCandidateDataset(mv::Dataset<mv::DatasetImpl> candidateDataset);
 
-private:
+private: // Morphology
     mv::Dataset<CellMorphologies>   _morphologyDataset;             /** Morphology data */
     mv::Dataset<Points>             _morphologyFeatureDataset;      /** Morphology feature data */
-    mv::Dataset<Text>               _cellMetadataDataset;           /** Cell metadata */
 
     CortexStructure                 _cortexStructure;
+
+private: // Ephys
+    mv::Dataset<Points>             _ephysFeatures;                 /** Ephys feature data */
+    mv::Dataset<EphysExperiments>   _ephysTraces;                   /** Ephys traces */
+    mv::Dataset<Text>               _cellMetadata;                  /** Cell metadata */
+
+private: // Metadata
+    mv::Dataset<Text>               _cellMetadataDataset;           /** Cell metadata */
 };

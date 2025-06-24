@@ -1,13 +1,13 @@
 #pragma once
 
 #include "MorphologyWidget.h"
+#include "MEWidget.h"
 
 #include "SettingsAction.h"
 
 #include "NeuronDescriptor.h"
 
 #include "Scene.h"
-#include "Electrophysiology/Scene.h"
 #include "Electrophysiology/EphysWebWidget.h"
 
 #include <ViewPlugin.h>
@@ -67,13 +67,11 @@ private:
     SettingsAction                  _settingsAction;
     DropWidget*                     _dropWidget;                /** Widget for drag and drop behavior */
 
-    Scene                           _scene;
+    Scene&                          _scene;
 
     MorphologyWidget*               _morphologyWidget;
-
-    EphysScene                      _ephysScene;
-
     EphysWebWidget*                 _ephysWidget;
+    MEWidget*                       _meWidget;
 };
 
 /**

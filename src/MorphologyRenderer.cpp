@@ -25,7 +25,7 @@ void MorphologyRenderer::update(float t)
     
 }
 
-void MorphologyRenderer::buildRenderObjects()
+void MorphologyRenderer::buildRenderObjects(const std::vector<Cell>& cells)
 {
     // Delete previous render objects
     for (CellRenderObject& cellRenderObject : _cellRenderObjects)
@@ -38,24 +38,11 @@ void MorphologyRenderer::buildRenderObjects()
 
     _cellRenderObjects.clear();
 
-    mv::Dataset<CellMorphologies> morphologyDataset = _scene->getMorphologyDataset();
-
-    const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
-    const auto& selectionIndices = morphologyDataset->getSelectionIndices();
-    std::vector<uint32_t> sortedSelectionIndices = selectionIndices;
-
-    // Reorder selection based on soma depth
-    std::sort(sortedSelectionIndices.begin(), sortedSelectionIndices.end(), [&morphologies](const uint32_t& a, const uint32_t& b)
+    _cellRenderObjects.resize(cells.size());
+    qDebug() << "Build render objects: " << cells.size();
+    for (int i = 0; i < cells.size(); i++)
     {
-        return morphologies[a].somaPosition.y > morphologies[b].somaPosition.y;
-    });
-
-    _cellRenderObjects.resize(sortedSelectionIndices.size());
-    qDebug() << "Build render objects: " << sortedSelectionIndices.size();
-    for (int i = 0; i < sortedSelectionIndices.size(); i++)
-    {
-        int si = sortedSelectionIndices[i];
-        const CellMorphology& morphology = morphologies[si];
+        const CellMorphology& morphology = *cells[i].morphology;
 
         buildRenderObject(morphology, _cellRenderObjects[i]);
     }

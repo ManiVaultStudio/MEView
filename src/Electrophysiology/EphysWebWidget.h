@@ -39,7 +39,7 @@ class EphysWebWidget : public mv::gui::WebWidget
 {
     Q_OBJECT
 public:
-    EphysWebWidget(MEView* plugin, EphysScene* scene);
+    EphysWebWidget(MEView* plugin);
     ~EphysWebWidget();
 
     JSCommunicationObject& getCommObject() { return _commObject; }
@@ -60,5 +60,5 @@ public slots:
 private:
     JSCommunicationObject   _commObject;    // Communication Object between Qt (cpp) and JavaScript
 
-    EphysScene* _scene;
+    Scene& _scene;
 };

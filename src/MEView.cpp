@@ -18,31 +18,13 @@ Q_PLUGIN_METADATA(IID "studio.manivault.MEView")
 
 using namespace mv;
 
-namespace
-{
-    bool isEphysFeatures(mv::Dataset<DatasetImpl> dataset)
-    {
-        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "E";
-    }
-
-    bool isEphysTraces(mv::Dataset<DatasetImpl> dataset)
-    {
-        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "EphysTraces";
-    }
-
-    bool isMetadata(mv::Dataset<DatasetImpl> dataset)
-    {
-        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "Metadata";
-    }
-}
-
 MEView::MEView(const PluginFactory* factory) :
     ViewPlugin(factory),
     _dropWidget(nullptr),
-    _scene(),
-    _ephysScene(),
-    _morphologyWidget(new MorphologyWidget(this, &_scene)),
-    _ephysWidget(new EphysWebWidget(this, &_ephysScene)),
+    _scene(Scene::getInstance()),
+    _morphologyWidget(new MorphologyWidget(this)),
+    _ephysWidget(new EphysWebWidget(this)),
+    _meWidget(new MEWidget()),
     _primaryToolbarAction(this, "PrimaryToolbar"),
     _settingsAction(this, "SettingsAction")
 {
@@ -73,8 +55,9 @@ void MEView::init()
 
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
-    layout->addWidget(_ephysWidget, 50);
-    layout->addWidget(_morphologyWidget, 70);
+    layout->addWidget(_meWidget, 99);
+    //layout->addWidget(_ephysWidget, 50);
+    //layout->addWidget(_morphologyWidget, 70);
 
     // Apply the layout
     getWidget().setLayout(layout);
@@ -86,7 +69,7 @@ void MEView::init()
         _dropWidget->setShowDropIndicator(_scene.getMorphologyDataset()->getGuiName().isEmpty());
     });
 
-    connect(&_ephysScene._ephysTraces, &Dataset<Text>::changed, this, [this]() { connect(&_ephysScene._ephysTraces, &Dataset<Text>::dataSelectionChanged, this, &MEView::onCellSelectionChanged); });
+    connect(&_scene.getEphysTraces(), &Dataset<Text>::changed, this, [this]() { connect(&_scene.getEphysTraces(), &Dataset<Text>::dataSelectionChanged, this, &MEView::onCellSelectionChanged); });
 
     // Alternatively, classes which derive from hdsp::EventListener (all plugins do) can also respond to events
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetAdded));
@@ -98,20 +81,6 @@ void MEView::init()
     // Check if any usable datasets are already available, if so, use them
     for (mv::Dataset dataset : mv::data().getAllDatasets())
         _scene.offerCandidateDataset(dataset);
-
-    // Check if any usable datasets are already available, if so, use them
-    for (mv::Dataset dataset : mv::data().getAllDatasets())
-    {
-        if (isEphysFeatures(dataset))
-            _ephysScene._ephysFeatures = dataset;
-        if (isEphysTraces(dataset))
-            _ephysScene._ephysTraces = dataset;
-        if (isMetadata(dataset))
-            _ephysScene._cellMetadata = dataset;
-    }
-    qDebug() << _ephysScene._ephysFeatures.isValid();
-    qDebug() << _ephysScene._ephysTraces.isValid();
-    qDebug() << _ephysScene._cellMetadata.isValid();
 }
 
 void MEView::onDataEvent(mv::DatasetEvent* dataEvent)
@@ -133,17 +102,6 @@ void MEView::onDataEvent(mv::DatasetEvent* dataEvent)
 
             _scene.offerCandidateDataset(changedDataSet);
 
-            if (isEphysFeatures(changedDataSet))
-                _ephysScene._ephysFeatures = changedDataSet;
-            if (isEphysTraces(changedDataSet))
-                _ephysScene._ephysTraces = changedDataSet;
-            if (isMetadata(changedDataSet))
-                _ephysScene._cellMetadata = changedDataSet;
-
-            qDebug() << _ephysScene._ephysFeatures.isValid();
-            qDebug() << _ephysScene._ephysTraces.isValid();
-            qDebug() << _ephysScene._cellMetadata.isValid();
-
             // Get the GUI name of the added points dataset and print to the console
             qDebug() << datasetGuiName << "was added";
 
@@ -161,52 +119,71 @@ void MEView::onCellSelectionChanged()
     if (!_scene.hasAllRequiredDatasets())
         return;
 
-    if (!_ephysScene._ephysTraces.isValid())
-        return;
+    //// Compute maximum width of the visualization, i.e. how many cells can we fit on average
+    //float totalWidth = 0;
+    //for (CellMorphology& cellMorphology : _scene.getMorphologyDataset()->getData())
+    //{
+    //    Vector3f range = cellMorphology.maxRange - cellMorphology.minRange;
 
-    if (!_ephysScene._cellMetadata.isValid())
-    {
-        qWarning() << "No cell metadata dataset set.";
-        return;
-    }
+    //    float maxWidth = sqrtf(range.x * range.x + range.z * range.z);
 
-    if (!_ephysScene._ephysFeatures.isValid())
+    //    totalWidth += maxWidth;
+    //}
+    //float averageWidth = (totalWidth / _scene.getMorphologyDataset()->getData().size()) * 1.5f;
+
+    // Find appropriate selection indices in the morphology and ephys data
+    mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
+    const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
+
+    const auto& selectionIndices = morphologyDataset->getSelectionIndices();
+    std::vector<uint32_t> sortedSelectionIndices = selectionIndices;
+
+    // Reorder selection based on soma depth
+    std::sort(sortedSelectionIndices.begin(), sortedSelectionIndices.end(), [&morphologies](const uint32_t& a, const uint32_t& b)
     {
-        qWarning() << "No ephys features dataset found by EphysView.";
-        return;
-    }
+        return morphologies[a].somaPosition.y > morphologies[b].somaPosition.y;
+    });
 
     // Find common selected points
-    const auto& selectionIndices = _scene.getMorphologyDataset()->getSelectionIndices();
-    std::vector<uint32_t> ephysSelectionIndices;
+    std::vector<int> ephysSelectionIndices;
+    std::vector<int> metaSelectionIndices;
 
     for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
     {
         mv::BiMap& morphBiMap = selGroup.getBiMap(_scene.getMorphologyDataset());
-        mv::BiMap& ephysBiMap = selGroup.getBiMap(_ephysScene._ephysTraces);
+        mv::BiMap& ephysBiMap = selGroup.getBiMap(_scene.getEphysTraces());
+        mv::BiMap& metaBiMap = selGroup.getBiMap(_scene.getCellMetadataDataset());
 
-        std::vector<QString> keys = morphBiMap.getKeysByValues(selectionIndices);
-        ephysSelectionIndices = ephysBiMap.getValuesByKeys(keys);
+        std::vector<QString> keys = morphBiMap.getKeysByValues(sortedSelectionIndices);
+
+        ephysSelectionIndices = ephysBiMap.getValuesByKeysWithMissingValue(keys, -1);
+        metaSelectionIndices = metaBiMap.getValuesByKeysWithMissingValue(keys, -1);
     }
 
-    // Compute maximum width of the visualization, i.e. how many cells can we fit on average
-    float totalWidth = 0;
-    for (CellMorphology& cellMorphology : _scene.getMorphologyDataset()->getData())
+    auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
+    auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn("Cluster");
+
+    // Construct vector of cells containing all necessary information
+    std::vector<Cell> cells(sortedSelectionIndices.size());
+    for (int i = 0; i < cells.size(); i++)
     {
-        Vector3f range = cellMorphology.maxRange - cellMorphology.minRange;
+        Cell& cell = cells[i];
+        cell.morphology = &morphologies[sortedSelectionIndices[i]];
 
-        float maxWidth = sqrtf(range.x * range.x + range.z * range.z);
+        int ephysIndex = ephysSelectionIndices[i];
+        cell.ephysTraces = ephysIndex > 0 ? &_scene.getEphysTraces()->getData()[ephysIndex] : nullptr;
 
-        totalWidth += maxWidth;
+        int metaIndex = metaSelectionIndices[i];
+        cell.cellId = metaIndex > 0 ? cellIdColumn[metaSelectionIndices[i]] : "Missing";
+        cell.cluster = metaIndex > 0 ? clusterColumn[metaSelectionIndices[i]] : "Missing";
     }
-    float averageWidth = (totalWidth / _scene.getMorphologyDataset()->getData().size()) * 1.5f;
 
-    _morphologyWidget->setRowWidth(2180);
+    _meWidget->setCells(cells);
 
-    // Upload cell morphologies
-    _morphologyWidget->uploadMorphologies();
+    //// Upload cell morphologies
+    //_morphologyWidget->uploadMorphologies();
 
-    _ephysWidget->setData(_ephysScene._ephysTraces->getData(), ephysSelectionIndices);
+    //_ephysWidget->setData(_scene.getEphysTraces()->getData(), ephysSelectionIndices);
 }
 
 ViewPlugin* CellMorphologyPluginFactory::produce()

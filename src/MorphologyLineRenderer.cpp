@@ -20,7 +20,7 @@ void MorphologyLineRenderer::init()
     glEnable(GL_LINE_SMOOTH);
 }
 
-void MorphologyLineRenderer::render(int index, float t)
+void MorphologyLineRenderer::render(float t)
 {
     glViewport(vx, vy, vw, vh);
 
@@ -30,7 +30,7 @@ void MorphologyLineRenderer::render(int index, float t)
 
     //glClear(GL_DEPTH_BUFFER_BIT);
 
-    float depthRange = _scene->getCortexStructure().getMaxDepth() - _scene->getCortexStructure().getMinDepth();
+    float depthRange = _scene.getCortexStructure().getMaxDepth() - _scene.getCortexStructure().getMinDepth();
 
     _lineShader.bind();
 
@@ -38,6 +38,7 @@ void MorphologyLineRenderer::render(int index, float t)
     _viewMatrix.scale(1.0f / depthRange);
 
     float xOffset = 0;
+    qDebug() << "Rendering " << _cellRenderObjects.size() << " objects.";
     for (int i = 0; i < _cellRenderObjects.size(); i++)
     {
         CellRenderObject& cellRenderObject = _cellRenderObjects[i];
@@ -62,7 +63,7 @@ void MorphologyLineRenderer::render(int index, float t)
         glDrawArrays(GL_LINES, 0, cellRenderObject.numVertices);
         glBindVertexArray(0);
 
-        xOffset += _maxRowWidth;
+        xOffset += 200;//_maxRowWidth;
     }
 
     _lineShader.release();
@@ -75,7 +76,7 @@ void MorphologyLineRenderer::showAxons(bool enabled)
 
 void MorphologyLineRenderer::getCellMetadataLocations(std::vector<float>& locations)
 {
-    float depthRange = _scene->getCortexStructure().getMaxDepth() - _scene->getCortexStructure().getMinDepth();
+    float depthRange = _scene.getCortexStructure().getMaxDepth() - _scene.getCortexStructure().getMinDepth();
 
     locations.resize(_cellRenderObjects.size());
 
@@ -92,7 +93,7 @@ void MorphologyLineRenderer::getCellMetadataLocations(std::vector<float>& locati
         QVector4D v = _projMatrix * viewMatrix * modelMatrix * QVector4D(0, 0, 0, 1);
         locations[i] = (v.x() / v.w()) * 0.5f + 0.5f;
 
-        xOffset += _maxRowWidth;
+        //xOffset += _maxRowWidth;
     }
 }
 

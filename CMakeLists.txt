@@ -36,6 +36,8 @@ set(PLUGIN_SOURCES
     src/MEView.cpp
     src/MorphologyWidget.h
     src/MorphologyWidget.cpp
+    src/MEWidget.h
+    src/MEWidget.cpp
     src/NeuronDescriptor.h
     src/MorphologyDescription.h
     src/MorphologyDescription.cpp
@@ -59,6 +61,8 @@ set(RENDER_SOURCES
     src/MorphologyLineRenderer.cpp
     src/MorphologyTubeRenderer.h
     src/MorphologyTubeRenderer.cpp
+    #src/TraceRenderer.h
+    #src/TraceRenderer.cpp
     #src/MorphologyLineSegments.h
     #src/MorphologyLineSegments.cpp
     src/LayerDrawing.h
@@ -70,10 +74,8 @@ set(EPHYS_SOURCES
     src/Electrophysiology/EphysWidget.cpp
     src/Electrophysiology/EphysWebWidget.h
     src/Electrophysiology/EphysWebWidget.cpp
-    src/Electrophysiology/Scene.h
-    src/Electrophysiology/Scene.cpp
-    src/Electrophysiology/TraceRenderer.h
-    src/Electrophysiology/TraceRenderer.cpp
+    #src/Electrophysiology/TraceRenderer.h
+    #src/Electrophysiology/TraceRenderer.cpp
 )
 
 set(QRESOURCES

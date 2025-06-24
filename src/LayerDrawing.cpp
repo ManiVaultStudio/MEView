@@ -6,6 +6,7 @@ int MARGIN = 48;
 
 LayerDrawing::LayerDrawing(QWidget* parent) :
     _parent(parent),
+    _scene(Scene::getInstance()),
     _minDepth(0),
     _maxDepth(1),
     _depthRange(1)
@@ -20,12 +21,12 @@ void LayerDrawing::setDepthRange(float minDepth, float maxDepth)
     _depthRange = maxDepth - minDepth;
 }
 
-void LayerDrawing::drawAxes(QPainter& painter, Scene* scene)
+void LayerDrawing::drawAxes(QPainter& painter)
 {
     int chartWidth = _parent->width() - MARGIN * 2;
     int chartHeight = _parent->height() - MARGIN * 2;
 
-    const CortexStructure& cortexStructure = scene->getCortexStructure();
+    const CortexStructure& cortexStructure = _scene.getCortexStructure();
 
     QPen axisPen(QColor(80, 80, 80, 255), 2, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
     QPen midPen(QColor(80, 80, 80, 255), 1, Qt::DashLine, Qt::FlatCap, Qt::RoundJoin);

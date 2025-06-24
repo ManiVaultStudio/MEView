@@ -63,9 +63,9 @@ JSCommunicationObject::JSCommunicationObject()
 // EphysWebWidget
 // =============================================================================
 
-EphysWebWidget::EphysWebWidget(MEView* plugin, EphysScene* scene) :
+EphysWebWidget::EphysWebWidget(MEView* plugin) :
     _commObject(),
-    _scene(scene)
+    _scene(Scene::getInstance())
 {
     connect(this, &WebWidget::webPageFullyLoaded, this, &EphysWebWidget::onWebPageFullyLoaded);
     qDebug() << "Connect to event";

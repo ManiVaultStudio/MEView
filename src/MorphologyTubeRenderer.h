@@ -5,8 +5,8 @@
 class MorphologyTubeRenderer : public MorphologyRenderer
 {
 public:
-    MorphologyTubeRenderer(Scene* scene) :
-        MorphologyRenderer(scene)
+    MorphologyTubeRenderer() :
+        MorphologyRenderer()
     {
 
     }
@@ -14,7 +14,7 @@ public:
     void init() override;
     //void update(float t) override;
 
-    virtual void render(int index, float t) override;
+    virtual void render(float t) override;
 
     void reloadShaders();
 

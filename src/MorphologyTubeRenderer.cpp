@@ -70,11 +70,11 @@ void MorphologyTubeRenderer::init()
     }
 }
 
-void MorphologyTubeRenderer::render(int index, float t)
+void MorphologyTubeRenderer::render(float t)
 {
     glEnable(GL_DEPTH_TEST);
 
-    CellRenderObject& cellRenderObject = _cellRenderObjects[index];
+    CellRenderObject& cellRenderObject = _cellRenderObjects[0];
 
     _projMatrix.setToIdentity();
     mv::Vector3f somaPosition = cellRenderObject.somaPosition;

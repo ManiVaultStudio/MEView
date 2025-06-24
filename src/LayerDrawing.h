@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Scene.h"
+
 #include <QWidget>
 #include <QPainter>
 
@@ -12,13 +14,15 @@ public:
 
     void setDepthRange(float minDepth, float maxDepth);
 
-    void drawAxes(QPainter& painter, Scene* scene);
+    void drawAxes(QPainter& painter);
 
 private:
     void drawHorizontalLine(QPainter& painter, float y);
 
 private:
     QWidget* _parent;
+
+    Scene& _scene;
 
     float _minDepth;
     float _maxDepth;

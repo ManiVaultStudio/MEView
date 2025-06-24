@@ -26,7 +26,7 @@ class MorphologyWidget : public mv::gui::OpenGLWidget
 {
     Q_OBJECT
 public:
-    MorphologyWidget(MEView* plugin, Scene* scene);
+    MorphologyWidget(MEView* plugin);
     ~MorphologyWidget();
 
     void setRenderMode(RenderMode renderMode)
@@ -49,7 +49,7 @@ protected:
 private:
     bool isInitialized = false;
 
-    Scene* _scene;
+    Scene& _scene;
 
     float t = 0;
 

@@ -13,9 +13,8 @@ public:
 class MorphologyLineRenderer : public MorphologyRenderer
 {
 public:
-    MorphologyLineRenderer(Scene* scene) :
-        MorphologyRenderer(scene),
-        _maxRowWidth(0),
+    MorphologyLineRenderer() :
+        MorphologyRenderer(),
         _cellCache(100)
     {
 
@@ -24,11 +23,9 @@ public:
     void init() override;
     //void update(float t) override;
 
-    virtual void render(int index, float t) override;
+    virtual void render(float t) override;
 
     void showAxons(bool enabled);
-
-    void setRowWidth(float rowWidth) { _maxRowWidth = rowWidth; }
 
     void getCellMetadataLocations(std::vector<float>& locations);
 
@@ -38,8 +35,6 @@ private:
 private:
     mv::ShaderProgram _lineShader;
     mv::ShaderProgram _quadShader;
-
-    float _maxRowWidth; // Maximum width that can be filled by displayed cells, if exceeded, next cells are rendered below
 
     LRUCache<QString, CellRenderObject> _cellCache;
 
