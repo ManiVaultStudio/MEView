@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MorphologyWidget.h"
 #include "MEWidget.h"
 
 #include "SettingsAction.h"
@@ -69,8 +68,8 @@ private:
 
     Scene&                          _scene;
 
-    MorphologyWidget*               _morphologyWidget;
-    EphysWebWidget*                 _ephysWidget;
+    //MorphologyWidget*               _morphologyWidget;
+    //EphysWebWidget*                 _ephysWidget;
     MEWidget*                       _meWidget;
 };
 

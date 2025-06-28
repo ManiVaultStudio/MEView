@@ -1,9 +1,9 @@
 #include "MEWidget.h"
 
 MEWidget::MEWidget() :
-    _lineRenderer()
+    _emRenderer()
 {
-
+    connect(&_emRenderer, &EMRenderer::requestNewAspectRatio, this, &MEWidget::onNewAspectRatioRequested);
 }
 
 void MEWidget::setCells(const std::vector<Cell>& cells)
@@ -14,12 +14,17 @@ void MEWidget::setCells(const std::vector<Cell>& cells)
     _cells = cells;
 
     makeCurrent();
-    _lineRenderer.buildRenderObjects(cells);
+    _emRenderer.buildRenderObjects(cells);
+}
+
+void MEWidget::showAxons(bool enabled)
+{
+    _emRenderer.showAxons(enabled);
 }
 
 void MEWidget::onWidgetInitialized()
 {
-    _lineRenderer.init();
+    _emRenderer.init();
 
     // Start 50 fps render timer
     QTimer* updateTimer = new QTimer();
@@ -29,7 +34,9 @@ void MEWidget::onWidgetInitialized()
 
 void MEWidget::onWidgetResized(int w, int h)
 {
-    _lineRenderer.resize(w, h, 0, 0);
+    qDebug() << "Widget resize";
+    _width = w; _height = h;
+    _emRenderer.resize(w, h);
 }
 
 void MEWidget::onWidgetRendered()
@@ -37,12 +44,17 @@ void MEWidget::onWidgetRendered()
     // Increment time
     t += 0.3f;
 
-    glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    _lineRenderer.render(t);
+    _emRenderer.update(t);
 }
 
 void MEWidget::onWidgetCleanup()
 {
+}
+
+void MEWidget::onNewAspectRatioRequested(float aspectRatio)
+{
+    // Should be set in pre-scaled coordinates, because 32 pixels here results in 40px at 125%
+    int newWidth = aspectRatio* (_height / devicePixelRatioF());
+    qDebug() << "Requested new width: " << newWidth;
+    setFixedWidth(newWidth);
 }

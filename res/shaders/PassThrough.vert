@@ -27,12 +27,12 @@ void main()
     // Axon
     else if (type == 2)
     {
-        color = vec3(0.8, 0.8, 0.8);
+        color = vec3(0.56, 0.56, 0.56);
     }
     // Basal dendrite
     else if (type == 3)
     {
-        color = vec3(0.5, 0.5, 0.5);
+        color = cellTypeColor * 0.8;
     }
     // Apical dendrite
     else if (type == 4)

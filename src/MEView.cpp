@@ -22,8 +22,8 @@ MEView::MEView(const PluginFactory* factory) :
     ViewPlugin(factory),
     _dropWidget(nullptr),
     _scene(Scene::getInstance()),
-    _morphologyWidget(new MorphologyWidget(this)),
-    _ephysWidget(new EphysWebWidget(this)),
+    //_morphologyWidget(new MorphologyWidget(this)),
+    //_ephysWidget(new EphysWebWidget(this)),
     _meWidget(new MEWidget()),
     _primaryToolbarAction(this, "PrimaryToolbar"),
     _settingsAction(this, "SettingsAction")
@@ -46,12 +46,12 @@ void MEView::init()
     //_primaryToolbarAction.addAction(&_settingsAction.getRealRendererButton());
     _primaryToolbarAction.addAction(&_settingsAction.getShowAxonsToggle());
 
-    connect(&_settingsAction.getLineRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::LINE); });
-    connect(&_settingsAction.getRealRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::REAL); });
-    connect(&_settingsAction.getShowAxonsToggle(), &ToggleAction::toggled, this, [this](bool toggled) { _morphologyWidget->showAxons(toggled); });
+    //connect(&_settingsAction.getLineRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::LINE); });
+    //connect(&_settingsAction.getRealRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::REAL); });
+    connect(&_settingsAction.getShowAxonsToggle(), &ToggleAction::toggled, this, [this](bool toggled) { _meWidget->showAxons(toggled); });
 
     // Load webpage
-    _ephysWidget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
+    //_ephysWidget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
 
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
@@ -161,7 +161,10 @@ void MEView::onCellSelectionChanged()
     }
 
     auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
-    auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn("Cluster");
+
+    // FIXME
+    QString columnName = _scene.getCellMetadataDataset()->hasColumn("Cluster") ? "Cluster" : "Group";
+    auto& clusterColumn =  _scene.getCellMetadataDataset()->getColumn(columnName);
 
     // Construct vector of cells containing all necessary information
     std::vector<Cell> cells(sortedSelectionIndices.size());

@@ -34,8 +34,8 @@ find_package(ManiVault COMPONENTS Core PointData TextData CONFIG REQUIRED)
 set(PLUGIN_SOURCES
     src/MEView.h
     src/MEView.cpp
-    src/MorphologyWidget.h
-    src/MorphologyWidget.cpp
+    #src/MorphologyWidget.h
+    #src/MorphologyWidget.cpp
     src/MEWidget.h
     src/MEWidget.cpp
     src/NeuronDescriptor.h
@@ -55,12 +55,14 @@ set(PLUGIN_SOURCES
 )
 
 set(RENDER_SOURCES
-    src/MorphologyRenderer.h
-    src/MorphologyRenderer.cpp
-    src/MorphologyLineRenderer.h
-    src/MorphologyLineRenderer.cpp
-    src/MorphologyTubeRenderer.h
-    src/MorphologyTubeRenderer.cpp
+    #src/MorphologyRenderer.h
+    #src/MorphologyRenderer.cpp
+    #src/MorphologyLineRenderer.h
+    #src/MorphologyLineRenderer.cpp
+    #src/MorphologyTubeRenderer.h
+    #src/MorphologyTubeRenderer.cpp
+    src/EMRenderer.h
+    src/EMRenderer.cpp
     #src/TraceRenderer.h
     #src/TraceRenderer.cpp
     #src/MorphologyLineSegments.h

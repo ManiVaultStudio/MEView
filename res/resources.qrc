@@ -2,8 +2,8 @@
     <qresource prefix="me_viewer">
         <file>shaders/PassThrough.vert</file>
         <file>shaders/Lines.frag</file>
-        <file>shaders/Model.vert</file>
-        <file>shaders/Tubes.frag</file>
+        <file>shaders/Trace.vert</file>
+        <file>shaders/Trace.frag</file>
         <file>shaders/Quad.vert</file>
         <file>shaders/Quad.frag</file>
         <file>human_average_layer_depths.json</file>
