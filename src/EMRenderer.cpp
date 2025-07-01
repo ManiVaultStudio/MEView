@@ -13,6 +13,22 @@ namespace
 
         return std::max(std::max(minDiffX, maxDiffX), std::max(minDiffY, maxDiffY));
     }
+
+    float computeMaxCellHeight(const std::vector<CellRenderObject>& cellRenderObjects)
+    {
+        float maxHeight = std::numeric_limits<float>::min();
+        for (int i = 0; i < cellRenderObjects.size(); i++)
+        {
+            if (cellRenderObjects[i].ranges.y > maxHeight)
+                maxHeight = cellRenderObjects[i].ranges.y;
+        }
+        return maxHeight;
+    }
+
+    float computeOpenGLHeight(float maxCellHeight)
+    {
+        return maxCellHeight * 1.4; // 3/4 cell, 1/4 trace + some margin -> total height = 1.333 * maxCellHeight + margin ~ 1.4
+    }
 }
 
 void EMRenderer::init()
@@ -30,7 +46,6 @@ void EMRenderer::init()
     }
 
     glEnable(GL_LINE_SMOOTH);
-    glLineWidth(5);
 }
 
 void EMRenderer::resize(int w, int h)
@@ -52,18 +67,12 @@ void EMRenderer::update(float t)
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    float maxScale = 0.01f;
-    for (int i = 0; i < _cellRenderObjects.size(); i++)
-    {
-        if (_cellRenderObjects[i].maxExtent > maxScale)
-            maxScale = _cellRenderObjects[i].maxExtent;
-    }
-    maxScale *= 1.8f;
-
     _lineShader.bind();
 
+    float maxCellHeight = computeMaxCellHeight(_cellRenderObjects);
+    float maxOpenGLHeight = computeOpenGLHeight(maxCellHeight);
     _viewMatrix.setToIdentity();
-    _viewMatrix.scale(1.0f / maxScale);
+    _viewMatrix.scale(1.0f / maxOpenGLHeight); // Map [0, maxOpenGLHeight] to [0, 1]
 
     float xOffset = 0;
     //qDebug() << "Rendering " << _cellRenderObjects.size() << " objects.";
@@ -77,7 +86,7 @@ void EMRenderer::update(float t)
 
         //qDebug() << "YOffset" << yOffset;
         _modelMatrix.setToIdentity();
-        _modelMatrix.translate(xOffset + maxWidth / 2, maxScale/2, 0);
+        _modelMatrix.translate(xOffset + maxWidth / 2, maxOpenGLHeight * 0.625, 0);
         _modelMatrix.rotate(t, 0, 1, 0);
         _modelMatrix.translate(-anchorPoint.x, -anchorPoint.y, -anchorPoint.z);
         //qDebug() << cellRenderObject.somaPosition.x << cellRenderObject.somaPosition.y << cellRenderObject.somaPosition.z;
@@ -109,8 +118,8 @@ void EMRenderer::update(float t)
 
         //qDebug() << "YOffset" << yOffset;
         _modelMatrix.setToIdentity();
-        _modelMatrix.translate(xOffset + maxWidth / 2 - maxScale * 0.05f, maxScale * 0.1f, 0);
-        _modelMatrix.scale(maxScale * 0.1f);
+        _modelMatrix.translate(xOffset + maxWidth / 2 - maxOpenGLHeight * 0.1f, maxOpenGLHeight * 0.05f, 0); // FIXME change maxHeight to something else
+        _modelMatrix.scale(maxOpenGLHeight * 0.2f);
         //_modelMatrix.scale(1.0f / 100);
         //qDebug() << cellRenderObject.somaPosition.x << cellRenderObject.somaPosition.y << cellRenderObject.somaPosition.z;
         //qDebug() << cellRenderObject.maxExtent;
@@ -118,6 +127,8 @@ void EMRenderer::update(float t)
         _traceShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
         _traceShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
         _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
+
+        _traceShader.uniform3f("cellTypeColor", cellRenderObject.cellTypeColor);
 
         glBindVertexArray(cellRenderObject.traceVAO);
         glDrawArrays(GL_LINE_STRIP, 0, cellRenderObject.numTraceVertices);
@@ -159,15 +170,10 @@ void EMRenderer::buildRenderObjects(const std::vector<Cell>& cells)
         newWidgetWidthToRequest += sqrtf(powf(_cellRenderObjects[i].ranges.x, 2) + powf(_cellRenderObjects[i].ranges.z, 2)) * 1.2f;
     }
 
-    float maxScale = 0.01f;
-    for (int i = 0; i < _cellRenderObjects.size(); i++)
-    {
-        if (_cellRenderObjects[i].maxExtent > maxScale)
-            maxScale = _cellRenderObjects[i].maxExtent;
-    }
-    maxScale *= 1.8f;
+    float maxCellHeight = computeMaxCellHeight(_cellRenderObjects);
+    float maxOpenGLHeight = computeOpenGLHeight(maxCellHeight);
 
-    float aspectRatioRequest = newWidgetWidthToRequest / maxScale;
+    float aspectRatioRequest = newWidgetWidthToRequest / maxOpenGLHeight;
 
     emit requestNewAspectRatio(aspectRatioRequest);
 }

@@ -1,9 +1,16 @@
 #include "MEWidget.h"
 
+#include <QSizePolicy>
+
 MEWidget::MEWidget() :
-    _emRenderer()
+    _emRenderer(),
+    _width(1),
+    _height(1)
 {
     connect(&_emRenderer, &EMRenderer::requestNewAspectRatio, this, &MEWidget::onNewAspectRatioRequested);
+
+    //setMinimumSize(10, 10);
+    setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
 }
 
 void MEWidget::setCells(const std::vector<Cell>& cells)
@@ -56,5 +63,5 @@ void MEWidget::onNewAspectRatioRequested(float aspectRatio)
     // Should be set in pre-scaled coordinates, because 32 pixels here results in 40px at 125%
     int newWidth = aspectRatio* (_height / devicePixelRatioF());
     qDebug() << "Requested new width: " << newWidth;
-    setFixedWidth(newWidth);
+    setMinimumWidth(newWidth);
 }

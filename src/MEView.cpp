@@ -11,6 +11,8 @@
 
 #include <QDebug>
 #include <QMimeData>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <fstream>
 #include <sstream>
 
@@ -55,9 +57,14 @@ void MEView::init()
 
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
-    layout->addWidget(_meWidget, 99);
-    //layout->addWidget(_ephysWidget, 50);
-    //layout->addWidget(_morphologyWidget, 70);
+
+    QScrollArea* scrollArea = new QScrollArea();
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrollArea->verticalScrollBar()->setEnabled(false);
+    scrollArea->setWidget(_meWidget);
+    scrollArea->setWidgetResizable(true);
+
+    layout->addWidget(scrollArea, 99);
 
     // Apply the layout
     getWidget().setLayout(layout);
