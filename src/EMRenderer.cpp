@@ -74,6 +74,9 @@ void EMRenderer::update(float t)
     _viewMatrix.setToIdentity();
     _viewMatrix.scale(1.0f / maxOpenGLHeight); // Map [0, maxOpenGLHeight] to [0, 1]
 
+    _lineShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
+    _lineShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
+
     float xOffset = 0;
     //qDebug() << "Rendering " << _cellRenderObjects.size() << " objects.";
     for (int i = 0; i < _cellRenderObjects.size(); i++)
@@ -92,8 +95,6 @@ void EMRenderer::update(float t)
         //qDebug() << cellRenderObject.somaPosition.x << cellRenderObject.somaPosition.y << cellRenderObject.somaPosition.z;
         //qDebug() << cellRenderObject.maxExtent;
 
-        _lineShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
-        _lineShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
         _lineShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
         _lineShader.uniform3f("cellTypeColor", cellRenderObject.cellTypeColor);
@@ -109,15 +110,15 @@ void EMRenderer::update(float t)
 
     _traceShader.bind();
 
+    _traceShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
+    _traceShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
+
     xOffset = 0;
     for (int i = 0; i < _cellRenderObjects.size(); i++)
     {
         CellRenderObject& cellRenderObject = _cellRenderObjects[i];
 
         float maxWidth = sqrtf(powf(cellRenderObject.morphologyObject.dimensions.x, 2) + powf(cellRenderObject.morphologyObject.dimensions.z, 2)) * 1.2f;
-
-        _traceShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
-        _traceShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
 
         _modelMatrix.setToIdentity();
         _modelMatrix.translate(xOffset + maxWidth / 2 - maxOpenGLHeight * 0.1f, maxOpenGLHeight * 0.05f, 0); // FIXME change maxHeight to something else
