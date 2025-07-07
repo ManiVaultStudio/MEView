@@ -24,7 +24,7 @@ public:
 
     int numVertices = 0;
 
-    mv::Vector3f ranges;
+    mv::Vector3f dimensions;
     float maxExtent = 0;
     mv::Vector3f somaPosition;
     mv::Vector3f cellTypeColor;

@@ -19,8 +19,8 @@ namespace
         float maxHeight = std::numeric_limits<float>::min();
         for (int i = 0; i < cellRenderObjects.size(); i++)
         {
-            if (cellRenderObjects[i].ranges.y > maxHeight)
-                maxHeight = cellRenderObjects[i].ranges.y;
+            if (cellRenderObjects[i].morphologyObject.dimensions.y > maxHeight)
+                maxHeight = cellRenderObjects[i].morphologyObject.dimensions.y;
         }
         return maxHeight;
     }
@@ -80,9 +80,9 @@ void EMRenderer::update(float t)
     {
         CellRenderObject& cellRenderObject = _cellRenderObjects[i];
 
-        mv::Vector3f anchorPoint = cellRenderObject.anchorPoint;
+        mv::Vector3f anchorPoint = cellRenderObject.morphologyObject.anchorPoint;
 
-        float maxWidth = sqrtf(powf(cellRenderObject.ranges.x, 2) + powf(cellRenderObject.ranges.z, 2)) * 1.2f;
+        float maxWidth = sqrtf(powf(cellRenderObject.morphologyObject.dimensions.x, 2) + powf(cellRenderObject.morphologyObject.dimensions.z, 2)) * 1.2f;
 
         //qDebug() << "YOffset" << yOffset;
         _modelMatrix.setToIdentity();
@@ -98,8 +98,8 @@ void EMRenderer::update(float t)
 
         _lineShader.uniform3f("cellTypeColor", cellRenderObject.cellTypeColor);
 
-        glBindVertexArray(cellRenderObject.vao);
-        glDrawArrays(GL_LINES, 0, cellRenderObject.numVertices);
+        glBindVertexArray(cellRenderObject.morphologyObject.vao);
+        glDrawArrays(GL_LINES, 0, cellRenderObject.morphologyObject.numVertices);
         glBindVertexArray(0);
 
         xOffset += maxWidth;
@@ -114,7 +114,7 @@ void EMRenderer::update(float t)
     {
         CellRenderObject& cellRenderObject = _cellRenderObjects[i];
 
-        float maxWidth = sqrtf(powf(cellRenderObject.ranges.x, 2) + powf(cellRenderObject.ranges.z, 2)) * 1.2f;
+        float maxWidth = sqrtf(powf(cellRenderObject.morphologyObject.dimensions.x, 2) + powf(cellRenderObject.morphologyObject.dimensions.z, 2)) * 1.2f;
 
         _traceShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
         _traceShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
@@ -149,17 +149,32 @@ void EMRenderer::update(float t)
 void EMRenderer::showAxons(bool enabled)
 {
     _showAxons = enabled;
+
+    RebuildMorphologies();
 }
 
-void EMRenderer::buildRenderObjects(const std::vector<Cell>& cells)
+void EMRenderer::setCurrentStimset(const QString& stimSet)
+{
+    _currentStimset = stimSet;
+
+    RebuildTraces();
+}
+
+void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
 {
     // Delete previous render objects
     for (CellRenderObject& cellRenderObject : _cellRenderObjects)
     {
-        glDeleteBuffers(1, &cellRenderObject.vbo);
-        glDeleteBuffers(1, &cellRenderObject.rbo);
-        glDeleteBuffers(1, &cellRenderObject.tbo);
-        glDeleteVertexArrays(1, &cellRenderObject.vao);
+        glDeleteBuffers(1, &cellRenderObject.morphologyObject.vbo);
+        glDeleteBuffers(1, &cellRenderObject.morphologyObject.rbo);
+        glDeleteBuffers(1, &cellRenderObject.morphologyObject.tbo);
+        glDeleteVertexArrays(1, &cellRenderObject.morphologyObject.vao);
+
+        glDeleteBuffers(1, &cellRenderObject.stimulusObject.vbo);
+        glDeleteBuffers(1, &cellRenderObject.acquisitionObject.vbo);
+
+        glDeleteVertexArrays(1, &cellRenderObject.stimulusObject.vao);
+        glDeleteVertexArrays(1, &cellRenderObject.acquisitionObject.vao);
     }
 
     _cellRenderObjects.clear();
@@ -205,7 +220,7 @@ void EMRenderer::buildRenderObjects(const std::vector<Cell>& cells)
     float newWidgetWidthToRequest = 0;
     for (int i = 0; i < cells.size(); i++)
     {
-        newWidgetWidthToRequest += sqrtf(powf(_cellRenderObjects[i].ranges.x, 2) + powf(_cellRenderObjects[i].ranges.z, 2)) * 1.2f;
+        newWidgetWidthToRequest += sqrtf(powf(_cellRenderObjects[i].morphologyObject.dimensions.x, 2) + powf(_cellRenderObjects[i].morphologyObject.dimensions.z, 2)) * 1.2f;
     }
 
     float maxCellHeight = computeMaxCellHeight(_cellRenderObjects);
@@ -221,101 +236,10 @@ void EMRenderer::buildRenderObject(const Cell& cell, CellRenderObject& cellRende
     // Morphology
     if (cell.morphology != nullptr)
     {
+        MorphologyRenderObject& mro = cellRenderObject.morphologyObject;
         const CellMorphology& cellMorphology = *cell.morphology;
-        MorphologyLineSegments lineSegments;
 
-        mv::Vector3f                somaPosition;
-        float                       somaRadius;
-
-        // Generate line segments
-        try
-        {
-            for (int i = 0; i < cellMorphology.ids.size(); i++)
-            {
-                mv::Vector3f position = cellMorphology.positions.at(i);
-                float radius = cellMorphology.radii.at(i);
-
-                if (cellMorphology.types.at(i) == (int)CellMorphology::Type::Soma)
-                {
-                    somaPosition = position;
-                    somaRadius = radius;
-                    break;
-                }
-            }
-
-            for (int i = 1; i < cellMorphology.parents.size(); i++)
-            {
-                if (cellMorphology.parents[i] == -1) // New root found, there is no line segment here so skip it
-                    continue;
-
-                int id = cellMorphology.idMap.at(cellMorphology.ids[i]);
-                int parent = cellMorphology.idMap.at(cellMorphology.parents[i]);
-
-                int type = cellMorphology.types[id];
-
-                // Hide axons if so indicated
-                if (!_showAxons && type == (int)CellMorphology::Type::Axon)
-                    continue;
-
-                float radius = cellMorphology.radii[id];
-
-                lineSegments.segments.push_back(cellMorphology.positions[parent]);
-                lineSegments.segments.push_back(cellMorphology.positions[id]);
-                lineSegments.segmentRadii.push_back(radius);
-                lineSegments.segmentRadii.push_back(radius);
-                lineSegments.segmentTypes.push_back(type);
-                lineSegments.segmentTypes.push_back(type);
-            }
-        }
-        catch (std::out_of_range& oor)
-        {
-            qWarning() << "Out of range error in setCellMorphology(): " << oor.what();
-            return;
-        }
-
-        // Initialize VAO and VBOs
-        glGenVertexArrays(1, &cellRenderObject.vao);
-        glBindVertexArray(cellRenderObject.vao);
-
-        glGenBuffers(1, &cellRenderObject.vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, cellRenderObject.vbo);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(0);
-
-        glGenBuffers(1, &cellRenderObject.rbo);
-        glBindBuffer(GL_ARRAY_BUFFER, cellRenderObject.rbo);
-        glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(1);
-
-        glGenBuffers(1, &cellRenderObject.tbo);
-        glBindBuffer(GL_ARRAY_BUFFER, cellRenderObject.tbo);
-        glVertexAttribIPointer(2, 1, GL_INT, 0, 0);
-        glEnableVertexAttribArray(2);
-
-        // Store data on GPU
-        glBindVertexArray(cellRenderObject.vao);
-
-        glBindBuffer(GL_ARRAY_BUFFER, cellRenderObject.vbo);
-        glBufferData(GL_ARRAY_BUFFER, lineSegments.segments.size() * sizeof(mv::Vector3f), lineSegments.segments.data(), GL_STATIC_DRAW);
-        qDebug() << "VBO size: " << (lineSegments.segments.size() * sizeof(mv::Vector3f)) / 1000 << "kb";
-        glBindBuffer(GL_ARRAY_BUFFER, cellRenderObject.rbo);
-        glBufferData(GL_ARRAY_BUFFER, lineSegments.segmentRadii.size() * sizeof(float), lineSegments.segmentRadii.data(), GL_STATIC_DRAW);
-        qDebug() << "RBO size: " << (lineSegments.segmentRadii.size() * sizeof(float)) / 1000 << "kb";
-        glBindBuffer(GL_ARRAY_BUFFER, cellRenderObject.tbo);
-        glBufferData(GL_ARRAY_BUFFER, lineSegments.segmentTypes.size() * sizeof(int), lineSegments.segmentTypes.data(), GL_STATIC_DRAW);
-        qDebug() << "TBO size: " << (lineSegments.segmentTypes.size() * sizeof(int)) / 1000 << "kb";
-
-        cellRenderObject.numVertices = (int)lineSegments.segments.size();
-
-        if (_showAxons)
-            cellRenderObject.anchorPoint = (cellMorphology.minRange + cellMorphology.maxRange) / 2;
-        else
-            cellRenderObject.anchorPoint = (cellMorphology.noAxonMinRange + cellMorphology.noAxonMaxRange) / 2;
-
-        mv::Vector3f range = _showAxons ? (cellMorphology.maxRange - cellMorphology.minRange) : (cellMorphology.noAxonMaxRange - cellMorphology.noAxonMinRange);
-        float maxExtent = std::max(std::max(range.x, range.y), range.z);
-        cellRenderObject.ranges = range;
-        cellRenderObject.maxExtent = maxExtent;
+        _renderObjectBuilder.BuildMorphologyObject(mro, cellMorphology, _showAxons);
 
         cellRenderObject.cellTypeColor = cellMorphology.cellTypeColor;
     }
@@ -329,7 +253,7 @@ void EMRenderer::buildRenderObject(const Cell& cell, CellRenderObject& cellRende
         for (int i = 0; i < experiment.getStimuli().size(); i++)
         {
             const Recording& recording = experiment.getStimuli()[i];
-            if (recording.GetStimulusDescription() == "X4PS_SupraThresh")
+            if (recording.GetStimulusDescription() == _currentStimset)
             {
                 buildTraceRenderObject(cellRenderObject.stimulusObject, experiment.getStimuli()[i], true);
                 buildTraceRenderObject(cellRenderObject.acquisitionObject, experiment.getAcquisitions()[i], false);
@@ -380,4 +304,14 @@ void EMRenderer::buildTraceRenderObject(TraceRenderObject& ro, const Recording& 
     glEnableVertexAttribArray(0);
 
     ro.numVertices = vertices.size();
+}
+
+void EMRenderer::RebuildMorphologies()
+{
+
+}
+
+void EMRenderer::RebuildTraces()
+{
+
 }

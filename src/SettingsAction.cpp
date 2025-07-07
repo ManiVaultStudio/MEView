@@ -7,7 +7,8 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     _plugin(dynamic_cast<MEView*>(parent)),
     _lineRendererButton(this, "Line Renderer"),
     _realRendererButton(this, "True Renderer"),
-    _showAxons(this, "Show Axons", true)
+    _showAxons(this, "Show Axons", true),
+    _stimSetsAction(this, "Stim sets")
 {
 
 }

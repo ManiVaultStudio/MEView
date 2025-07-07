@@ -69,6 +69,12 @@ set(RENDER_SOURCES
     #src/MorphologyLineSegments.cpp
     src/LayerDrawing.h
     src/LayerDrawing.cpp
+    src/Rendering/CellRenderObject.h
+    src/Rendering/CellRenderObject.cpp
+    src/Rendering/RenderObjectBuilder.h
+    src/Rendering/RenderObjectBuilder.cpp
+    src/Rendering/RenderState.h
+    src/Rendering/RenderState.cpp
 )
 
 set(EPHYS_SOURCES

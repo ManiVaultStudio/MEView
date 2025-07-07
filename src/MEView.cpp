@@ -47,10 +47,12 @@ void MEView::init()
     _primaryToolbarAction.addAction(&_settingsAction.getLineRendererButton());
     //_primaryToolbarAction.addAction(&_settingsAction.getRealRendererButton());
     _primaryToolbarAction.addAction(&_settingsAction.getShowAxonsToggle());
+    _primaryToolbarAction.addAction(&_settingsAction.getStimSetsAction());
 
     //connect(&_settingsAction.getLineRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::LINE); });
     //connect(&_settingsAction.getRealRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::REAL); });
     connect(&_settingsAction.getShowAxonsToggle(), &ToggleAction::toggled, this, [this](bool toggled) { _meWidget->showAxons(toggled); });
+    connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentTextChanged, this, [this](const QString& stimSet) { _meWidget->GetRenderer().setCurrentStimset(stimSet); });
 
     // Load webpage
     //_ephysWidget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
@@ -120,6 +122,12 @@ void MEView::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
+void MEView::setStimulusSetOptions(const QSet<QString>& stimSets)
+{
+    QStringList stimSetList = QStringList(stimSets.begin(), stimSets.end());
+    _settingsAction.getStimSetsAction().setOptions(stimSetList);
+}
+
 void MEView::onCellSelectionChanged()
 {
     // Check if the morphology, features and metadata datasets are loaded
@@ -187,6 +195,24 @@ void MEView::onCellSelectionChanged()
         cell.cellId = metaIndex > 0 ? cellIdColumn[metaSelectionIndices[i]] : "Missing";
         cell.cluster = metaIndex > 0 ? clusterColumn[metaSelectionIndices[i]] : "Missing";
     }
+
+    //// Find out which stimulus sets are available
+    QSet<QString> stimSets;
+    for (int i = 0; i < cells.size(); i++)
+    {
+        Cell& cell = cells[i];
+
+        if (cell.ephysTraces)
+        {
+            const std::vector<Recording>& recordings = cell.ephysTraces->getStimuli();
+            for (const Recording& recording : recordings)
+            {
+                stimSets.insert(recording.GetStimulusDescription());
+            }
+        }
+    }
+    qDebug() << stimSets;
+    setStimulusSetOptions(stimSets);
 
     _meWidget->setCells(cells);
 

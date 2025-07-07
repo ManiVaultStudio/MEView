@@ -21,7 +21,7 @@ void MEWidget::setCells(const std::vector<Cell>& cells)
     _cells = cells;
 
     makeCurrent();
-    _emRenderer.buildRenderObjects(cells);
+    _emRenderer.BuildRenderObjects(cells);
 }
 
 void MEWidget::showAxons(bool enabled)

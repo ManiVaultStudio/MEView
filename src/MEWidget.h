@@ -13,6 +13,8 @@ class MEWidget : public mv::gui::OpenGLWidget
 public:
     MEWidget();
 
+    EMRenderer& GetRenderer() { return _emRenderer; }
+
     /** Set the indices of which morphologies should be shown */
     void setCells(const std::vector<Cell>& cells);
 
