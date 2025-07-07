@@ -35,7 +35,7 @@ struct TraceRenderObject
 class CellRenderObject
 {
 public:
-    void BuildMorphologyObject(const CellMorphology& cellMorphology, bool showAxons);
+    void Cleanup(QOpenGLFunctions_3_3_Core* f);
 
 public:
     // Base color of the whole cell

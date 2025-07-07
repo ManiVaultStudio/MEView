@@ -165,16 +165,7 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
     // Delete previous render objects
     for (CellRenderObject& cellRenderObject : _cellRenderObjects)
     {
-        glDeleteBuffers(1, &cellRenderObject.morphologyObject.vbo);
-        glDeleteBuffers(1, &cellRenderObject.morphologyObject.rbo);
-        glDeleteBuffers(1, &cellRenderObject.morphologyObject.tbo);
-        glDeleteVertexArrays(1, &cellRenderObject.morphologyObject.vao);
-
-        glDeleteBuffers(1, &cellRenderObject.stimulusObject.vbo);
-        glDeleteBuffers(1, &cellRenderObject.acquisitionObject.vbo);
-
-        glDeleteVertexArrays(1, &cellRenderObject.stimulusObject.vao);
-        glDeleteVertexArrays(1, &cellRenderObject.acquisitionObject.vao);
+        cellRenderObject.Cleanup(this);
     }
 
     _cellRenderObjects.clear();
