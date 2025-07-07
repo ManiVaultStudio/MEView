@@ -16,6 +16,14 @@ public:
     std::vector<int>            segmentTypes;
 };
 
+class TraceRenderObject
+{
+public:
+    GLuint vao = 0;
+    GLuint vbo = 0;
+    int numVertices = 0;
+};
+
 class CellRenderObject
 {
 public:
@@ -31,9 +39,8 @@ public:
     mv::Vector3f anchorPoint;
     mv::Vector3f cellTypeColor;
 
-    GLuint traceVAO = 0; // Trace vao
-    GLuint traceVBO = 0;
-    int numTraceVertices = 0;
+    TraceRenderObject stimulusObject;
+    TraceRenderObject acquisitionObject;
 };
 
 class EMRenderer : public QObject, protected QOpenGLFunctions_3_3_Core
@@ -55,6 +62,7 @@ public:
 
 private:
     void buildRenderObject(const Cell& cell, CellRenderObject& cellRenderObject);
+    void buildTraceRenderObject(TraceRenderObject& ro, const Recording& trace, bool isStim);
 
 signals:
     void requestNewAspectRatio(float aspectRatio);
@@ -73,6 +81,12 @@ private:
     int vx, vy, vw, vh;
 
     std::vector<CellRenderObject> _cellRenderObjects;
+
+    float _stimChartRangeMin = -1;
+    float _stimChartRangeMax = 1;
+
+    float _acqChartRangeMin = -1;
+    float _acqChartRangeMax = 1;
 
     bool _showAxons = true;
 };
