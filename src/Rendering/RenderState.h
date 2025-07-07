@@ -3,7 +3,9 @@
 class RenderState
 {
 public:
+    float _stimChartRangeMin = -1;
+    float _stimChartRangeMax = 1;
 
-private:
-
+    float _acqChartRangeMin = -1;
+    float _acqChartRangeMax = 1;
 };

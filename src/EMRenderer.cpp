@@ -150,14 +150,14 @@ void EMRenderer::showAxons(bool enabled)
 {
     _showAxons = enabled;
 
-    RebuildMorphologies();
+    //RebuildMorphologies();
 }
 
 void EMRenderer::setCurrentStimset(const QString& stimSet)
 {
     _currentStimset = stimSet;
 
-    RebuildTraces();
+    //RebuildTraces();
 }
 
 void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
@@ -180,8 +180,8 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
     _cellRenderObjects.clear();
 
     // Compute stimulus chart height
-    _stimChartRangeMin = -1;
-    _stimChartRangeMax = 1;
+    _renderState._stimChartRangeMin = -1;
+    _renderState._stimChartRangeMax = 1;
     for (int i = 0; i < cells.size(); i++)
     {
         const Cell& cell = cells[i];
@@ -197,15 +197,15 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
                 const Recording& stim = experiment.getStimuli()[j];
                 if (stim.GetStimulusDescription() == "X4PS_SupraThresh")
                 {
-                    if (stim.GetData().yMin < _stimChartRangeMin) _stimChartRangeMin = stim.GetData().yMin;
-                    if (stim.GetData().yMax > _stimChartRangeMax) _stimChartRangeMax = stim.GetData().yMax;
+                    if (stim.GetData().yMin < _renderState._stimChartRangeMin) _renderState._stimChartRangeMin = stim.GetData().yMin;
+                    if (stim.GetData().yMax > _renderState._stimChartRangeMax) _renderState._stimChartRangeMax = stim.GetData().yMax;
                     
                     break;
                 }
                 const Recording& acq = experiment.getAcquisitions()[j];
 
-                if (acq.GetData().yMin < _acqChartRangeMin) _acqChartRangeMin = acq.GetData().yMin;
-                if (acq.GetData().yMax > _acqChartRangeMax) _acqChartRangeMax = acq.GetData().yMax;
+                if (acq.GetData().yMin < _renderState._acqChartRangeMin) _renderState._acqChartRangeMin = acq.GetData().yMin;
+                if (acq.GetData().yMax > _renderState._acqChartRangeMax) _renderState._acqChartRangeMax = acq.GetData().yMax;
             }
         }
     }
@@ -255,63 +255,10 @@ void EMRenderer::buildRenderObject(const Cell& cell, CellRenderObject& cellRende
             const Recording& recording = experiment.getStimuli()[i];
             if (recording.GetStimulusDescription() == _currentStimset)
             {
-                buildTraceRenderObject(cellRenderObject.stimulusObject, experiment.getStimuli()[i], true);
-                buildTraceRenderObject(cellRenderObject.acquisitionObject, experiment.getAcquisitions()[i], false);
+                _renderObjectBuilder.BuildTraceObject(cellRenderObject.stimulusObject, experiment.getStimuli()[i], true);
+                _renderObjectBuilder.BuildTraceObject(cellRenderObject.acquisitionObject, experiment.getAcquisitions()[i], false);
                 break;
             }
         }
     }
-}
-
-void EMRenderer::buildTraceRenderObject(TraceRenderObject& ro, const Recording& trace, bool isStim)
-{
-    // Generate line segments
-    const TimeSeries& ts = trace.GetData();
-
-    std::vector<Vector3f> vertices;
-    for (int i = 0; i < ts.xSeries.size(); i++)
-    {
-        vertices.emplace_back(ts.xSeries[i], ts.ySeries[i], 0);
-    }
-    float xMin = std::numeric_limits<float>::max(), xMax = -std::numeric_limits<float>::max(), yMin = std::numeric_limits<float>::max(), yMax = -std::numeric_limits<float>::max();
-    for (int i = 0; i < vertices.size(); i++)
-    {
-        Vector3f& v = vertices[i];
-        if (v.x < xMin) xMin = v.x;
-        if (v.x > xMax) xMax = v.x;
-        if (v.y < yMin) yMin = v.y;
-        if (v.y > yMax) yMax = v.y;
-    }
-    float xRange = xMax - xMin;
-    float yRange = yMax - yMin;
-    for (int i = 0; i < vertices.size(); i++)
-    {
-        vertices[i].x = (vertices[i].x - xMin) / xRange;
-        if (isStim)
-            vertices[i].y = (vertices[i].y - _stimChartRangeMin) / (_stimChartRangeMax - _stimChartRangeMin);
-        else
-            vertices[i].y = (vertices[i].y - _acqChartRangeMin) / (_acqChartRangeMax - _acqChartRangeMin);
-    }
-    
-    // Initialize VAO and VBOs
-    glGenVertexArrays(1, &ro.vao);
-    glBindVertexArray(ro.vao);
-
-    glGenBuffers(1, &ro.vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, ro.vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(0);
-
-    ro.numVertices = vertices.size();
-}
-
-void EMRenderer::RebuildMorphologies()
-{
-
-}
-
-void EMRenderer::RebuildTraces()
-{
-
 }

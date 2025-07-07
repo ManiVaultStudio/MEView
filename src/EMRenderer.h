@@ -12,14 +12,6 @@
 #include <QOpenGLFunctions_3_3_Core>
 #include <QMatrix4x4>
 
-class MorphologyLineSegments
-{
-public:
-    std::vector<mv::Vector3f>   segments;
-    std::vector<float>          segmentRadii;
-    std::vector<int>            segmentTypes;
-};
-
 class EMRenderer : public QObject, protected QOpenGLFunctions_3_3_Core
 {
     Q_OBJECT
@@ -43,10 +35,7 @@ public: // UI State
 
 private:
     void buildRenderObject(const Cell& cell, CellRenderObject& cellRenderObject);
-    void buildTraceRenderObject(TraceRenderObject& ro, const Recording& trace, bool isStim);
     //void Rebuild();
-    void RebuildMorphologies();
-    void RebuildTraces();
 
 signals:
     void requestNewAspectRatio(float aspectRatio);
@@ -65,12 +54,6 @@ private:
     int vx, vy, vw, vh;
 
     std::vector<CellRenderObject> _cellRenderObjects;
-
-    float _stimChartRangeMin = -1;
-    float _stimChartRangeMax = 1;
-
-    float _acqChartRangeMin = -1;
-    float _acqChartRangeMax = 1;
 
     RenderObjectBuilder _renderObjectBuilder;
     RenderState _renderState;

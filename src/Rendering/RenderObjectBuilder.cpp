@@ -127,3 +127,46 @@ void ROB::BuildMorphologyObject(MorphologyRenderObject& mro, const CellMorpholog
     mro.dimensions = range;
     mro.maxExtent = maxExtent;
 }
+
+void ROB::BuildTraceObject(TraceRenderObject& tro, const Recording& recording, bool isStim)
+{
+    // Generate line segments
+    const TimeSeries& ts = recording.GetData();
+
+    std::vector<Vector3f> vertices;
+    for (int i = 0; i < ts.xSeries.size(); i++)
+    {
+        vertices.emplace_back(ts.xSeries[i], ts.ySeries[i], 0);
+    }
+    float xMin = std::numeric_limits<float>::max(), xMax = -std::numeric_limits<float>::max(), yMin = std::numeric_limits<float>::max(), yMax = -std::numeric_limits<float>::max();
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        Vector3f& v = vertices[i];
+        if (v.x < xMin) xMin = v.x;
+        if (v.x > xMax) xMax = v.x;
+        if (v.y < yMin) yMin = v.y;
+        if (v.y > yMax) yMax = v.y;
+    }
+    float xRange = xMax - xMin;
+    float yRange = yMax - yMin;
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        vertices[i].x = (vertices[i].x - xMin) / xRange;
+        if (isStim)
+            vertices[i].y = (vertices[i].y - _renderState->_stimChartRangeMin) / (_renderState->_stimChartRangeMax - _renderState->_stimChartRangeMin);
+        else
+            vertices[i].y = (vertices[i].y - _renderState->_acqChartRangeMin) / (_renderState->_acqChartRangeMax - _renderState->_acqChartRangeMin);
+    }
+
+    // Initialize VAO and VBOs
+    _f->glGenVertexArrays(1, &tro.vao);
+    _f->glBindVertexArray(tro.vao);
+
+    _f->glGenBuffers(1, &tro.vbo);
+    _f->glBindBuffer(GL_ARRAY_BUFFER, tro.vbo);
+    _f->glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    _f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    _f->glEnableVertexAttribArray(0);
+
+    tro.numVertices = vertices.size();
+}
