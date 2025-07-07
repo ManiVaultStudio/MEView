@@ -186,7 +186,7 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
             for (int j = 0; j < experiment.getStimuli().size(); j++)
             {
                 const Recording& stim = experiment.getStimuli()[j];
-                if (stim.GetStimulusDescription() == "X4PS_SupraThresh")
+                if (stim.GetStimulusDescription() == _currentStimset)
                 {
                     if (stim.GetData().yMin < _renderState._stimChartRangeMin) _renderState._stimChartRangeMin = stim.GetData().yMin;
                     if (stim.GetData().yMax > _renderState._stimChartRangeMax) _renderState._stimChartRangeMax = stim.GetData().yMax;
