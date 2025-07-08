@@ -172,8 +172,10 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
     _cellRenderObjects.clear();
 
     // Compute stimulus chart height
-    _renderState._stimChartRangeMin = -1;
-    _renderState._stimChartRangeMax = 1;
+    _renderState._stimChartRangeMin = std::numeric_limits<float>::max();
+    _renderState._stimChartRangeMax = -std::numeric_limits<float>::max();
+    _renderState._acqChartRangeMin = std::numeric_limits<float>::max();
+    _renderState._acqChartRangeMax = -std::numeric_limits<float>::max();
     for (int i = 0; i < cells.size(); i++)
     {
         const Cell& cell = cells[i];
@@ -192,12 +194,13 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
                     if (stim.GetData().yMin < _renderState._stimChartRangeMin) _renderState._stimChartRangeMin = stim.GetData().yMin;
                     if (stim.GetData().yMax > _renderState._stimChartRangeMax) _renderState._stimChartRangeMax = stim.GetData().yMax;
                     
+                    const Recording& acq = experiment.getAcquisitions()[j];
+
+                    if (acq.GetData().yMin < _renderState._acqChartRangeMin) _renderState._acqChartRangeMin = acq.GetData().yMin;
+                    if (acq.GetData().yMax > _renderState._acqChartRangeMax) _renderState._acqChartRangeMax = acq.GetData().yMax;
+
                     break;
                 }
-                const Recording& acq = experiment.getAcquisitions()[j];
-
-                if (acq.GetData().yMin < _renderState._acqChartRangeMin) _renderState._acqChartRangeMin = acq.GetData().yMin;
-                if (acq.GetData().yMax > _renderState._acqChartRangeMax) _renderState._acqChartRangeMax = acq.GetData().yMax;
             }
         }
     }
