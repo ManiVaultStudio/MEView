@@ -44,6 +44,8 @@ void MEView::init()
 
     layout->setContentsMargins(0, 0, 0, 0);
 
+    connect(&_scene, &Scene::allRequiredDatasetsLoaded, this, &MEView::onAllRequiredDatasetsLoaded);
+
     _primaryToolbarAction.addAction(&_settingsAction.getLineRendererButton());
     //_primaryToolbarAction.addAction(&_settingsAction.getRealRendererButton());
     _primaryToolbarAction.addAction(&_settingsAction.getShowAxonsToggle());
@@ -128,11 +130,32 @@ void MEView::setStimulusSetOptions(const QSet<QString>& stimSets)
     _settingsAction.getStimSetsAction().setOptions(stimSetList);
 }
 
+void MEView::onAllRequiredDatasetsLoaded()
+{
+    qDebug() << "onAllRequiredDatasetsLoaded";
+    // Find out which stimulus sets are available
+    mv::Dataset<EphysExperiments> ephysTraces = _scene.getEphysTraces();
+
+    QSet<QString> stimSets;
+    for (const Experiment& experiment: ephysTraces->getData())
+    {
+        const std::vector<Recording>& recordings = experiment.getStimuli();
+        for (const Recording& recording : recordings)
+            stimSets.insert(recording.GetStimulusDescription());
+    }
+    qDebug() << stimSets;
+    setStimulusSetOptions(stimSets);
+}
+
 void MEView::onCellSelectionChanged()
 {
     // Check if the morphology, features and metadata datasets are loaded
-    if (!_scene.hasAllRequiredDatasets())
+    QStringList missingDatasets;
+    if (!_scene.hasAllRequiredDatasets(missingDatasets))
+    {
+        qWarning() << "[MEViewer] Missing datasets:" << missingDatasets;
         return;
+    }
 
     //// Compute maximum width of the visualization, i.e. how many cells can we fit on average
     //float totalWidth = 0;
@@ -195,24 +218,6 @@ void MEView::onCellSelectionChanged()
         cell.cellId = metaIndex > 0 ? cellIdColumn[metaSelectionIndices[i]] : "Missing";
         cell.cluster = metaIndex > 0 ? clusterColumn[metaSelectionIndices[i]] : "Missing";
     }
-
-    //// Find out which stimulus sets are available
-    QSet<QString> stimSets;
-    for (int i = 0; i < cells.size(); i++)
-    {
-        Cell& cell = cells[i];
-
-        if (cell.ephysTraces)
-        {
-            const std::vector<Recording>& recordings = cell.ephysTraces->getStimuli();
-            for (const Recording& recording : recordings)
-            {
-                stimSets.insert(recording.GetStimulusDescription());
-            }
-        }
-    }
-    qDebug() << stimSets;
-    setStimulusSetOptions(stimSets);
 
     _meWidget->setCells(cells);
 

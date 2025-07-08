@@ -39,49 +39,40 @@ Scene::Scene() :
     _cortexStructure = LayerDepthsReader::load(":/me_viewer/human_average_layer_depths.json");
 }
 
-bool Scene::hasAllRequiredDatasets()
+bool Scene::hasAllRequiredDatasets(QStringList& missingDatasets)
 {
     if (!_morphologyDataset.isValid())
-    {
-        qWarning() << "[MEViewer] No cell morphology dataset found.";
-        return false;
-    }
-
+        missingDatasets.push_back(".SWC Morphologies");
     if (!_morphologyFeatureDataset.isValid())
-    {
-        qWarning() << "[MEViewer] No cell morphology feature dataset found.";
-        return false;
-    }
-
+        missingDatasets.push_back("Morphology Features");
     if (!_ephysFeatures.isValid())
-    {
-        qWarning() << "[MEViewer] No electrophysiology feature dataset found.";
-        return false;
-    }
-
+        missingDatasets.push_back("Ephys Features");
     if (!_ephysTraces.isValid())
-    {
-        qWarning() << "[MEViewer] No electrophysiology traces found.";
-        return false;
-    }
-
+        missingDatasets.push_back("Ephys Traces");
     if (!_cellMetadataDataset.isValid())
-    {
-        qWarning() << "[MEViewer] No cell metadata dataset set.";
-        return false;
-    }
+        missingDatasets.push_back("Cell Metadata");
+
+    return missingDatasets.empty(); // true if empty
 }
 
 void Scene::offerCandidateDataset(Dataset<DatasetImpl> candidateDataset)
 {
     if (isMorphologicalData(candidateDataset))
         _morphologyFeatureDataset = candidateDataset;
-    if (isMorphologies(candidateDataset))
+    else if (isMorphologies(candidateDataset))
         _morphologyDataset = candidateDataset;
-    if (isEphysFeatures(candidateDataset))
+    else if (isEphysFeatures(candidateDataset))
         _ephysFeatures = candidateDataset;
-    if (isEphysTraces(candidateDataset))
+    else if (isEphysTraces(candidateDataset))
         _ephysTraces = candidateDataset;
-    if (isMetadata(candidateDataset))
+    else if (isMetadata(candidateDataset))
         _cellMetadataDataset = candidateDataset;
+    else
+        return;
+
+    QStringList missingDatasets;
+    if (hasAllRequiredDatasets(missingDatasets))
+    {
+        emit allRequiredDatasetsLoaded();
+    }
 }

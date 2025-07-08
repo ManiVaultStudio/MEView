@@ -5,8 +5,10 @@
 #include <CellMorphologyData/CellMorphologyData.h>
 #include <EphysData/EphysData.h>
 
+#include <QObject>
 #include <QHash>
 #include <QString>
+#include <QStringList>
 
 class Cell
 {
@@ -33,8 +35,9 @@ public:
     std::vector<float>  _layerDepths;
 };
 
-class Scene
+class Scene : public QObject
 {
+    Q_OBJECT
 public:
     static Scene& getInstance()
     {
@@ -47,8 +50,11 @@ public: // Delete copy constructors
     Scene(Scene const&) = delete;
     void operator=(Scene const&) = delete;
 
+signals:
+    void allRequiredDatasetsLoaded();
+
 public:
-    bool hasAllRequiredDatasets();
+    bool hasAllRequiredDatasets(QStringList& missingDatasets);
 
     mv::Dataset<CellMorphologies>&      getMorphologyDataset()              { return _morphologyDataset; }
     mv::Dataset<Points>&                getMorphologyFeatureDataset()       { return _morphologyFeatureDataset; }
@@ -69,7 +75,6 @@ private: // Morphology
 private: // Ephys
     mv::Dataset<Points>             _ephysFeatures;                 /** Ephys feature data */
     mv::Dataset<EphysExperiments>   _ephysTraces;                   /** Ephys traces */
-    mv::Dataset<Text>               _cellMetadata;                  /** Cell metadata */
 
 private: // Metadata
     mv::Dataset<Text>               _cellMetadataDataset;           /** Cell metadata */
