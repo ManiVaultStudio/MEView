@@ -184,7 +184,7 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
             const Experiment& experiment = *cell.ephysTraces;
 
             if (experiment.getStimuli().empty())
-                return;
+                break;
 
             for (int j = 0; j < experiment.getStimuli().size(); j++)
             {
