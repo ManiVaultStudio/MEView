@@ -127,39 +127,54 @@ void EMRenderer::update(float t)
     {
         CellRenderObject* cro = cellRenderObjects[i];
 
-        if (cro->stimulusObjects.empty())
-            break;
-        TraceRenderObject& stimRO = cro->stimulusObjects[0]; // FIXME Iterate through objects and find corresponding to current stimulus desc
-        TraceRenderObject& acqRO = cro->acquisitionsObjects[0];
-
         CellMorphology::Extent extent = cro->morphologyObject.ComputeExtents();
         mv::Vector3f dimensions = extent.emax - extent.emin;
         float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
 
-        _modelMatrix.setToIdentity();
-        _modelMatrix.translate(xOffset + maxWidth / 2 - maxOpenGLHeight * 0.1f, maxOpenGLHeight * 0.05f, 0); // FIXME change maxHeight to something else
-        _modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
-        _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
+        for (int i = 0; i < cro->stimulusObjects.size(); i++)
+        {
+            TraceRenderObject& stimRO = cro->stimulusObjects[i];
 
-        _traceShader.uniform3f("lineColor", 0.2f, 0.4f, 0.839f);
+            if (stimRO.stimulusDescription == _currentStimset)
+            {
+                TraceRenderObject& acqRO = cro->acquisitionsObjects[i];
 
-        glBindVertexArray(acqRO.vao);
-        glDrawArrays(GL_LINE_STRIP, 0, acqRO.numVertices);
-        glBindVertexArray(0);
+                // Acquisition
+                _modelMatrix.setToIdentity();
+                _modelMatrix.translate(xOffset + maxWidth / 2, maxOpenGLHeight * 0.05f, 0); // FIXME change maxHeight to something else
+                _modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
+                _modelMatrix.translate(-0.5, 0, 0);
+                _modelMatrix.scale(1.0f / acqRO.extents.getWidth(), 1.0f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
+                _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0);
 
-        _modelMatrix.setToIdentity();
-        _modelMatrix.translate(xOffset + maxWidth / 2 - maxOpenGLHeight * 0.1f, maxOpenGLHeight * 0.15f, 0); // FIXME change maxHeight to something else
-        _modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
-        _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
+                _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
-        _traceShader.uniform3f("lineColor", 0.839f, 0.4f, 0.2f);
+                _traceShader.uniform3f("lineColor", 0.2f, 0.4f, 0.839f);
 
-        glBindVertexArray(stimRO.vao);
-        glDrawArrays(GL_LINE_STRIP, 0, stimRO.numVertices);
-        glBindVertexArray(0);
+                glBindVertexArray(acqRO.vao);
+                glDrawArrays(GL_LINE_STRIP, 0, acqRO.numVertices);
+
+                // Stimulus
+                _modelMatrix.setToIdentity();
+                _modelMatrix.translate(xOffset + maxWidth / 2 - maxOpenGLHeight * 0.1f, maxOpenGLHeight * 0.15f, 0); // FIXME change maxHeight to something else
+                _modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
+                _modelMatrix.scale(1.0f / stimRO.extents.getWidth(), 1.0f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
+                _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
+                _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
+
+                _traceShader.uniform3f("lineColor", 0.839f, 0.4f, 0.2f);
+
+                glBindVertexArray(stimRO.vao);
+                glDrawArrays(GL_LINE_STRIP, 0, stimRO.numVertices);
+
+                break;
+            }
+        }
 
         xOffset += maxWidth;
     }
+
+    glBindVertexArray(0);
     _traceShader.release();
 }
 

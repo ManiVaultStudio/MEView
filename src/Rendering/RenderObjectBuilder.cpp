@@ -169,6 +169,7 @@ void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recordi
 {
     Bounds bounds(recording.GetData().xMin, recording.GetData().xMax, recording.GetData().yMin, recording.GetData().yMax);
     tro.extents = bounds;
+    tro.stimulusDescription = recording.GetStimulusDescription();
 
     // Generate line segments
     const TimeSeries& ts = recording.GetData();
@@ -178,25 +179,7 @@ void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recordi
     {
         vertices.emplace_back(ts.xSeries[i], ts.ySeries[i], 0);
     }
-    float xMin = std::numeric_limits<float>::max(), xMax = -std::numeric_limits<float>::max(), yMin = std::numeric_limits<float>::max(), yMax = -std::numeric_limits<float>::max();
-    for (int i = 0; i < vertices.size(); i++)
-    {
-        Vector3f& v = vertices[i];
-        if (v.x < xMin) xMin = v.x;
-        if (v.x > xMax) xMax = v.x;
-        if (v.y < yMin) yMin = v.y;
-        if (v.y > yMax) yMax = v.y;
-    }
-    float xRange = xMax - xMin;
-    float yRange = yMax - yMin;
-    for (int i = 0; i < vertices.size(); i++)
-    {
-        vertices[i].x = (vertices[i].x - xMin) / xRange;
-        if (isStim)
-            vertices[i].y = (vertices[i].y - _renderState->_stimChartRangeMin) / (_renderState->_stimChartRangeMax - _renderState->_stimChartRangeMin);
-        else
-            vertices[i].y = (vertices[i].y - _renderState->_acqChartRangeMin) / (_renderState->_acqChartRangeMax - _renderState->_acqChartRangeMin);
-    }
+
     //qDebug() << "Trace VBO size: " << (vertices.size() * sizeof(mv::Vector3f)) / 1000 << "kb";
     // Initialize VAO and VBOs
     _f->glGenVertexArrays(1, &tro.vao);

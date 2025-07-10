@@ -41,6 +41,8 @@ struct TraceRenderObject
     int numVertices = 0;
 
     mv::Bounds extents;
+
+    QString stimulusDescription;
 };
 
 class CellRenderObject
@@ -54,6 +56,7 @@ public:
 
     // Sub-render objects
     MorphologyRenderObject  morphologyObject;
+
     std::vector<TraceRenderObject> stimulusObjects;
     std::vector<TraceRenderObject> acquisitionsObjects;
 };
