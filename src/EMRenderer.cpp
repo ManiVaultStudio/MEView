@@ -266,46 +266,4 @@ void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)
 void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
 {
     _renderObjectBuilder.BuildCellRenderObjects(cells);
-
-    //// Delete previous render objects
-    //for (CellRenderObject& cellRenderObject : _cellRenderObjects)
-    //{
-    //    cellRenderObject.Cleanup(this);
-    //}
-
-    //_cellRenderObjects.clear();
-
-    
 }
-
-//void EMRenderer::buildRenderObject(const Cell& cell, CellRenderObject& cellRenderObject)
-//{
-//    // Morphology
-//    if (cell.morphology != nullptr)
-//    {
-//        MorphologyRenderObject& mro = cellRenderObject.morphologyObject;
-//        const CellMorphology& cellMorphology = *cell.morphology;
-//
-//        _renderObjectBuilder.BuildMorphologyObject(mro, cellMorphology, _showAxons);
-//
-//        cellRenderObject.cellTypeColor = cellMorphology.cellTypeColor;
-//    }
-//    if (cell.ephysTraces != nullptr)
-//    {
-//        const Experiment& experiment = *cell.ephysTraces;
-//
-//        if (experiment.getAcquisitions().empty() || experiment.getStimuli().empty())
-//            return;
-//
-//        for (int i = 0; i < experiment.getStimuli().size(); i++)
-//        {
-//            const Recording& recording = experiment.getStimuli()[i];
-//            if (recording.GetStimulusDescription() == _currentStimset)
-//            {
-//                _renderObjectBuilder.BuildTraceObject(cellRenderObject.stimulusObject, experiment.getStimuli()[i], true);
-//                _renderObjectBuilder.BuildTraceObject(cellRenderObject.acquisitionObject, experiment.getAcquisitions()[i], false);
-//                break;
-//            }
-//        }
-//    }
-//}
