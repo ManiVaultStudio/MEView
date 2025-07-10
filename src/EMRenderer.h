@@ -28,6 +28,7 @@ public:
     void update(float t);
 
     void BuildRenderObjects(const std::vector<Cell>& cells);
+    void SetSelectedCellIds(const std::vector<Cell>& cells);
 
 public: // UI State
     void showAxons(bool enabled);
@@ -52,8 +53,6 @@ private:
     QMatrix4x4 _modelMatrix;
 
     int vx, vy, vw, vh;
-
-    std::vector<CellRenderObject> _cellRenderObjects;
 
     RenderObjectBuilder _renderObjectBuilder;
     RenderState _renderState;

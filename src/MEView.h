@@ -61,7 +61,7 @@ public:
     void onDataEvent(mv::DatasetEvent* dataEvent);
 
 private:
-    void onAllRequiredDatasetsLoaded();
+    void onInitialLoad();
     void onCellSelectionChanged();
 
 private:

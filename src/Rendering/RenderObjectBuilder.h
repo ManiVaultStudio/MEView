@@ -1,10 +1,13 @@
 #pragma once
 
 #include "Scene.h"
-#include "Rendering/RenderState.h"
+
 #include "Rendering/CellRenderObject.h"
 
 #include <QOpenGLFunctions_3_3_Core>
+
+class RenderState;
+class Recording;
 
 class RenderObjectBuilder
 {
@@ -12,8 +15,10 @@ public:
     RenderObjectBuilder(QOpenGLFunctions_3_3_Core* f, RenderState* renderState);
 
 public:
-    void BuildCellRenderObject(CellRenderObject& out, Cell& cell);
-    void BuildMorphologyObject(MorphologyRenderObject& mro, const CellMorphology& cellMorpology, bool showAxons);
+    void BuildCellRenderObjects(const std::vector<Cell>& cells);
+    void BuildCellRenderObject(CellRenderObject& cro, const Cell& cell);
+
+    void BuildMorphologyObject(MorphologyRenderObject& mro, const CellMorphology& cellMorpology);
     void BuildTraceObject(TraceRenderObject& tro, const Recording& recording, bool isStim);
 
 private:

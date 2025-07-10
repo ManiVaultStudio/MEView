@@ -1,28 +1,37 @@
 #pragma once
 
+#include <graphics/Bounds.h>
 #include <graphics/Vector3f.h>
 
+#include <CellMorphologyData/CellMorphology.h>
+
 #include <QOpenGLFunctions_3_3_Core>
+#include <QHash>
 
 class CellMorphology;
 
-struct MorphologyRenderObject
+struct MorphologyProcessRenderObject
 {
     GLuint vao = 0; // Vertex array object
     GLuint vbo = 0; // Buffer for vertices of the morphology
     GLuint rbo = 0; // Buffer for the radius at each vertex
-    GLuint tbo = 0; // Buffer for the type of structure the vertex is a part of
 
-    /* Number of vertices in the morphology */
+    /* Number of vertices in the vbo */
     int numVertices = 0;
 
-    /* Centerpoint of the morphology, around which it will rotate */
-    mv::Vector3f anchorPoint;
+    /* Extents of the vertices in this object */
+    CellMorphology::Extent extents;
+};
 
-    /* Dimensions of the morphology */
-    mv::Vector3f dimensions = mv::Vector3f(1, 1, 1);
-    /* The largest of the 3 dimensions */
-    float maxExtent = 0;
+class MorphologyRenderObject
+{
+public:
+    CellMorphology::Extent ComputeExtents();
+
+    QHash<CellMorphology::Type, MorphologyProcessRenderObject> processes;
+
+    /* Centerpoint of the morphology, around which it will rotate */
+    mv::Vector3f _anchorPoint;
 };
 
 struct TraceRenderObject
@@ -30,6 +39,8 @@ struct TraceRenderObject
     GLuint vao = 0;
     GLuint vbo = 0;
     int numVertices = 0;
+
+    mv::Bounds extents;
 };
 
 class CellRenderObject
@@ -43,6 +54,6 @@ public:
 
     // Sub-render objects
     MorphologyRenderObject  morphologyObject;
-    TraceRenderObject       stimulusObject;
-    TraceRenderObject       acquisitionObject;
+    std::vector<TraceRenderObject> stimulusObjects;
+    std::vector<TraceRenderObject> acquisitionsObjects;
 };

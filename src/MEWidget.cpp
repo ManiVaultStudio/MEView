@@ -18,10 +18,19 @@ void MEWidget::setCells(const std::vector<Cell>& cells)
     if (!isWidgetInitialized())
         return;
 
-    _cells = cells;
-
     makeCurrent();
     _emRenderer.BuildRenderObjects(cells);
+}
+
+void MEWidget::setSelectedCells(const std::vector<Cell>& cells)
+{
+    //if (!isWidgetInitialized()) // Shouldn't be necessary
+    //    return;
+
+    _cells = cells;
+
+    // makeCurrent(); // Shouldn't be necessary
+    _emRenderer.SetSelectedCellIds(cells);
 }
 
 void MEWidget::showAxons(bool enabled)

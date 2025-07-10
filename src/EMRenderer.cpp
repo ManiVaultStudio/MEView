@@ -4,23 +4,16 @@
 
 namespace
 {
-    float computeWidthExtent(CellMorphology& cm)
-    {
-        float minDiffX = fabs(cm.minRange.x - cm.somaPosition.x);
-        float maxDiffX = fabs(cm.maxRange.x - cm.somaPosition.x);
-        float minDiffY = fabs(cm.minRange.y - cm.somaPosition.y);
-        float maxDiffY = fabs(cm.maxRange.y - cm.somaPosition.y);
-
-        return std::max(std::max(minDiffX, maxDiffX), std::max(minDiffY, maxDiffY));
-    }
-
-    float computeMaxCellHeight(const std::vector<CellRenderObject>& cellRenderObjects)
+    float computeMaxCellHeight(const std::vector<CellRenderObject*>& cellRenderObjects)
     {
         float maxHeight = std::numeric_limits<float>::min();
         for (int i = 0; i < cellRenderObjects.size(); i++)
         {
-            if (cellRenderObjects[i].morphologyObject.dimensions.y > maxHeight)
-                maxHeight = cellRenderObjects[i].morphologyObject.dimensions.y;
+            CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.ComputeExtents();
+            mv::Vector3f dimensions = extent.emax - extent.emin;
+
+            if (dimensions.y > maxHeight)
+                maxHeight = dimensions.y;
         }
         return maxHeight;
     }
@@ -69,7 +62,19 @@ void EMRenderer::update(float t)
 
     _lineShader.bind();
 
-    float maxCellHeight = computeMaxCellHeight(_cellRenderObjects);
+    // Build list of selected cell render object references
+    std::vector<CellRenderObject*> cellRenderObjects;
+    for (const Cell& cell : _renderState._selectedCells)
+    {
+        auto it = _renderState._cellRenderObjects.find(cell.cellId);
+
+        if (it != _renderState._cellRenderObjects.end())
+            cellRenderObjects.push_back(&(*it));
+        else
+            qDebug() << "[EMRenderer] This should never happen, but cellId wasn't found in _cellRenderObjects";
+    }
+
+    float maxCellHeight = computeMaxCellHeight(cellRenderObjects);
     float maxOpenGLHeight = computeOpenGLHeight(maxCellHeight);
     _viewMatrix.setToIdentity();
     _viewMatrix.scale(1.0f / maxOpenGLHeight); // Map [0, maxOpenGLHeight] to [0, 1]
@@ -78,30 +83,34 @@ void EMRenderer::update(float t)
     _lineShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
 
     float xOffset = 0;
-    //qDebug() << "Rendering " << _cellRenderObjects.size() << " objects.";
-    for (int i = 0; i < _cellRenderObjects.size(); i++)
+    //qDebug() << "Rendering " << cellRenderObjects.size() << " objects.";
+    for (int i = 0; i < cellRenderObjects.size(); i++)
     {
-        CellRenderObject& cellRenderObject = _cellRenderObjects[i];
+        CellRenderObject* cro = cellRenderObjects[i];
 
-        mv::Vector3f anchorPoint = cellRenderObject.morphologyObject.anchorPoint;
+        CellMorphology::Extent extent = cro->morphologyObject.ComputeExtents();
 
-        float maxWidth = sqrtf(powf(cellRenderObject.morphologyObject.dimensions.x, 2) + powf(cellRenderObject.morphologyObject.dimensions.z, 2)) * 1.2f;
+        mv::Vector3f anchorPoint = extent.center;
+        mv::Vector3f dimensions = extent.emax - extent.emin;
 
-        //qDebug() << "YOffset" << yOffset;
+        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
+
         _modelMatrix.setToIdentity();
         _modelMatrix.translate(xOffset + maxWidth / 2, maxOpenGLHeight * 0.625, 0);
         _modelMatrix.rotate(t, 0, 1, 0);
         _modelMatrix.translate(-anchorPoint.x, -anchorPoint.y, -anchorPoint.z);
-        //qDebug() << cellRenderObject.somaPosition.x << cellRenderObject.somaPosition.y << cellRenderObject.somaPosition.z;
-        //qDebug() << cellRenderObject.maxExtent;
 
         _lineShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
+        _lineShader.uniform3f("cellTypeColor", cro->cellTypeColor);
 
-        _lineShader.uniform3f("cellTypeColor", cellRenderObject.cellTypeColor);
-
-        glBindVertexArray(cellRenderObject.morphologyObject.vao);
-        glDrawArrays(GL_LINES, 0, cellRenderObject.morphologyObject.numVertices);
-        glBindVertexArray(0);
+        for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)
+        {
+            CellMorphology::Type type = it.key();
+            MorphologyProcessRenderObject mpro = it.value();
+            _lineShader.uniform1i("type", (int)type);
+            glBindVertexArray(mpro.vao);
+            glDrawArrays(GL_LINES, 0, mpro.numVertices);
+        }
 
         xOffset += maxWidth;
     }
@@ -114,11 +123,18 @@ void EMRenderer::update(float t)
     _traceShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
 
     xOffset = 0;
-    for (int i = 0; i < _cellRenderObjects.size(); i++)
+    for (int i = 0; i < cellRenderObjects.size(); i++)
     {
-        CellRenderObject& cellRenderObject = _cellRenderObjects[i];
+        CellRenderObject* cro = cellRenderObjects[i];
 
-        float maxWidth = sqrtf(powf(cellRenderObject.morphologyObject.dimensions.x, 2) + powf(cellRenderObject.morphologyObject.dimensions.z, 2)) * 1.2f;
+        if (cro->stimulusObjects.empty())
+            break;
+        TraceRenderObject& stimRO = cro->stimulusObjects[0]; // FIXME Iterate through objects and find corresponding to current stimulus desc
+        TraceRenderObject& acqRO = cro->acquisitionsObjects[0];
+
+        CellMorphology::Extent extent = cro->morphologyObject.ComputeExtents();
+        mv::Vector3f dimensions = extent.emax - extent.emin;
+        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
 
         _modelMatrix.setToIdentity();
         _modelMatrix.translate(xOffset + maxWidth / 2 - maxOpenGLHeight * 0.1f, maxOpenGLHeight * 0.05f, 0); // FIXME change maxHeight to something else
@@ -127,8 +143,8 @@ void EMRenderer::update(float t)
 
         _traceShader.uniform3f("lineColor", 0.2f, 0.4f, 0.839f);
 
-        glBindVertexArray(cellRenderObject.acquisitionObject.vao);
-        glDrawArrays(GL_LINE_STRIP, 0, cellRenderObject.acquisitionObject.numVertices);
+        glBindVertexArray(acqRO.vao);
+        glDrawArrays(GL_LINE_STRIP, 0, acqRO.numVertices);
         glBindVertexArray(0);
 
         _modelMatrix.setToIdentity();
@@ -138,8 +154,8 @@ void EMRenderer::update(float t)
 
         _traceShader.uniform3f("lineColor", 0.839f, 0.4f, 0.2f);
 
-        glBindVertexArray(cellRenderObject.stimulusObject.vao);
-        glDrawArrays(GL_LINE_STRIP, 0, cellRenderObject.stimulusObject.numVertices);
+        glBindVertexArray(stimRO.vao);
+        glDrawArrays(GL_LINE_STRIP, 0, stimRO.numVertices);
         glBindVertexArray(0);
 
         xOffset += maxWidth;
@@ -161,15 +177,24 @@ void EMRenderer::setCurrentStimset(const QString& stimSet)
     //RebuildTraces();
 }
 
-void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
+void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)
 {
-    // Delete previous render objects
-    for (CellRenderObject& cellRenderObject : _cellRenderObjects)
+    std::vector<QString> cellIds;
+
+    // Build list of selected cell render object references
+    std::vector<CellRenderObject*> cellRenderObjects;
+    for (const Cell& cell : cells)
     {
-        cellRenderObject.Cleanup(this);
+        cellIds.push_back(cell.cellId);
+        auto it = _renderState._cellRenderObjects.find(cell.cellId);
+
+        if (it != _renderState._cellRenderObjects.end())
+            cellRenderObjects.push_back(&(*it));
+        else
+            qDebug() << "[EMRenderer] This should never happen, but cellId wasn't found in _cellRenderObjects";
     }
 
-    _cellRenderObjects.clear();
+    _renderState._selectedCells = cells;
 
     // Compute stimulus chart height
     _renderState._stimChartRangeMin = std::numeric_limits<float>::max();
@@ -193,7 +218,7 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
                 {
                     if (stim.GetData().yMin < _renderState._stimChartRangeMin) _renderState._stimChartRangeMin = stim.GetData().yMin;
                     if (stim.GetData().yMax > _renderState._stimChartRangeMax) _renderState._stimChartRangeMax = stim.GetData().yMax;
-                    
+
                     const Recording& acq = experiment.getAcquisitions()[j];
 
                     if (acq.GetData().yMin < _renderState._acqChartRangeMin) _renderState._acqChartRangeMin = acq.GetData().yMin;
@@ -205,20 +230,17 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
         }
     }
 
-    // Build render objects
-    _cellRenderObjects.resize(cells.size());
-    qDebug() << "Build render objects: " << cells.size();
-    for (int i = 0; i < cells.size(); i++)
-        buildRenderObject(cells[i], _cellRenderObjects[i]);
-
     // Compute new widget width
     float newWidgetWidthToRequest = 0;
-    for (int i = 0; i < cells.size(); i++)
+    for (int i = 0; i < cellRenderObjects.size(); i++)
     {
-        newWidgetWidthToRequest += sqrtf(powf(_cellRenderObjects[i].morphologyObject.dimensions.x, 2) + powf(_cellRenderObjects[i].morphologyObject.dimensions.z, 2)) * 1.2f;
+        CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.ComputeExtents();
+        mv::Vector3f dimensions = extent.emax - extent.emin;
+        
+        newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
     }
 
-    float maxCellHeight = computeMaxCellHeight(_cellRenderObjects);
+    float maxCellHeight = computeMaxCellHeight(cellRenderObjects);
     float maxOpenGLHeight = computeOpenGLHeight(maxCellHeight);
 
     float aspectRatioRequest = newWidgetWidthToRequest / maxOpenGLHeight;
@@ -226,34 +248,49 @@ void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
     emit requestNewAspectRatio(aspectRatioRequest);
 }
 
-void EMRenderer::buildRenderObject(const Cell& cell, CellRenderObject& cellRenderObject)
+void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
 {
-    // Morphology
-    if (cell.morphology != nullptr)
-    {
-        MorphologyRenderObject& mro = cellRenderObject.morphologyObject;
-        const CellMorphology& cellMorphology = *cell.morphology;
+    _renderObjectBuilder.BuildCellRenderObjects(cells);
 
-        _renderObjectBuilder.BuildMorphologyObject(mro, cellMorphology, _showAxons);
+    //// Delete previous render objects
+    //for (CellRenderObject& cellRenderObject : _cellRenderObjects)
+    //{
+    //    cellRenderObject.Cleanup(this);
+    //}
 
-        cellRenderObject.cellTypeColor = cellMorphology.cellTypeColor;
-    }
-    if (cell.ephysTraces != nullptr)
-    {
-        const Experiment& experiment = *cell.ephysTraces;
+    //_cellRenderObjects.clear();
 
-        if (experiment.getAcquisitions().empty() || experiment.getStimuli().empty())
-            return;
-
-        for (int i = 0; i < experiment.getStimuli().size(); i++)
-        {
-            const Recording& recording = experiment.getStimuli()[i];
-            if (recording.GetStimulusDescription() == _currentStimset)
-            {
-                _renderObjectBuilder.BuildTraceObject(cellRenderObject.stimulusObject, experiment.getStimuli()[i], true);
-                _renderObjectBuilder.BuildTraceObject(cellRenderObject.acquisitionObject, experiment.getAcquisitions()[i], false);
-                break;
-            }
-        }
-    }
+    
 }
+
+//void EMRenderer::buildRenderObject(const Cell& cell, CellRenderObject& cellRenderObject)
+//{
+//    // Morphology
+//    if (cell.morphology != nullptr)
+//    {
+//        MorphologyRenderObject& mro = cellRenderObject.morphologyObject;
+//        const CellMorphology& cellMorphology = *cell.morphology;
+//
+//        _renderObjectBuilder.BuildMorphologyObject(mro, cellMorphology, _showAxons);
+//
+//        cellRenderObject.cellTypeColor = cellMorphology.cellTypeColor;
+//    }
+//    if (cell.ephysTraces != nullptr)
+//    {
+//        const Experiment& experiment = *cell.ephysTraces;
+//
+//        if (experiment.getAcquisitions().empty() || experiment.getStimuli().empty())
+//            return;
+//
+//        for (int i = 0; i < experiment.getStimuli().size(); i++)
+//        {
+//            const Recording& recording = experiment.getStimuli()[i];
+//            if (recording.GetStimulusDescription() == _currentStimset)
+//            {
+//                _renderObjectBuilder.BuildTraceObject(cellRenderObject.stimulusObject, experiment.getStimuli()[i], true);
+//                _renderObjectBuilder.BuildTraceObject(cellRenderObject.acquisitionObject, experiment.getAcquisitions()[i], false);
+//                break;
+//            }
+//        }
+//    }
+//}

@@ -5,10 +5,10 @@ uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 
 uniform vec3 cellTypeColor;
+uniform int type;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in float radius;
-layout(location = 2) in int type;
 
 out float pass_radius;
 out vec3 pass_color;

@@ -18,6 +18,8 @@ public:
     /** Set the indices of which morphologies should be shown */
     void setCells(const std::vector<Cell>& cells);
 
+    void setSelectedCells(const std::vector<Cell>& cells);
+
     void showAxons(bool enabled);
 
 protected: // mv::gui::OpenGLWidget overrides

@@ -44,7 +44,9 @@ void MEView::init()
 
     layout->setContentsMargins(0, 0, 0, 0);
 
-    connect(&_scene, &Scene::allRequiredDatasetsLoaded, this, &MEView::onAllRequiredDatasetsLoaded);
+    // Both signals needed to kickstart
+    connect(&_scene, &Scene::allRequiredDatasetsLoaded, this, &MEView::onInitialLoad);
+    connect(_meWidget, &MEWidget::widgetInitialized, this, &MEView::onInitialLoad);
 
     _primaryToolbarAction.addAction(&_settingsAction.getLineRendererButton());
     //_primaryToolbarAction.addAction(&_settingsAction.getRealRendererButton());
@@ -54,8 +56,8 @@ void MEView::init()
     //connect(&_settingsAction.getLineRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::LINE); });
     //connect(&_settingsAction.getRealRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::REAL); });
     connect(&_settingsAction.getShowAxonsToggle(), &ToggleAction::toggled, this, [this](bool toggled) { _meWidget->showAxons(toggled); });
-    connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentTextChanged, this, [this](const QString& stimSet) { _meWidget->GetRenderer().setCurrentStimset(stimSet); });
-
+    connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().setCurrentStimset(_settingsAction.getStimSetsAction().getCurrentText()); });
+    
     // Load webpage
     //_ephysWidget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
 
@@ -126,25 +128,74 @@ void MEView::onDataEvent(mv::DatasetEvent* dataEvent)
 
 void MEView::setStimulusSetOptions(const QSet<QString>& stimSets)
 {
+    qDebug() << "setStimulusSetOptions" << stimSets.size();
     QStringList stimSetList = QStringList(stimSets.begin(), stimSets.end());
     _settingsAction.getStimSetsAction().setOptions(stimSetList);
 }
 
-void MEView::onAllRequiredDatasetsLoaded()
+void MEView::onInitialLoad()
 {
-    qDebug() << "onAllRequiredDatasetsLoaded";
-    // Find out which stimulus sets are available
-    mv::Dataset<EphysExperiments> ephysTraces = _scene.getEphysTraces();
+    qDebug() << "onInitialLoad";
 
-    QSet<QString> stimSets;
-    for (const Experiment& experiment: ephysTraces->getData())
+    QStringList missingDatasets;
+    if (_scene.hasAllRequiredDatasets(missingDatasets) && _meWidget->isWidgetInitialized())
     {
-        const std::vector<Recording>& recordings = experiment.getStimuli();
-        for (const Recording& recording : recordings)
-            stimSets.insert(recording.GetStimulusDescription());
+        // Find out which stimulus sets are available, and set them in the combobox
+        mv::Dataset<EphysExperiments> ephysTraces = _scene.getEphysTraces();
+
+        QSet<QString> stimSets;
+        for (const Experiment& experiment : ephysTraces->getData())
+        {
+            const std::vector<Recording>& recordings = experiment.getStimuli();
+            for (const Recording& recording : recordings)
+                stimSets.insert(recording.GetStimulusDescription());
+        }
+        qDebug() << stimSets;
+        setStimulusSetOptions(stimSets);
+
+        // Compose all cells, send them to renderer for uploading to GPU
+        // ...
+        mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
+        mv::Dataset<EphysExperiments> ephysTraceDataset = _scene.getEphysTraces();
+        const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
+
+        // Find common selected points
+        std::vector<uint32_t> morphIndices(morphologies.size());
+        std::iota(morphIndices.begin(), morphIndices.end(), 0);
+
+        std::vector<int> ephysIndices;
+        std::vector<int> metaIndices;
+
+        for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
+        {
+            mv::BiMap& morphBiMap = selGroup.getBiMap(_scene.getMorphologyDataset());
+            mv::BiMap& ephysBiMap = selGroup.getBiMap(_scene.getEphysTraces());
+            mv::BiMap& metaBiMap = selGroup.getBiMap(_scene.getCellMetadataDataset());
+
+            std::vector<QString> keys = morphBiMap.getKeysByValues(morphIndices);
+
+            ephysIndices = ephysBiMap.getValuesByKeysWithMissingValue(keys, -1);
+            metaIndices = metaBiMap.getValuesByKeysWithMissingValue(keys, -1);
+        }
+
+        auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
+
+        // Construct vector of cells containing all necessary information
+        std::vector<Cell> cells(morphIndices.size());
+        for (int i = 0; i < cells.size(); i++)
+        {
+            Cell& cell = cells[i];
+            cell.morphology = &morphologies[i];
+
+            int ephysIndex = ephysIndices[i];
+            cell.ephysTraces = ephysIndex >= 0 ? &_scene.getEphysTraces()->getData()[ephysIndex] : nullptr;
+
+            int metaIndex = metaIndices[i];
+            cell.cellId = metaIndex >= 0 ? cellIdColumn[metaIndex] : "Missing";
+        }
+
+        _meWidget->setCells(cells);
     }
-    qDebug() << stimSets;
-    setStimulusSetOptions(stimSets);
 }
 
 void MEView::onCellSelectionChanged()
@@ -156,18 +207,6 @@ void MEView::onCellSelectionChanged()
         qWarning() << "[MEViewer] Missing datasets:" << missingDatasets;
         return;
     }
-
-    //// Compute maximum width of the visualization, i.e. how many cells can we fit on average
-    //float totalWidth = 0;
-    //for (CellMorphology& cellMorphology : _scene.getMorphologyDataset()->getData())
-    //{
-    //    Vector3f range = cellMorphology.maxRange - cellMorphology.minRange;
-
-    //    float maxWidth = sqrtf(range.x * range.x + range.z * range.z);
-
-    //    totalWidth += maxWidth;
-    //}
-    //float averageWidth = (totalWidth / _scene.getMorphologyDataset()->getData().size()) * 1.5f;
 
     // Find appropriate selection indices in the morphology and ephys data
     mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
@@ -212,14 +251,14 @@ void MEView::onCellSelectionChanged()
         cell.morphology = &morphologies[sortedSelectionIndices[i]];
 
         int ephysIndex = ephysSelectionIndices[i];
-        cell.ephysTraces = ephysIndex > 0 ? &_scene.getEphysTraces()->getData()[ephysIndex] : nullptr;
+        cell.ephysTraces = ephysIndex >= 0 ? &_scene.getEphysTraces()->getData()[ephysIndex] : nullptr;
 
         int metaIndex = metaSelectionIndices[i];
-        cell.cellId = metaIndex > 0 ? cellIdColumn[metaSelectionIndices[i]] : "Missing";
-        cell.cluster = metaIndex > 0 ? clusterColumn[metaSelectionIndices[i]] : "Missing";
+        cell.cellId = metaIndex >= 0 ? cellIdColumn[metaSelectionIndices[i]] : "Missing";
+        cell.cluster = metaIndex >= 0 ? clusterColumn[metaSelectionIndices[i]] : "Missing";
     }
 
-    _meWidget->setCells(cells);
+    _meWidget->setSelectedCells(cells);
 
     //// Upload cell morphologies
     //_morphologyWidget->uploadMorphologies();
