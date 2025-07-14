@@ -30,6 +30,16 @@ namespace
     }
 }
 
+QMatrix4x4 CortexStructure::mapCellToStructure(Vector3f somaPosition, Vector3f center) const
+{
+    // We want to map the soma from [-maxDepth, -minDepth] to [0, 1], depths are >0, while soma position is <0
+    // So therefore to map -maxDepth to 0, translate by +maxDepth, then scale by 1/depth range.
+    QMatrix4x4 cortexTransform;
+    cortexTransform.scale(1.0f / getDepthRange());
+    cortexTransform.translate(-center.x, getMaxDepth(), -center.z);
+    return cortexTransform;
+}
+
 Scene::Scene() :
     _morphologyFeatureDataset(),
     _morphologyDataset(),

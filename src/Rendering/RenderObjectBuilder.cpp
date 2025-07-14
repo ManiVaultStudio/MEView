@@ -76,9 +76,6 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
 
     QHash<CellMorphology::Type, MorphologyLineSegments> lineSegmentsHash;
 
-    mv::Vector3f                somaPosition;
-    float                       somaRadius;
-
     // Generate line segments
     try
     {
@@ -90,8 +87,8 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
 
             if (cellMorphology.types.at(i) == (int)CellMorphology::Type::Soma)
             {
-                somaPosition = position;
-                somaRadius = radius;
+                mro.somaPosition = position;
+                mro.somaRadius = radius;
                 break;
             }
         }

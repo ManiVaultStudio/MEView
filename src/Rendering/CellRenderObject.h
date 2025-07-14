@@ -30,8 +30,11 @@ public:
 
     QHash<CellMorphology::Type, MorphologyProcessRenderObject> processes;
 
-    /* Centerpoint of the morphology, around which it will rotate */
-    mv::Vector3f _anchorPoint;
+    mv::Vector3f somaPosition;
+    float somaRadius;
+
+    ///* Centerpoint of the morphology, around which it will rotate */
+    //mv::Vector3f _anchorPoint;
 };
 
 struct TraceRenderObject

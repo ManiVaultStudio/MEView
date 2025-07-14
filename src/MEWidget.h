@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 
+#include "LayerDrawing.h"
 #include "EMRenderer.h"
 
 #include "widgets/OpenGLWidget.h"
@@ -36,6 +37,7 @@ private:
 
     std::vector<Cell> _cells;
 
+    LayerDrawing _layerDrawing;
     EMRenderer _emRenderer;
 
     float t = 0;

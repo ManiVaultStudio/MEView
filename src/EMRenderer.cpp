@@ -4,6 +4,16 @@
 
 namespace
 {
+    QMatrix4x4 MapYRangeToUnit(float bottom, float top)
+    {
+        // We want to map from [bottom, top] to [0, 1].
+        // So therefore to map bottom to 0, translate by -bottom, then scale by 1/fabs(top-bottom).
+        QMatrix4x4 M;
+        M.scale(1.0f / fabs(top - bottom));
+        M.translate(0, bottom, 0);
+        return M;
+    }
+
     float computeMaxCellHeight(const std::vector<CellRenderObject*>& cellRenderObjects)
     {
         float maxHeight = std::numeric_limits<float>::min();
@@ -51,14 +61,16 @@ void EMRenderer::resize(int w, int h)
     _projMatrix.ortho(0, aspectRatio, 0, 1, 1, -1);
 
     vx = 0; vy = 0; vw = w; vh = h;
+    _fullViewport.Set(0, 0, w, h);
+    int margin = 48 * 1.25f; // FIXME device pixel ratio
+    int topMargin = 16 * 1.25f; // FIXME device pixel ratio
+    int bottomMargin = 128 * 1.25f; // FIXME device pixel ratio
+    _morphologyViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
 }
 
 void EMRenderer::update(float t)
 {
-    glViewport(vx, vy, vw, vh);
-
-    glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+    _fullViewport.Begin();
 
     _lineShader.bind();
 
@@ -77,12 +89,21 @@ void EMRenderer::update(float t)
     float maxCellHeight = computeMaxCellHeight(cellRenderObjects);
     float maxOpenGLHeight = computeOpenGLHeight(maxCellHeight);
     _viewMatrix.setToIdentity();
-    _viewMatrix.scale(1.0f / maxOpenGLHeight); // Map [0, maxOpenGLHeight] to [0, 1]
-
-    _lineShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
     _lineShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
+    //_viewMatrix.scale(1.0f / maxOpenGLHeight); // Map [0, maxOpenGLHeight] to [0, 1]
+
+    _morphologyViewport.Begin();
+    _projMatrix.setToIdentity();
+    _projMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
+    qDebug() << "Aspect ratio: " << _morphologyViewport.GetAspectRatio();
+    _lineShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
 
     float xOffset = 0;
+
+    //QMatrix4x4 yToUnit;
+    //if (cortical)
+    //    yToUnit = MapYRangeToUnit(-_scene.getCortexStructure().getMaxDepth(), -_scene.getCortexStructure().getMinDepth());
+
     //qDebug() << "Rendering " << cellRenderObjects.size() << " objects.";
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
@@ -90,17 +111,30 @@ void EMRenderer::update(float t)
 
         CellMorphology::Extent extent = cro->morphologyObject.ComputeExtents();
 
-        mv::Vector3f anchorPoint = extent.center;
         mv::Vector3f dimensions = extent.emax - extent.emin;
 
         float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
 
+        // Map from the original cell to its height being [0, 1], and the other dimensions proportional
         _modelMatrix.setToIdentity();
-        _modelMatrix.translate(xOffset + maxWidth / 2, maxOpenGLHeight * 0.625, 0);
-        _modelMatrix.rotate(t, 0, 1, 0);
-        _modelMatrix.translate(-anchorPoint.x, -anchorPoint.y, -anchorPoint.z);
+        if (cortical)
+        {
+            float depthRange = _scene.getCortexStructure().getDepthRange();
+            QMatrix4x4 cortexMatrix = _scene.getCortexStructure().mapCellToStructure(cro->morphologyObject.somaPosition, extent.center);
 
+            _modelMatrix.translate((xOffset + maxWidth / 2) / depthRange, 0, 0);
+            _modelMatrix.rotate(t, 0, 1, 0);
+            _modelMatrix *= cortexMatrix;
+        }
+        else
+        {
+            _modelMatrix.translate((xOffset + maxWidth / 2) / maxCellHeight, 0, 0);
+            _modelMatrix.rotate(t, 0, 1, 0);
+            _modelMatrix.scale(1.0f / maxCellHeight);
+            _modelMatrix.translate(-extent.center.x, -extent.emin.y, -extent.center.z);
+        }
         _lineShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
+
         _lineShader.uniform3f("cellTypeColor", cro->cellTypeColor);
 
         for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)
@@ -114,6 +148,7 @@ void EMRenderer::update(float t)
 
         xOffset += maxWidth;
     }
+    _morphologyViewport.End();
 
     _lineShader.release();
 
@@ -176,6 +211,18 @@ void EMRenderer::update(float t)
 
     glBindVertexArray(0);
     _traceShader.release();
+
+    _fullViewport.End();
+}
+
+void EMRenderer::RenderMorphologies(const std::vector<CellRenderObject*>& cellRenderObjects)
+{
+
+}
+
+void EMRenderer::RenderTraces(const std::vector<CellRenderObject*>& cellRenderObjects)
+{
+
 }
 
 void EMRenderer::showAxons(bool enabled)

@@ -3,6 +3,8 @@
 #include "Scene.h"
 
 int MARGIN = 48;
+int TOP_MARGIN = 16;
+int BOTTOM_MARGIN = 128;
 
 LayerDrawing::LayerDrawing(QWidget* parent) :
     _parent(parent),
@@ -24,7 +26,7 @@ void LayerDrawing::setDepthRange(float minDepth, float maxDepth)
 void LayerDrawing::drawAxes(QPainter& painter)
 {
     int chartWidth = _parent->width() - MARGIN * 2;
-    int chartHeight = _parent->height() - MARGIN * 2;
+    int chartHeight = _parent->height() - TOP_MARGIN - BOTTOM_MARGIN;
 
     const CortexStructure& cortexStructure = _scene.getCortexStructure();
 
@@ -44,7 +46,7 @@ void LayerDrawing::drawAxes(QPainter& painter)
     {
         float layerDepth = cortexStructure.getLayerDepth(i);
 
-        int lineY = (layerDepth / _depthRange) * chartHeight + MARGIN;
+        int lineY = (layerDepth / _depthRange) * chartHeight + TOP_MARGIN;
 
         if (i == 0 || i == cortexStructure._layerDepths.size() - 1)
             painter.setPen(axisPen);
@@ -55,9 +57,8 @@ void LayerDrawing::drawAxes(QPainter& painter)
 
         if (i != cortexStructure._layerDepths.size() - 1)
         {
-            int bottomY = (cortexStructure.getLayerDepth(i+1) / _depthRange) * chartHeight + MARGIN;
+            int bottomY = (cortexStructure.getLayerDepth(i+1) / _depthRange) * chartHeight + TOP_MARGIN;
             int midPoint = (bottomY + lineY) / 2;
-
 
             painter.drawText(MARGIN - 28, midPoint + 8, "L" + QString::number(i + 1));
         }
@@ -67,8 +68,9 @@ void LayerDrawing::drawAxes(QPainter& painter)
     }
 
     painter.setFont(originalFont);
+    // Vertical axis
     painter.setPen(axisPen);
-    painter.drawLine(MARGIN, MARGIN, MARGIN, _parent->height() - MARGIN);
+    painter.drawLine(MARGIN, TOP_MARGIN, MARGIN, _parent->height() - BOTTOM_MARGIN);
 }
 
 void LayerDrawing::drawHorizontalLine(QPainter& painter, float y)

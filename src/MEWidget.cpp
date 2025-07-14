@@ -4,6 +4,7 @@
 
 MEWidget::MEWidget() :
     _emRenderer(),
+    _layerDrawing(this),
     _width(1),
     _height(1)
 {
@@ -60,7 +61,23 @@ void MEWidget::onWidgetRendered()
     // Increment time
     t += 0.3f;
 
+    QPainter painter(this);
+
+    painter.beginNativePainting();
+    glClearColor(1, 1, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    painter.endNativePainting();
+
+    Scene& scene = Scene::getInstance();
+    qDebug() << "Height: " << height();
+    _layerDrawing.setDepthRange(scene.getCortexStructure().getMinDepth(), scene.getCortexStructure().getMaxDepth());
+    _layerDrawing.drawAxes(painter);
+
+    painter.beginNativePainting();
     _emRenderer.update(t);
+    painter.endNativePainting();
+
+    painter.end();
 }
 
 void MEWidget::onWidgetCleanup()

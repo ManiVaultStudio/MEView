@@ -75,6 +75,8 @@ set(RENDER_SOURCES
     src/Rendering/RenderObjectBuilder.cpp
     src/Rendering/RenderState.h
     src/Rendering/RenderState.cpp
+    src/Rendering/RenderRegion.h
+    src/Rendering/RenderRegion.cpp
 )
 
 set(EPHYS_SOURCES

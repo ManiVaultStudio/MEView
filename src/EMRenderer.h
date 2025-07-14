@@ -5,6 +5,7 @@
 #include "Rendering/RenderState.h"
 #include "Rendering/RenderObjectBuilder.h"
 #include "Rendering/CellRenderObject.h"
+#include "Rendering/RenderRegion.h"
 
 #include "graphics/Shader.h"
 #include "graphics/Vector3f.h"
@@ -18,7 +19,9 @@ class EMRenderer : public QObject, protected QOpenGLFunctions_3_3_Core
 public:
     EMRenderer() :
         _scene(Scene::getInstance()),
-        _renderObjectBuilder(this, &_renderState)
+        _renderObjectBuilder(this, &_renderState),
+        _fullViewport(this),
+        _morphologyViewport(this)
     {
 
     }
@@ -27,16 +30,15 @@ public:
     void resize(int w, int h);
     void update(float t);
 
+    void RenderMorphologies(const std::vector<CellRenderObject*>& cellRenderObjects);
+    void RenderTraces(const std::vector<CellRenderObject*>& cellRenderObjects);
+
     void BuildRenderObjects(const std::vector<Cell>& cells);
     void SetSelectedCellIds(const std::vector<Cell>& cells);
 
 public: // UI State
     void showAxons(bool enabled);
     void setCurrentStimset(const QString& stimset);
-
-private:
-    void buildRenderObject(const Cell& cell, CellRenderObject& cellRenderObject);
-    //void Rebuild();
 
 signals:
     void requestNewAspectRatio(float aspectRatio);
@@ -52,7 +54,11 @@ private:
     QMatrix4x4 _viewMatrix;
     QMatrix4x4 _modelMatrix;
 
+    bool cortical = false;
+
     int vx, vy, vw, vh;
+    RenderRegion _fullViewport;
+    RenderRegion _morphologyViewport;
 
     RenderObjectBuilder _renderObjectBuilder;
     RenderState _renderState;

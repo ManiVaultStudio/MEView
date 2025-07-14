@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QString>
 #include <QStringList>
+#include <QMatrix4x4>
 
 class Cell
 {
@@ -28,10 +29,20 @@ public:
 
     }
 
+    /**
+     * Map cell from local coordinates to cortex coordinates with y:[-1, 1]
+     */
+    QMatrix4x4 mapCellToStructure(Vector3f somaPosition, Vector3f center) const;
+
     float getLayerDepth(int layer) const { return _layerDepths[layer]; }
     float getMinDepth() const { return _layerDepths[0]; }
     float getMaxDepth() const { return _layerDepths[_layerDepths.size()-1]; }
+    float getDepthRange() const { return fabs(getMaxDepth() - getMinDepth()); }
 
+    /**
+     * Depths of the various layer thresholds, these are positive numbers (>0),
+     * higher numbers are lower in the cortex.
+     */
     std::vector<float>  _layerDepths;
 };
 
