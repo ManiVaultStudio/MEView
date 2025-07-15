@@ -21,7 +21,8 @@ public:
         _scene(Scene::getInstance()),
         _renderObjectBuilder(this, &_renderState),
         _fullViewport(this),
-        _morphologyViewport(this)
+        _morphologyViewport(this),
+        _traceViewport(this)
     {
 
     }
@@ -59,6 +60,7 @@ private:
     int vx, vy, vw, vh;
     RenderRegion _fullViewport;
     RenderRegion _morphologyViewport;
+    RenderRegion _traceViewport;
 
     RenderObjectBuilder _renderObjectBuilder;
     RenderState _renderState;

@@ -62,10 +62,19 @@ void EMRenderer::resize(int w, int h)
 
     vx = 0; vy = 0; vw = w; vh = h;
     _fullViewport.Set(0, 0, w, h);
-    int margin = 48 * 1.25f; // FIXME device pixel ratio
-    int topMargin = 16 * 1.25f; // FIXME device pixel ratio
-    int bottomMargin = 128 * 1.25f; // FIXME device pixel ratio
-    _morphologyViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
+
+    {
+        int margin = 48 * 1.25f; // FIXME device pixel ratio
+        int topMargin = 16 * 1.25f; // FIXME device pixel ratio
+        int bottomMargin = 128 * 1.25f; // FIXME device pixel ratio
+        _morphologyViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
+    }
+    {
+        int margin = 48 * 1.25f; // FIXME device pixel ratio
+        int topMargin = h - (128 - 16) * 1.25f; // FIXME device pixel ratio
+        int bottomMargin = 16 * 1.25f; // FIXME device pixel ratio
+        _traceViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
+    }
 }
 
 void EMRenderer::update(float t)
@@ -148,11 +157,18 @@ void EMRenderer::update(float t)
 
         xOffset += maxWidth;
     }
-    _morphologyViewport.End();
-
     _lineShader.release();
 
+    _morphologyViewport.End();
+
+    // TRACES
+    _traceViewport.Begin();
+
     _traceShader.bind();
+
+    _projMatrix.setToIdentity();
+    _projMatrix.ortho(0, _traceViewport.GetAspectRatio(), 0, 1, -1, 1);
+    _viewMatrix.setToIdentity();
 
     _traceShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
     _traceShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
@@ -174,12 +190,14 @@ void EMRenderer::update(float t)
             {
                 TraceRenderObject& acqRO = cro->acquisitionsObjects[i];
 
+                float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
+
                 // Acquisition
                 _modelMatrix.setToIdentity();
-                _modelMatrix.translate(xOffset + maxWidth / 2, maxOpenGLHeight * 0.05f, 0); // FIXME change maxHeight to something else
-                _modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
+                _modelMatrix.translate((xOffset + maxWidth / 2) / maxCellHeight * r, 0, 0); // FIXME maxCellHeight should be depthRange for cortical
+                //_modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
                 _modelMatrix.translate(-0.5, 0, 0);
-                _modelMatrix.scale(1.0f / acqRO.extents.getWidth(), 1.0f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
+                _modelMatrix.scale(1.0f / acqRO.extents.getWidth(), 0.5f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
                 _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0);
 
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
@@ -191,9 +209,10 @@ void EMRenderer::update(float t)
 
                 // Stimulus
                 _modelMatrix.setToIdentity();
-                _modelMatrix.translate(xOffset + maxWidth / 2 - maxOpenGLHeight * 0.1f, maxOpenGLHeight * 0.15f, 0); // FIXME change maxHeight to something else
-                _modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
-                _modelMatrix.scale(1.0f / stimRO.extents.getWidth(), 1.0f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
+                _modelMatrix.translate((xOffset + maxWidth / 2) / maxCellHeight * r, 0, 0); // FIXME maxCellHeight should be depthRange for cortical
+                //_modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
+                _modelMatrix.translate(-0.5, 0.5, 0);
+                _modelMatrix.scale(1.0f / stimRO.extents.getWidth(), 0.5f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
                 _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
