@@ -127,7 +127,7 @@ void EMRenderer::update(float t)
 
         // Map from the original cell to its height being [0, 1], and the other dimensions proportional
         _modelMatrix.setToIdentity();
-        if (cortical)
+        if (_isCortical)
         {
             float depthRange = _scene.getCortexStructure().getDepthRange();
             QMatrix4x4 cortexMatrix = _scene.getCortexStructure().mapCellToStructure(cro->morphologyObject.somaPosition, extent.center);
@@ -194,7 +194,7 @@ void EMRenderer::update(float t)
                 float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
 
                 float height;
-                if (cortical)
+                if (_isCortical)
                     height = _scene.getCortexStructure().getDepthRange();
                 else
                     height = maxCellHeight;
@@ -241,16 +241,6 @@ void EMRenderer::update(float t)
     _fullViewport.End();
 }
 
-void EMRenderer::RenderMorphologies(const std::vector<CellRenderObject*>& cellRenderObjects)
-{
-
-}
-
-void EMRenderer::RenderTraces(const std::vector<CellRenderObject*>& cellRenderObjects)
-{
-
-}
-
 void EMRenderer::showAxons(bool enabled)
 {
     _showAxons = enabled;
@@ -263,6 +253,11 @@ void EMRenderer::setCurrentStimset(const QString& stimSet)
     _currentStimset = stimSet;
 
     //RebuildTraces();
+}
+
+void EMRenderer::SetCortical(bool isCortical)
+{
+    _isCortical = isCortical;
 }
 
 void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)

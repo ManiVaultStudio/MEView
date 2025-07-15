@@ -21,6 +21,7 @@ public:
 
     void setSelectedCells(const std::vector<Cell>& cells);
 
+    void SetCortical(bool isCortical);
     void showAxons(bool enabled);
 
 protected: // mv::gui::OpenGLWidget overrides
@@ -37,6 +38,7 @@ private:
 
     std::vector<Cell> _cells;
 
+    bool _isCortical;
     LayerDrawing _layerDrawing;
     EMRenderer _emRenderer;
 

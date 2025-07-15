@@ -31,9 +31,7 @@ public:
     void resize(int w, int h);
     void update(float t);
 
-    void RenderMorphologies(const std::vector<CellRenderObject*>& cellRenderObjects);
-    void RenderTraces(const std::vector<CellRenderObject*>& cellRenderObjects);
-
+    void SetCortical(bool isCortical);
     void BuildRenderObjects(const std::vector<Cell>& cells);
     void SetSelectedCellIds(const std::vector<Cell>& cells);
 
@@ -55,7 +53,7 @@ private:
     QMatrix4x4 _viewMatrix;
     QMatrix4x4 _modelMatrix;
 
-    bool cortical = false;
+    bool _isCortical = false;
 
     int vx, vy, vw, vh;
     RenderRegion _fullViewport;

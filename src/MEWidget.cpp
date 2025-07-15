@@ -6,7 +6,8 @@ MEWidget::MEWidget() :
     _emRenderer(),
     _layerDrawing(this),
     _width(1),
-    _height(1)
+    _height(1),
+    _isCortical(false)
 {
     connect(&_emRenderer, &EMRenderer::requestNewAspectRatio, this, &MEWidget::onNewAspectRatioRequested);
 
@@ -32,6 +33,13 @@ void MEWidget::setSelectedCells(const std::vector<Cell>& cells)
 
     // makeCurrent(); // Shouldn't be necessary
     _emRenderer.SetSelectedCellIds(cells);
+}
+
+void MEWidget::SetCortical(bool isCortical)
+{
+    _isCortical = isCortical;
+
+    _emRenderer.SetCortical(isCortical);
 }
 
 void MEWidget::showAxons(bool enabled)

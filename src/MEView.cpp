@@ -258,6 +258,11 @@ void MEView::onCellSelectionChanged()
         cell.cluster = metaIndex >= 0 ? clusterColumn[metaSelectionIndices[i]] : "Missing";
     }
 
+    bool isCortical = false;
+    if (_scene.getMorphologyDataset()->hasProperty("isCortical"))
+        isCortical = true;
+
+    _meWidget->SetCortical(isCortical);
     _meWidget->setSelectedCells(cells);
 
     //// Upload cell morphologies
