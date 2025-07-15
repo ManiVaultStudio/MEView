@@ -63,15 +63,16 @@ void EMRenderer::resize(int w, int h)
     vx = 0; vy = 0; vw = w; vh = h;
     _fullViewport.Set(0, 0, w, h);
 
+    int quarter = h / 4;
     {
         int margin = 48 * 1.25f; // FIXME device pixel ratio
         int topMargin = 16 * 1.25f; // FIXME device pixel ratio
-        int bottomMargin = 128 * 1.25f; // FIXME device pixel ratio
+        int bottomMargin = quarter * 1.25f; // FIXME device pixel ratio
         _morphologyViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
     }
     {
         int margin = 48 * 1.25f; // FIXME device pixel ratio
-        int topMargin = h - (128 - 16) * 1.25f; // FIXME device pixel ratio
+        int topMargin = h - (quarter - 16) * 1.25f; // FIXME device pixel ratio
         int bottomMargin = 16 * 1.25f; // FIXME device pixel ratio
         _traceViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
     }
@@ -122,7 +123,7 @@ void EMRenderer::update(float t)
 
         mv::Vector3f dimensions = extent.emax - extent.emin;
 
-        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
+        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.5f;
 
         // Map from the original cell to its height being [0, 1], and the other dimensions proportional
         _modelMatrix.setToIdentity();
@@ -180,7 +181,7 @@ void EMRenderer::update(float t)
 
         CellMorphology::Extent extent = cro->morphologyObject.ComputeExtents();
         mv::Vector3f dimensions = extent.emax - extent.emin;
-        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
+        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.5f;
 
         for (int i = 0; i < cro->stimulusObjects.size(); i++)
         {
@@ -192,12 +193,18 @@ void EMRenderer::update(float t)
 
                 float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
 
+                float height;
+                if (cortical)
+                    height = _scene.getCortexStructure().getDepthRange();
+                else
+                    height = maxCellHeight;
+
                 // Acquisition
                 _modelMatrix.setToIdentity();
-                _modelMatrix.translate((xOffset + maxWidth / 2) / maxCellHeight * r, 0, 0); // FIXME maxCellHeight should be depthRange for cortical
+                _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
                 //_modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
-                _modelMatrix.translate(-0.5, 0, 0);
-                _modelMatrix.scale(1.0f / acqRO.extents.getWidth(), 0.5f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
+                _modelMatrix.translate(-0.35, 0, 0);
+                _modelMatrix.scale(0.7f / acqRO.extents.getWidth(), 0.4f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
                 _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0);
 
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
@@ -209,10 +216,10 @@ void EMRenderer::update(float t)
 
                 // Stimulus
                 _modelMatrix.setToIdentity();
-                _modelMatrix.translate((xOffset + maxWidth / 2) / maxCellHeight * r, 0, 0); // FIXME maxCellHeight should be depthRange for cortical
+                _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
                 //_modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
-                _modelMatrix.translate(-0.5, 0.5, 0);
-                _modelMatrix.scale(1.0f / stimRO.extents.getWidth(), 0.5f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
+                _modelMatrix.translate(-0.35, 0.5, 0);
+                _modelMatrix.scale(0.7f / stimRO.extents.getWidth(), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
                 _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
