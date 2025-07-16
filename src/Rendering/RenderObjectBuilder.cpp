@@ -72,8 +72,6 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
 
 void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, const CellMorphology& cellMorphology)
 {
-    bool showAxons = true; // FIXME Redo morphology storage
-
     QHash<CellMorphology::Type, MorphologyLineSegments> lineSegmentsHash;
 
     // Generate line segments
@@ -103,10 +101,6 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
 
             int itype = cellMorphology.types[id];
             CellMorphology::Type type = CellMorphology::TypeFromInt(itype);
-
-            // Hide axons if so indicated
-            if (!showAxons && type == CellMorphology::Type::Axon)
-                continue;
 
             float radius = cellMorphology.radii[id];
 

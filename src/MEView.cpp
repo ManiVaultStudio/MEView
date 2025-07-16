@@ -24,17 +24,11 @@ MEView::MEView(const PluginFactory* factory) :
     ViewPlugin(factory),
     _dropWidget(nullptr),
     _scene(Scene::getInstance()),
-    //_morphologyWidget(new MorphologyWidget(this)),
-    //_ephysWidget(new EphysWebWidget(this)),
     _meWidget(new MEWidget()),
     _primaryToolbarAction(this, "PrimaryToolbar"),
     _settingsAction(this, "SettingsAction")
 {
-    // Notice when the cell morphologies dataset changes, so that we can connect to its selection changes
-    //connect(&_scene.getMorphologyDataset(), &Dataset<CellMorphologies>::changed, this, [this]() {
-    //    if (_scene.getMorphologyDataset().isValid())
-    //        connect(&_scene.getMorphologyDataset(), &Dataset<CellMorphologies>::dataSelectionChanged, this, &MEView::onCellSelectionChanged);
-    //});
+
 }
 
 void MEView::init()
@@ -48,19 +42,12 @@ void MEView::init()
     connect(&_scene, &Scene::allRequiredDatasetsLoaded, this, &MEView::onInitialLoad);
     connect(_meWidget, &MEWidget::widgetInitialized, this, &MEView::onInitialLoad);
 
-    _primaryToolbarAction.addAction(&_settingsAction.getLineRendererButton());
-    //_primaryToolbarAction.addAction(&_settingsAction.getRealRendererButton());
     _primaryToolbarAction.addAction(&_settingsAction.getShowAxonsToggle());
     _primaryToolbarAction.addAction(&_settingsAction.getStimSetsAction());
 
-    //connect(&_settingsAction.getLineRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::LINE); });
-    //connect(&_settingsAction.getRealRendererButton(), &TriggerAction::triggered, this, [this]() { _morphologyWidget->setRenderMode(RenderMode::REAL); });
     connect(&_settingsAction.getShowAxonsToggle(), &ToggleAction::toggled, this, [this](bool toggled) { _meWidget->showAxons(toggled); });
     connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().setCurrentStimset(_settingsAction.getStimSetsAction().getCurrentText()); });
     
-    // Load webpage
-    //_ephysWidget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
-
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
 
@@ -264,11 +251,6 @@ void MEView::onCellSelectionChanged()
 
     _meWidget->SetCortical(isCortical);
     _meWidget->setSelectedCells(cells);
-
-    //// Upload cell morphologies
-    //_morphologyWidget->uploadMorphologies();
-
-    //_ephysWidget->setData(_scene.getEphysTraces()->getData(), ephysSelectionIndices);
 }
 
 ViewPlugin* CellMorphologyPluginFactory::produce()

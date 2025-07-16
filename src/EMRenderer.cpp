@@ -249,16 +249,12 @@ void EMRenderer::showAxons(bool enabled)
 {
     _showAxons = enabled;
 
-    //RebuildMorphologies();
-
     RequestNewWidgetWidth();
 }
 
 void EMRenderer::setCurrentStimset(const QString& stimSet)
 {
     _currentStimset = stimSet;
-
-    //RebuildTraces();
 }
 
 void EMRenderer::SetCortical(bool isCortical)

@@ -77,7 +77,7 @@ void MEWidget::onWidgetRendered()
     painter.endNativePainting();
 
     Scene& scene = Scene::getInstance();
-    qDebug() << "Height: " << height();
+    
     _layerDrawing.setDepthRange(scene.getCortexStructure().getMinDepth(), scene.getCortexStructure().getMaxDepth());
     _layerDrawing.drawAxes(painter);
 
