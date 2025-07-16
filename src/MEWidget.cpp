@@ -51,10 +51,10 @@ void MEWidget::onWidgetInitialized()
 {
     _emRenderer.init();
 
-    // Start 50 fps render timer
+    // Start 40 fps render timer
     QTimer* updateTimer = new QTimer();
     QObject::connect(updateTimer, &QTimer::timeout, this, [this]() { update(); });
-    updateTimer->start(1000.0f / 50);
+    updateTimer->start(1000.0f / 40);
 }
 
 void MEWidget::onWidgetResized(int w, int h)

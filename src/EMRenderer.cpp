@@ -19,7 +19,7 @@ namespace
         float maxHeight = std::numeric_limits<float>::min();
         for (int i = 0; i < cellRenderObjects.size(); i++)
         {
-            CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.ComputeExtents();
+            CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.totalExtent;
             mv::Vector3f dimensions = extent.emax - extent.emin;
 
             if (dimensions.y > maxHeight)
@@ -56,11 +56,8 @@ void EMRenderer::resize(int w, int h)
     float aspectRatio = (float)w / h;
     qDebug() << "Resize called";
     _projMatrix.setToIdentity();
-    //_projMatrix.ortho(0, aspectRatio, 0, 1, -1, 1);
-
     _projMatrix.ortho(0, aspectRatio, 0, 1, 1, -1);
 
-    vx = 0; vy = 0; vw = w; vh = h;
     _fullViewport.Set(0, 0, w, h);
 
     int quarter = h / 4;
@@ -105,7 +102,7 @@ void EMRenderer::update(float t)
     _morphologyViewport.Begin();
     _projMatrix.setToIdentity();
     _projMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
-    qDebug() << "Aspect ratio: " << _morphologyViewport.GetAspectRatio();
+
     _lineShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
 
     float xOffset = 0;
@@ -114,12 +111,17 @@ void EMRenderer::update(float t)
     //if (cortical)
     //    yToUnit = MapYRangeToUnit(-_scene.getCortexStructure().getMaxDepth(), -_scene.getCortexStructure().getMinDepth());
 
+    std::vector<CellMorphology::Type> ignoredTypes;
+    if (!_showAxons)
+        ignoredTypes.push_back(CellMorphology::Type::Axon);
+
     //qDebug() << "Rendering " << cellRenderObjects.size() << " objects.";
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
         CellRenderObject* cro = cellRenderObjects[i];
 
-        CellMorphology::Extent extent = cro->morphologyObject.ComputeExtents();
+        cro->morphologyObject.ComputeExtents(ignoredTypes);
+        const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
 
         mv::Vector3f dimensions = extent.emax - extent.emin;
 
@@ -150,6 +152,8 @@ void EMRenderer::update(float t)
         for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)
         {
             CellMorphology::Type type = it.key();
+            if (type == CellMorphology::Type::Axon && !_showAxons)
+                continue;
             MorphologyProcessRenderObject mpro = it.value();
             _lineShader.uniform1i("type", (int)type);
             glBindVertexArray(mpro.vao);
@@ -179,7 +183,7 @@ void EMRenderer::update(float t)
     {
         CellRenderObject* cro = cellRenderObjects[i];
 
-        CellMorphology::Extent extent = cro->morphologyObject.ComputeExtents();
+        const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
         mv::Vector3f dimensions = extent.emax - extent.emin;
         float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.5f;
 
@@ -246,6 +250,8 @@ void EMRenderer::showAxons(bool enabled)
     _showAxons = enabled;
 
     //RebuildMorphologies();
+
+    RequestNewWidgetWidth();
 }
 
 void EMRenderer::setCurrentStimset(const QString& stimSet)
@@ -262,20 +268,9 @@ void EMRenderer::SetCortical(bool isCortical)
 
 void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)
 {
-    std::vector<QString> cellIds;
-
     // Build list of selected cell render object references
     std::vector<CellRenderObject*> cellRenderObjects;
-    for (const Cell& cell : cells)
-    {
-        cellIds.push_back(cell.cellId);
-        auto it = _renderState._cellRenderObjects.find(cell.cellId);
-
-        if (it != _renderState._cellRenderObjects.end())
-            cellRenderObjects.push_back(&(*it));
-        else
-            qDebug() << "[EMRenderer] This should never happen, but cellId wasn't found in _cellRenderObjects";
-    }
+    BuildListOfCellRenderObjects(cells, cellRenderObjects);
 
     _renderState._selectedCells = cells;
 
@@ -313,13 +308,45 @@ void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)
         }
     }
 
+    RequestNewWidgetWidth();
+}
+
+void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
+{
+    _renderObjectBuilder.BuildCellRenderObjects(cells);
+}
+
+void EMRenderer::BuildListOfCellRenderObjects(const std::vector<Cell>& cells, std::vector<CellRenderObject*>& cellRenderObjects)
+{
+    // Build list of selected cell render object references
+    for (const Cell& cell : cells)
+    {
+        auto it = _renderState._cellRenderObjects.find(cell.cellId);
+
+        if (it != _renderState._cellRenderObjects.end())
+            cellRenderObjects.push_back(&(*it));
+        else
+            qDebug() << "[EMRenderer] This should never happen, but cellId wasn't found in _cellRenderObjects";
+    }
+}
+
+void EMRenderer::RequestNewWidgetWidth()
+{
+    std::vector<CellRenderObject*> cellRenderObjects;
+    BuildListOfCellRenderObjects(_renderState._selectedCells, cellRenderObjects);
+
+    std::vector<CellMorphology::Type> ignoredTypes;
+    if (!_showAxons)
+        ignoredTypes.push_back(CellMorphology::Type::Axon);
+
     // Compute new widget width
     float newWidgetWidthToRequest = 0;
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
-        CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.ComputeExtents();
+        cellRenderObjects[i]->morphologyObject.ComputeExtents(ignoredTypes);
+        CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.totalExtent;
         mv::Vector3f dimensions = extent.emax - extent.emin;
-        
+
         newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
     }
 
@@ -329,9 +356,4 @@ void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)
     float aspectRatioRequest = newWidgetWidthToRequest / maxOpenGLHeight;
 
     emit requestNewAspectRatio(aspectRatioRequest);
-}
-
-void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
-{
-    _renderObjectBuilder.BuildCellRenderObjects(cells);
 }

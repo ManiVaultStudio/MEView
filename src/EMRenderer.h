@@ -39,6 +39,10 @@ public: // UI State
     void showAxons(bool enabled);
     void setCurrentStimset(const QString& stimset);
 
+private:
+    void BuildListOfCellRenderObjects(const std::vector<Cell>& cells, std::vector<CellRenderObject*>& cellRenderObjects);
+    void RequestNewWidgetWidth();
+
 signals:
     void requestNewAspectRatio(float aspectRatio);
 
@@ -55,7 +59,6 @@ private:
 
     bool _isCortical = false;
 
-    int vx, vy, vw, vh;
     RenderRegion _fullViewport;
     RenderRegion _morphologyViewport;
     RenderRegion _traceViewport;

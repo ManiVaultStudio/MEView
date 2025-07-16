@@ -26,12 +26,14 @@ struct MorphologyProcessRenderObject
 class MorphologyRenderObject
 {
 public:
-    CellMorphology::Extent ComputeExtents();
+    void ComputeExtents(std::vector<CellMorphology::Type> ignoredTypes);
 
     QHash<CellMorphology::Type, MorphologyProcessRenderObject> processes;
 
     mv::Vector3f somaPosition;
     float somaRadius;
+
+    CellMorphology::Extent totalExtent;
 
     ///* Centerpoint of the morphology, around which it will rotate */
     //mv::Vector3f _anchorPoint;

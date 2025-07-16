@@ -14,14 +14,16 @@ void CellRenderObject::Cleanup(QOpenGLFunctions_3_3_Core* f)
     //f->glDeleteVertexArrays(1, &acquisitionObject.vao);
 }
 
-CellMorphology::Extent MorphologyRenderObject::ComputeExtents()
+void MorphologyRenderObject::ComputeExtents(std::vector<CellMorphology::Type> ignoredTypes)
 {
-    CellMorphology::Extent totalExtent;
     totalExtent.emin = mv::Vector3f(std::numeric_limits<float>::max());
     totalExtent.emax = mv::Vector3f(-std::numeric_limits<float>::max());
 
     for (auto it = processes.constBegin(); it != processes.constEnd(); ++it)
-        totalExtent.Extend(it.value().extents);
+    {
+        if (std::find(ignoredTypes.begin(), ignoredTypes.end(), it.key()) != ignoredTypes.end())
+            continue;
 
-    return totalExtent;
+        totalExtent.Extend(it.value().extents);
+    }
 }
