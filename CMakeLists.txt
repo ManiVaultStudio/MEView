@@ -116,7 +116,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src")
 # Target properties
 # -----------------------------------------------------------------------------
 # Request C++17
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 
 # -----------------------------------------------------------------------------
