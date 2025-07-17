@@ -128,6 +128,8 @@ add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${RENDER_SOURCES} ${EPHYS_S
 target_include_directories(${PROJECT_NAME} PRIVATE "${ManiVault_INCLUDE_DIR}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/src")
 #target_include_directories(${PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/3rdparty/curl/include/")
+target_include_directories(${PROJECT_NAME} PRIVATE "${MV_CMD_INSTALL_DIR}/$<CONFIGURATION>/include/")
+target_include_directories(${PROJECT_NAME} PRIVATE "${MV_EPD_INSTALL_DIR}/$<CONFIGURATION>/include/")
 
 
 # -----------------------------------------------------------------------------
@@ -154,10 +156,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Network)
 # to adapt the MV_LINK_PATH and PLUGIN_LINK_PATH to your install folder
 set(MV_LINK_PATH "${ManiVault_INSTALL_DIR}/$<CONFIGURATION>/lib")
 set(PLUGIN_LINK_PATH "${ManiVault_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
+set(CMDPLUGIN_LINK_PATH "${MV_CMD_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
+set(EPDPLUGIN_LINK_PATH "${MV_EPD_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
 set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${CMAKE_SHARED_LIBRARY_SUFFIX}>)
 
-set(CELL_MORPHOLOGY_DATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CellMorphologyData${MV_LINK_SUFFIX}")
-set(EPHYS_DATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}EphysData${MV_LINK_SUFFIX}")
+set(CELL_MORPHOLOGY_DATA_LINK_LIBRARY "${CMDPLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CellMorphologyData${MV_LINK_SUFFIX}")
+set(EPHYS_DATA_LINK_LIBRARY "${EPDPLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}EphysData${MV_LINK_SUFFIX}")
 
 # Link to ManiVault and data plugins
 target_link_libraries(${PROJECT_NAME} PRIVATE ManiVault::Core)
