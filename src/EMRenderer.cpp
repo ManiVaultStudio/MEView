@@ -55,8 +55,10 @@ void EMRenderer::resize(int w, int h, float pixelRatio)
 {
     float aspectRatio = (float)w / h;
     qDebug() << "Resize called";
-    _projMatrix.setToIdentity();
-    _projMatrix.ortho(0, aspectRatio, 0, 1, 1, -1);
+    _morphProjMatrix.setToIdentity();
+    _morphProjMatrix.ortho(0, aspectRatio, 0, 1, 1, -1);
+    _traceProjMatrix.setToIdentity();
+    _traceProjMatrix.ortho(0, aspectRatio, 0, 1, 1, -1);
 
     _fullViewport.Set(0, 0, w, h);
 
@@ -100,10 +102,10 @@ void EMRenderer::update(float t)
     //_viewMatrix.scale(1.0f / maxOpenGLHeight); // Map [0, maxOpenGLHeight] to [0, 1]
 
     _morphologyViewport.Begin();
-    _projMatrix.setToIdentity();
-    _projMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
+    _morphProjMatrix.setToIdentity();
+    _morphProjMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
 
-    _lineShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
+    _lineShader.uniformMatrix4f("projMatrix", _morphProjMatrix.constData());
 
     float xOffset = 0;
 
@@ -155,7 +157,7 @@ void EMRenderer::update(float t)
         _lineShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
         {
-            QVector4D clipSpace = (_projMatrix * QVector4D(xCoord, 0, 0, 1));
+            QVector4D clipSpace = (_morphProjMatrix * QVector4D(xCoord, 0, 0, 1));
             QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
             xCoord = _morphologyViewport.GetScreenCoordinates(ndc).x();
             _horizontalCellLocations.push_back(xCoord);
@@ -185,11 +187,11 @@ void EMRenderer::update(float t)
 
     _traceShader.bind();
 
-    _projMatrix.setToIdentity();
-    _projMatrix.ortho(0, _traceViewport.GetAspectRatio(), 0, 1, -1, 1);
+    _traceProjMatrix.setToIdentity();
+    _traceProjMatrix.ortho(0, _traceViewport.GetAspectRatio(), 0, 1, -1, 1);
     _viewMatrix.setToIdentity();
 
-    _traceShader.uniformMatrix4f("projMatrix", _projMatrix.constData());
+    _traceShader.uniformMatrix4f("projMatrix", _traceProjMatrix.constData());
     _traceShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
 
     xOffset = 0;
@@ -362,13 +364,21 @@ void EMRenderer::RequestNewWidgetWidth()
         CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.totalExtent;
         mv::Vector3f dimensions = extent.emax - extent.emin;
 
-        newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
+        newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.5f;
     }
 
-    float maxCellHeight = computeMaxCellHeight(cellRenderObjects);
-    float maxOpenGLHeight = computeOpenGLHeight(maxCellHeight);
+    if (newWidgetWidthToRequest == 0)
+        return;
 
-    float aspectRatioRequest = newWidgetWidthToRequest / maxOpenGLHeight;
+    _morphProjMatrix.setToIdentity();
+    _morphProjMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
+
+    float morphHeight = _isCortical ? _scene.getCortexStructure().getDepthRange() : computeMaxCellHeight(cellRenderObjects);
+    QVector4D clipSpace = (_morphProjMatrix * QVector4D(newWidgetWidthToRequest / morphHeight, 0, 0, 1));
+    QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
+    newWidgetWidthToRequest = _morphologyViewport.GetScreenCoordinates(ndc).x();
+
+    float aspectRatioRequest = newWidgetWidthToRequest / _fullViewport.GetHeight();
 
     emit requestNewAspectRatio(aspectRatioRequest);
 }

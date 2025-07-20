@@ -54,7 +54,8 @@ private:
     mv::ShaderProgram _traceShader;
     //mv::ShaderProgram _quadShader;
 
-    QMatrix4x4 _projMatrix;
+    QMatrix4x4 _morphProjMatrix;
+    QMatrix4x4 _traceProjMatrix;
     QMatrix4x4 _viewMatrix;
     QMatrix4x4 _modelMatrix;
 

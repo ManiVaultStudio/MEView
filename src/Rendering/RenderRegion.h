@@ -9,6 +9,8 @@ public:
     RenderRegion(QOpenGLFunctions_3_3_Core* f);
 
     void Set(int x, int y, int w, int h);
+    int GetWidth() { return _w; }
+    int GetHeight() { return _h; }
     float GetAspectRatio();
     QVector4D GetScreenCoordinates(QVector4D ndc);
 
