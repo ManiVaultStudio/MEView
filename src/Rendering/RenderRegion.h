@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QOpenGLFunctions_3_3_Core>
+#include <QVector4D>
 
 class RenderRegion
 {
@@ -9,6 +10,7 @@ public:
 
     void Set(int x, int y, int w, int h);
     float GetAspectRatio();
+    QVector4D GetScreenCoordinates(QVector4D ndc);
 
     void Begin();
     void End();

@@ -14,7 +14,7 @@ public:
 
     void setDepthRange(float minDepth, float maxDepth);
 
-    void drawAxes(QPainter& painter);
+    void drawAxes(QPainter& painter, bool isCortical);
 
 private:
     void drawHorizontalLine(QPainter& painter, float y);

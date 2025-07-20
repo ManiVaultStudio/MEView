@@ -51,7 +51,7 @@ void EMRenderer::init()
     glEnable(GL_LINE_SMOOTH);
 }
 
-void EMRenderer::resize(int w, int h)
+void EMRenderer::resize(int w, int h, float pixelRatio)
 {
     float aspectRatio = (float)w / h;
     qDebug() << "Resize called";
@@ -60,17 +60,17 @@ void EMRenderer::resize(int w, int h)
 
     _fullViewport.Set(0, 0, w, h);
 
-    int quarter = h / 4;
+    int quarter = h / 3.0f;
     {
-        int margin = 48 * 1.25f; // FIXME device pixel ratio
-        int topMargin = 16 * 1.25f; // FIXME device pixel ratio
-        int bottomMargin = quarter * 1.25f; // FIXME device pixel ratio
+        int margin = 48 * pixelRatio;
+        int topMargin = 32 * pixelRatio;
+        int bottomMargin = quarter;
         _morphologyViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
     }
     {
-        int margin = 48 * 1.25f; // FIXME device pixel ratio
-        int topMargin = h - (quarter - 16) * 1.25f; // FIXME device pixel ratio
-        int bottomMargin = 16 * 1.25f; // FIXME device pixel ratio
+        int margin = 48 * pixelRatio;
+        int topMargin = h - (quarter - (16 * pixelRatio));
+        int bottomMargin = 16 * pixelRatio;
         _traceViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
     }
 }
@@ -115,6 +115,8 @@ void EMRenderer::update(float t)
     if (!_showAxons)
         ignoredTypes.push_back(CellMorphology::Type::Axon);
 
+    _horizontalCellLocations.clear();
+
     //qDebug() << "Rendering " << cellRenderObjects.size() << " objects.";
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
@@ -127,6 +129,7 @@ void EMRenderer::update(float t)
 
         float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.5f;
 
+        float xCoord = 0;
         // Map from the original cell to its height being [0, 1], and the other dimensions proportional
         _modelMatrix.setToIdentity();
         if (_isCortical)
@@ -137,6 +140,8 @@ void EMRenderer::update(float t)
             _modelMatrix.translate((xOffset + maxWidth / 2) / depthRange, 0, 0);
             _modelMatrix.rotate(t, 0, 1, 0);
             _modelMatrix *= cortexMatrix;
+
+            xCoord = (xOffset + maxWidth / 2) / depthRange;
         }
         else
         {
@@ -144,8 +149,17 @@ void EMRenderer::update(float t)
             _modelMatrix.rotate(t, 0, 1, 0);
             _modelMatrix.scale(1.0f / maxCellHeight);
             _modelMatrix.translate(-extent.center.x, -extent.emin.y, -extent.center.z);
+
+            xCoord = (xOffset + maxWidth / 2) / maxCellHeight;
         }
         _lineShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
+
+        {
+            QVector4D clipSpace = (_projMatrix * QVector4D(xCoord, 0, 0, 1));
+            QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
+            xCoord = _morphologyViewport.GetScreenCoordinates(ndc).x();
+            _horizontalCellLocations.push_back(xCoord);
+        }
 
         _lineShader.uniform3f("cellTypeColor", cro->cellTypeColor);
 
@@ -208,7 +222,7 @@ void EMRenderer::update(float t)
                 _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
                 //_modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
                 _modelMatrix.translate(-0.35, 0, 0);
-                _modelMatrix.scale(0.7f / acqRO.extents.getWidth(), 0.4f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
+                _modelMatrix.scale(0.8f / acqRO.extents.getWidth(), 0.4f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
                 _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0);
 
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
@@ -223,7 +237,7 @@ void EMRenderer::update(float t)
                 _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
                 //_modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
                 _modelMatrix.translate(-0.35, 0.5, 0);
-                _modelMatrix.scale(0.7f / stimRO.extents.getWidth(), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
+                _modelMatrix.scale(0.8f / stimRO.extents.getWidth(), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
                 _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
@@ -260,6 +274,11 @@ void EMRenderer::setCurrentStimset(const QString& stimSet)
 void EMRenderer::SetCortical(bool isCortical)
 {
     _isCortical = isCortical;
+}
+
+std::vector<float> EMRenderer::GetHorizontalCellLocations()
+{
+    return _horizontalCellLocations;
 }
 
 void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)

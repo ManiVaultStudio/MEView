@@ -28,12 +28,13 @@ public:
     }
 
     void init();
-    void resize(int w, int h);
+    void resize(int w, int h, float pixelRatio);
     void update(float t);
 
     void SetCortical(bool isCortical);
     void BuildRenderObjects(const std::vector<Cell>& cells);
     void SetSelectedCellIds(const std::vector<Cell>& cells);
+    std::vector<float> GetHorizontalCellLocations();
 
 public: // UI State
     void showAxons(bool enabled);
@@ -58,6 +59,8 @@ private:
     QMatrix4x4 _modelMatrix;
 
     bool _isCortical = false;
+
+    std::vector<float> _horizontalCellLocations;
 
     RenderRegion _fullViewport;
     RenderRegion _morphologyViewport;

@@ -61,7 +61,7 @@ void MEWidget::onWidgetResized(int w, int h)
 {
     qDebug() << "Widget resize";
     _width = w; _height = h;
-    _emRenderer.resize(w, h);
+    _emRenderer.resize(w, h, devicePixelRatioF());
 }
 
 void MEWidget::onWidgetRendered()
@@ -79,11 +79,28 @@ void MEWidget::onWidgetRendered()
     Scene& scene = Scene::getInstance();
     
     _layerDrawing.setDepthRange(scene.getCortexStructure().getMinDepth(), scene.getCortexStructure().getMaxDepth());
-    _layerDrawing.drawAxes(painter);
+    _layerDrawing.drawAxes(painter, _isCortical);
 
     painter.beginNativePainting();
     _emRenderer.update(t);
     painter.endNativePainting();
+
+    std::vector<float> horizontalCellLocations = _emRenderer.GetHorizontalCellLocations();
+    for (int i = 0; i < horizontalCellLocations.size(); i++)
+    {
+        int xCoord = horizontalCellLocations[i] / devicePixelRatioF();
+        int yCoord = 16;
+
+        QFontMetrics fm(painter.font());
+        int textWidth = fm.horizontalAdvance(_cells[i].cluster);
+        int textHeight = fm.height();
+
+        // Calculate top-left corner to draw the text so that it is centered
+        int x = xCoord - textWidth / 2;
+        int y = yCoord + fm.ascent() - textHeight / 2;
+
+        painter.drawText(x, y, _cells[i].cluster);
+    }
 
     painter.end();
 }
