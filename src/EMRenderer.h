@@ -56,7 +56,6 @@ private:
 
     QMatrix4x4 _morphProjMatrix;
     QMatrix4x4 _traceProjMatrix;
-    QMatrix4x4 _viewMatrix;
     QMatrix4x4 _modelMatrix;
 
     bool _isCortical = false;

@@ -1,7 +1,6 @@
 #version 330 core
 
 uniform mat4 projMatrix;
-uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 
 uniform vec3 cellTypeColor;
@@ -42,5 +41,5 @@ void main()
 
     pass_color = color;
 
-    gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(position, 1);
+    gl_Position = projMatrix * modelMatrix * vec4(position, 1);
 }

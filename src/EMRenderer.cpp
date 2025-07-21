@@ -27,11 +27,6 @@ namespace
         }
         return maxHeight;
     }
-
-    float computeOpenGLHeight(float maxCellHeight)
-    {
-        return maxCellHeight * 1.4; // 3/4 cell, 1/4 trace + some margin -> total height = 1.333 * maxCellHeight + margin ~ 1.4
-    }
 }
 
 void EMRenderer::init()
@@ -55,10 +50,6 @@ void EMRenderer::resize(int w, int h, float pixelRatio)
 {
     float aspectRatio = (float)w / h;
     qDebug() << "Resize called";
-    _morphProjMatrix.setToIdentity();
-    _morphProjMatrix.ortho(0, aspectRatio, 0, 1, 1, -1);
-    _traceProjMatrix.setToIdentity();
-    _traceProjMatrix.ortho(0, aspectRatio, 0, 1, 1, -1);
 
     _fullViewport.Set(0, 0, w, h);
 
@@ -75,6 +66,11 @@ void EMRenderer::resize(int w, int h, float pixelRatio)
         int bottomMargin = 16 * pixelRatio;
         _traceViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
     }
+
+    _morphProjMatrix.setToIdentity();
+    _morphProjMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
+    _traceProjMatrix.setToIdentity();
+    _traceProjMatrix.ortho(0, _traceViewport.GetAspectRatio(), 0, 1, -1, 1);
 }
 
 void EMRenderer::update(float t)
@@ -85,33 +81,15 @@ void EMRenderer::update(float t)
 
     // Build list of selected cell render object references
     std::vector<CellRenderObject*> cellRenderObjects;
-    for (const Cell& cell : _renderState._selectedCells)
-    {
-        auto it = _renderState._cellRenderObjects.find(cell.cellId);
-
-        if (it != _renderState._cellRenderObjects.end())
-            cellRenderObjects.push_back(&(*it));
-        else
-            qDebug() << "[EMRenderer] This should never happen, but cellId wasn't found in _cellRenderObjects";
-    }
+    BuildListOfCellRenderObjects(_renderState._selectedCells, cellRenderObjects);
 
     float maxCellHeight = computeMaxCellHeight(cellRenderObjects);
-    float maxOpenGLHeight = computeOpenGLHeight(maxCellHeight);
-    _viewMatrix.setToIdentity();
-    _lineShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
-    //_viewMatrix.scale(1.0f / maxOpenGLHeight); // Map [0, maxOpenGLHeight] to [0, 1]
 
     _morphologyViewport.Begin();
-    _morphProjMatrix.setToIdentity();
-    _morphProjMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
 
     _lineShader.uniformMatrix4f("projMatrix", _morphProjMatrix.constData());
 
     float xOffset = 0;
-
-    //QMatrix4x4 yToUnit;
-    //if (cortical)
-    //    yToUnit = MapYRangeToUnit(-_scene.getCortexStructure().getMaxDepth(), -_scene.getCortexStructure().getMinDepth());
 
     std::vector<CellMorphology::Type> ignoredTypes;
     if (!_showAxons)
@@ -119,7 +97,6 @@ void EMRenderer::update(float t)
 
     _horizontalCellLocations.clear();
 
-    //qDebug() << "Rendering " << cellRenderObjects.size() << " objects.";
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
         CellRenderObject* cro = cellRenderObjects[i];
@@ -187,12 +164,7 @@ void EMRenderer::update(float t)
 
     _traceShader.bind();
 
-    _traceProjMatrix.setToIdentity();
-    _traceProjMatrix.ortho(0, _traceViewport.GetAspectRatio(), 0, 1, -1, 1);
-    _viewMatrix.setToIdentity();
-
     _traceShader.uniformMatrix4f("projMatrix", _traceProjMatrix.constData());
-    _traceShader.uniformMatrix4f("viewMatrix", _viewMatrix.constData());
 
     xOffset = 0;
     for (int i = 0; i < cellRenderObjects.size(); i++)
@@ -222,7 +194,6 @@ void EMRenderer::update(float t)
                 // Acquisition
                 _modelMatrix.setToIdentity();
                 _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
-                //_modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
                 _modelMatrix.translate(-0.35, 0, 0);
                 _modelMatrix.scale(0.8f / acqRO.extents.getWidth(), 0.4f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
                 _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0);
@@ -237,7 +208,6 @@ void EMRenderer::update(float t)
                 // Stimulus
                 _modelMatrix.setToIdentity();
                 _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
-                //_modelMatrix.scale(maxOpenGLHeight * 0.2f, maxOpenGLHeight * 0.1f, 1);
                 _modelMatrix.translate(-0.35, 0.5, 0);
                 _modelMatrix.scale(0.8f / stimRO.extents.getWidth(), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
                 _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
