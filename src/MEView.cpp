@@ -118,6 +118,15 @@ void MEView::setStimulusSetOptions(const QSet<QString>& stimSets)
     qDebug() << "setStimulusSetOptions" << stimSets.size();
     QStringList stimSetList = QStringList(stimSets.begin(), stimSets.end());
     _settingsAction.getStimSetsAction().setOptions(stimSetList);
+
+    // Set initially on suprathresh
+    for (int i = 0; i < stimSetList.size(); i++)
+    {
+        if (stimSetList[i] == "X4PS_SupraThresh")
+        {
+            _settingsAction.getStimSetsAction().setCurrentText(stimSetList[i]);
+        }
+    }
 }
 
 void MEView::onInitialLoad()
