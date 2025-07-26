@@ -274,7 +274,7 @@ void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)
             const Experiment& experiment = *cell.ephysTraces;
 
             if (experiment.getStimuli().empty())
-                break;
+                continue;
 
             for (int j = 0; j < experiment.getStimuli().size(); j++)
             {
