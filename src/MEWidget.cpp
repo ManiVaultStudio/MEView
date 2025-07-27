@@ -13,6 +13,9 @@ MEWidget::MEWidget() :
 
     //setMinimumSize(10, 10);
     setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
+
+    setMouseTracking(true);
+    popup = new HoverPopup();
 }
 
 void MEWidget::setCells(const std::vector<Cell>& cells)
@@ -107,6 +110,45 @@ void MEWidget::onWidgetRendered()
 
 void MEWidget::onWidgetCleanup()
 {
+}
+
+void MEWidget::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        QPoint localPos = event->pos(); // position inside the widget
+        QPoint globalPos = mapToGlobal(localPos);
+
+        std::vector<float> cellLocations = _emRenderer.GetHorizontalCellLocations();
+        Cell* cell = nullptr;
+        float closestDist = std::numeric_limits<float>::max();
+        for (int i = 0; i < cellLocations.size(); i++)
+        {
+            int xCoord = cellLocations[i] / devicePixelRatioF(); // Non-dpr coord
+            float dist = abs(xCoord - localPos.x());
+            qDebug() << "X:" << xCoord << "Mx: " << localPos.x();
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                cell = &_cells[i];
+            }
+        }
+
+        if (cell != nullptr)
+        {
+            popup->setCell(*cell);
+
+            popup->move(globalPos + QPoint(10, -200));
+            popup->show();
+        }
+    }
+    QWidget::mousePressEvent(event);
+}
+
+void MEWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    popup->hide();
+    QWidget::mouseMoveEvent(event);
 }
 
 void MEWidget::onNewAspectRatioRequested(float aspectRatio)

@@ -43,6 +43,8 @@ set(PLUGIN_SOURCES
     src/MorphologyDescription.cpp
     src/SettingsAction.h
     src/SettingsAction.cpp
+    src/HoverPopup.h
+    src/HoverPopup.cpp
     src/Scene.h
     src/Scene.cpp
     src/LRUCache.h

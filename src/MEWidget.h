@@ -4,6 +4,7 @@
 
 #include "LayerDrawing.h"
 #include "EMRenderer.h"
+#include "HoverPopup.h"
 
 #include "widgets/OpenGLWidget.h"
 
@@ -30,6 +31,10 @@ protected: // mv::gui::OpenGLWidget overrides
     virtual void onWidgetRendered() override;
     virtual void onWidgetCleanup() override;
 
+protected:
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+
 public slots:
     void onNewAspectRatioRequested(float aspectRatio);
 
@@ -43,4 +48,6 @@ private:
     EMRenderer _emRenderer;
 
     float t = 0;
+
+    HoverPopup* popup = nullptr;
 };
