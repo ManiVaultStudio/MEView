@@ -39,7 +39,7 @@ class EphysWebWidget : public mv::gui::WebWidget
 {
     Q_OBJECT
 public:
-    EphysWebWidget(MEView* plugin);
+    EphysWebWidget();
     ~EphysWebWidget();
 
     JSCommunicationObject& getCommObject() { return _commObject; }

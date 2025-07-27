@@ -2,6 +2,8 @@
 
 #include "Scene.h"
 
+#include "Electrophysiology/EphysWebWidget.h"
+
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -9,24 +11,17 @@
 class HoverPopup : public QWidget
 {
 public:
-    HoverPopup(QWidget* parent = nullptr) : QWidget(parent, Qt::ToolTip) {
-        setAttribute(Qt::WA_ShowWithoutActivating);
-        QLabel* label = new QLabel("This is a custom popup", this);
-        _cellLabel = new QLabel();
+    HoverPopup(QWidget* parent = nullptr);
 
-        setFixedSize(400, 400);
-        _layout = new QVBoxLayout(this);
-        _layout->addWidget(label);
-        _layout->addWidget(_cellLabel);
-        setLayout(_layout);
-    }
+    void setCell(Cell& cell);
 
-    void setCell(Cell& cell)
-    {
-        _cellLabel->setText("Cell: " + cell.cellId);
-    }
+protected:
+    void leaveEvent(QEvent* event) override;
 
 private:
     QVBoxLayout* _layout;
+
     QLabel* _cellLabel;
+    QLabel* _clusterLabel;
+    EphysWebWidget* _ephysWebWidget;
 };

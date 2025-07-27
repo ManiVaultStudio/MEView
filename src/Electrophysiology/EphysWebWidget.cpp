@@ -18,7 +18,7 @@ QStringList newFormatStims = { "X1PS_SubThresh", "X3LP_Rheo", "X4PS_SupraThresh"
 QStringList oldFormatStims = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO" };
 
 QStringList subStims = { "X1PS_SubThresh" };
-QStringList includedStims = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO", "X3LP_Rheo", "X4PS_SupraThresh" };
+QStringList includedStimsets = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO", "X3LP_Rheo", "X4PS_SupraThresh" };
 
 namespace
 {
@@ -63,7 +63,7 @@ JSCommunicationObject::JSCommunicationObject()
 // EphysWebWidget
 // =============================================================================
 
-EphysWebWidget::EphysWebWidget(MEView* plugin) :
+EphysWebWidget::EphysWebWidget() :
     _commObject(),
     _scene(Scene::getInstance())
 {
@@ -121,7 +121,7 @@ void EphysWebWidget::setData(std::vector<Experiment>& experiments, const std::ve
 
         // Build list of recordings that should be included in the cell's graph
         QJsonArray recordingArray;
-        QStringList& includedStims = includedStims;
+        QStringList& includedStims = includedStimsets;
 
         float axMin = std::numeric_limits<float>::max();
         float axMax = -std::numeric_limits<float>::max();
@@ -165,9 +165,6 @@ void EphysWebWidget::setData(std::vector<Experiment>& experiments, const std::ve
 
             if (includedStims.contains(acquisition.GetStimulusDescription()))
             {
-                if (recordingArray.count() >= 3)
-                    break;
-
                 addRecordingToArray(recordingArray, acquisition, stimulus);
 
                 if (acquisition.GetData().xMin < axMin) axMin = acquisition.GetData().xMin;

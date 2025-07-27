@@ -136,10 +136,10 @@ void MEWidget::mousePressEvent(QMouseEvent* event)
 
         if (cell != nullptr)
         {
-            popup->setCell(*cell);
-
             popup->move(globalPos + QPoint(10, -200));
             popup->show();
+
+            popup->setCell(*cell);
         }
     }
     QWidget::mousePressEvent(event);
@@ -147,7 +147,7 @@ void MEWidget::mousePressEvent(QMouseEvent* event)
 
 void MEWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    popup->hide();
+    //popup->hide();
     QWidget::mouseMoveEvent(event);
 }
 
