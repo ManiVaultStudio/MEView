@@ -106,7 +106,7 @@ void EMRenderer::update(float t)
 
         mv::Vector3f dimensions = extent.emax - extent.emin;
 
-        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.5f;
+        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
 
         float xCoord = 0;
         // Map from the original cell to its height being [0, 1], and the other dimensions proportional
@@ -173,7 +173,7 @@ void EMRenderer::update(float t)
 
         const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
         mv::Vector3f dimensions = extent.emax - extent.emin;
-        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.5f;
+        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
 
         for (int i = 0; i < cro->stimulusObjects.size(); i++)
         {
@@ -334,7 +334,7 @@ void EMRenderer::RequestNewWidgetWidth()
         CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.totalExtent;
         mv::Vector3f dimensions = extent.emax - extent.emin;
 
-        newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.5f;
+        newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
     }
 
     if (newWidgetWidthToRequest == 0)
