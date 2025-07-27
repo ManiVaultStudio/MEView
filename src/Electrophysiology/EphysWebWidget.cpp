@@ -18,7 +18,7 @@ QStringList newFormatStims = { "X1PS_SubThresh", "X3LP_Rheo", "X4PS_SupraThresh"
 QStringList oldFormatStims = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO" };
 
 QStringList subStims = { "X1PS_SubThresh" };
-QStringList supraStims = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO", "X3LP_Rheo", "X4PS_SupraThresh" };
+QStringList includedStims = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO", "X3LP_Rheo", "X4PS_SupraThresh" };
 
 namespace
 {
@@ -121,7 +121,7 @@ void EphysWebWidget::setData(std::vector<Experiment>& experiments, const std::ve
 
         // Build list of recordings that should be included in the cell's graph
         QJsonArray recordingArray;
-        QStringList& includedStims = supraStims;
+        QStringList& includedStims = includedStims;
 
         float axMin = std::numeric_limits<float>::max();
         float axMax = -std::numeric_limits<float>::max();
