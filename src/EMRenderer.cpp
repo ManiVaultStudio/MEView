@@ -68,9 +68,9 @@ void EMRenderer::resize(int w, int h, float pixelRatio)
     }
 
     _morphProjMatrix.setToIdentity();
-    _morphProjMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
+    _morphProjMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -3, 3);
     _traceProjMatrix.setToIdentity();
-    _traceProjMatrix.ortho(0, _traceViewport.GetAspectRatio(), 0, 1, -1, 1);
+    _traceProjMatrix.ortho(0, _traceViewport.GetAspectRatio(), 0, 1, -3, 3);
 }
 
 void EMRenderer::update(float t)
