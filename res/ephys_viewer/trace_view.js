@@ -1,6 +1,6 @@
-const chartWidth = 140
-const acqHeight = 140
-const stimHeight = 100
+const chartWidth = 180
+const acqHeight = 160
+const stimHeight = 120
 
 function drawTrace(jsonDoc)
 {
@@ -255,8 +255,7 @@ function drawTrace(jsonDoc)
 
     const s2Time = performance.now()
     
-    let graphArray = jsonDoc["graphs"]
-    var numGraphs  = graphArray.length;
+    let graphObj = jsonDoc["graph"]
     
     var div = document.getElementById("traceRow");
     // Clear column divs
@@ -264,17 +263,17 @@ function drawTrace(jsonDoc)
     {
         div.removeChild(div.lastChild);
     }
-        const s3Time = performance.now()
+    const s3Time = performance.now()
+    
     // Generate new ones
-    for (let i = 0; i < numGraphs; i++)
-    {
-        var newDiv = document.createElement('div');
-        newDiv.className = "chart-div"
-        newDiv.setAttribute("id", "container" + i);
-        div.appendChild(newDiv);
+    let i = 0;
+    var newDiv = document.createElement('div');
+    newDiv.className = "chart-div"
+    newDiv.setAttribute("id", "container" + i);
+    div.appendChild(newDiv);
 
-        drawGraph("#container" + i, graphArray[i])
-    }
+    drawGraph("#container" + i, graphObj)
+
     const endTime = performance.now()
     
     log(`Call to drawTrace took ${endTime - s3Time} ${s3Time - s2Time} ${s2Time - s1Time} ${s1Time - startTime} milliseconds`)

@@ -44,8 +44,7 @@ public:
 
     JSCommunicationObject& getCommObject() { return _commObject; }
 
-    void setData(std::vector<Experiment>& experiments, const std::vector<uint32_t>& selectionIndices);
-    void setData(const std::vector<Recording>& acquisitions, const std::vector<Recording>& stimuli);
+    void setData(const Experiment& experiment, const std::vector<uint32_t>& sweeps);
 
 private slots:
     void onWebPageFullyLoaded();

@@ -26,9 +26,8 @@ void HoverPopup::setCell(Cell& cell)
 
     if (cell.ephysTraces != nullptr)
     {
-        std::vector<Experiment> experiments;
-        experiments.push_back(*cell.ephysTraces);
-        _ephysWebWidget->setData(experiments, std::vector<uint32_t>{ 0 });
+        std::vector<uint32_t> sweeps = cell.ephysTraces->getStimsetSweeps("X4PS_SupraThresh");
+        _ephysWebWidget->setData(*cell.ephysTraces, sweeps);
     }
 }
 
