@@ -9,9 +9,14 @@ try {
         QtBridge = channel.objects.QtBridge;
 
         // register signals
-        QtBridge.setData.connect(function () { const data_json = JSON.parse(arguments[0]); drawTrace(data_json); });
+        QtBridge.setData.connect(function () {
+            const data_json = JSON.parse(arguments[0]);
+            setSweepOptions(data_json);
+            drawTrace(data_json);
+        });
         QtBridge.setFilterInJS.connect(function () { drawChart(arguments[0]); });
         QtBridge.setHeaderOptions.connect(function () { setHeaderOptions(arguments[0]); });
+        QtBridge.setNumSweeps.connect(function () { setNumSweeps(arguments[0]); });
 
         // confirm successful connection
         isQtAvailable = true;

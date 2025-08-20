@@ -41,9 +41,13 @@ namespace
         stimulusObj["xData"] = stimXData;
         stimulusObj["yData"] = stimYData;
 
+        if (stimulus.GetSweepNumber() != acquisition.GetSweepNumber())
+            qWarning() << "Showing mismatching sweeps, stim: " << stimulus.GetSweepNumber() << " acq: " << acquisition.GetSweepNumber();
+
         QJsonObject recordingObj;
         recordingObj.insert("acquisition", acquisitionObj);
         recordingObj.insert("stimulus", stimulusObj);
+        recordingObj.insert("sweepNumber", stimulus.GetSweepNumber());
         //recordingObj.insert("title", acquisition.GetStimulusDescription());
 
         recordingArray.append(recordingObj);
@@ -88,6 +92,11 @@ EphysWebWidget::EphysWebWidget() :
 EphysWebWidget::~EphysWebWidget()
 {
 
+}
+
+void EphysWebWidget::setNumSweeps(int numSweeps)
+{
+    //_commObject.setNumSweeps(numSweeps);
 }
 
 void EphysWebWidget::setData(const Experiment& experiment, const std::vector<uint32_t>& sweeps)

@@ -22,6 +22,7 @@ signals:
     void setData(QString data);
     void setFilterInJS(const QVariantList& data);
     void setHeaderOptions(const QVariantList& data);
+    void setNumSweeps(int numSweeps);
 
 public slots:
     // Invoked from JS side 
@@ -44,6 +45,7 @@ public:
 
     JSCommunicationObject& getCommObject() { return _commObject; }
 
+    void setNumSweeps(int numSweeps);
     void setData(const Experiment& experiment, const std::vector<uint32_t>& sweeps);
 
 private slots:

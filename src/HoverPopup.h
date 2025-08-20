@@ -4,6 +4,8 @@
 
 #include "Electrophysiology/EphysWebWidget.h"
 
+#include <actions/IntegralAction.h>
+
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -24,4 +26,5 @@ private:
     QLabel* _cellLabel;
     QLabel* _clusterLabel;
     EphysWebWidget* _ephysWebWidget;
+    mv::gui::IntegralAction* _spinnerWidget;
 };

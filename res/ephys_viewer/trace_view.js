@@ -1,12 +1,42 @@
+// Simple app state
+window.traceState = {
+  data: null,         // last jsonDoc used to draw
+  selectedSweep: 0,   // 0-based index from the spinner
+};
+
 const chartWidth = 180
 const acqHeight = 160
 const stimHeight = 120
+
+function setSweepOptions(jsonDoc)
+{
+    const spinner = document.getElementById("spinner");
+
+    let graphObj = jsonDoc["graph"]
+    
+    let recordings = graphObj["recordings"];
+    var numGraphs  = recordings.length;
+    
+    // Clear existing options
+    spinner.innerHTML = "";
+    
+        // Add new options
+    for (let i = 0; i < numGraphs; i++) {
+        let recording = recordings[i];
+        let sweepNum = parseInt(recording["sweepNumber"], 10);
+        
+        let option = document.createElement("option");
+        option.value = i;
+        option.text = "Sweep " + sweepNum;
+        spinner.appendChild(option);
+    }
+}
 
 function drawTrace(jsonDoc)
 {
     const startTime = performance.now()
     log("Draw trace");
-    
+  
     d3.select("svg").remove();
     const s1Time = performance.now()
 
@@ -18,6 +48,12 @@ function drawTrace(jsonDoc)
     const keyStimExtentY = "stimExtentY";
     const keyAcqExtentX = "acqExtentX";
     const keyAcqExtentY = "acqExtentY";
+
+    // If new data is passed, persist it
+    if (jsonDoc) window.traceState.data = jsonDoc;
+
+    const doc = window.traceState.data;
+    if (!doc) return;
 
     function drawGraph(selector, graphObj)
     {
@@ -164,6 +200,19 @@ function drawTrace(jsonDoc)
             return svg;
         }
         
+        const spinnerEl = document.getElementById('spinner');
+        let selectedSweep = 0;
+        if (spinnerEl)
+        {
+          // Ensure there's a selection; if not, default to first option when available
+          if (spinnerEl.selectedIndex === -1 && spinnerEl.options.length) {
+            spinnerEl.selectedIndex = 0;
+          }
+          selectedSweep = spinnerEl.selectedIndex; // 0..N-1
+          // If you prefer the numeric value (1..N) that you set in spinner.js:
+          // selectedSweep = Math.max(0, (parseInt(spinnerEl.value, 10) || 1) - 1);
+        }
+        
         stimSvg = drawStimulusGraph(selector, graphObj);
         acqSvg = drawAcquisitionGraph(selector, graphObj);
         
@@ -177,6 +226,7 @@ function drawTrace(jsonDoc)
         let stimExtentY = graphObj[keyStimExtentY];
         
         log("NumGraphs " + numGraphs);
+        
         // STIMULI
         for (let i = 0; i < numGraphs; i++)
         {
@@ -200,8 +250,8 @@ function drawTrace(jsonDoc)
                 .domain(stimExtentY)
                 .range([height, 0]);
             
-            let color = (i == numGraphs-1) ? "orangered" : "grey";
-            let opacity = (i == numGraphs-1) ? 1.0 : 0.2;
+            let color = (i == selectedSweep) ? "orangered" : "grey";
+            let opacity = (i == selectedSweep) ? 1.0 : 0.2;
             // Add the acquisition line
             stimSvg.append("path")
                 .datum(stim_data)
@@ -236,8 +286,8 @@ function drawTrace(jsonDoc)
                 .domain(acqExtentY)
                 .range([height, 0]);
             
-            let color = (i == 0) ? "steelblue" : "grey";
-            let opacity = (i == 0) ? 1.0 : 0.1;
+            let color = (i == selectedSweep) ? "steelblue" : "grey";
+            let opacity = (i == selectedSweep) ? 1.0 : 0.1;
             // Add the acquisition line
             acqSvg.append("path")
                 .datum(acq_data)
@@ -255,7 +305,7 @@ function drawTrace(jsonDoc)
 
     const s2Time = performance.now()
     
-    let graphObj = jsonDoc["graph"]
+    let graphObj = doc["graph"]
     
     var div = document.getElementById("traceRow");
     // Clear column divs
@@ -278,3 +328,9 @@ function drawTrace(jsonDoc)
     
     log(`Call to drawTrace took ${endTime - s3Time} ${s3Time - s2Time} ${s2Time - s1Time} ${s1Time - startTime} milliseconds`)
 }
+
+document.getElementById('spinner')?.addEventListener('change', () => {
+    log("Spinner changed");
+    // Re-use last data
+    drawTrace(window.traceState.data);
+});
