@@ -46,7 +46,7 @@ public:
     JSCommunicationObject& getCommObject() { return _commObject; }
 
     void setNumSweeps(int numSweeps);
-    void setData(const Experiment& experiment, const std::vector<uint32_t>& sweeps);
+    void setCell(const Cell& cell);
 
 private slots:
     void onWebPageFullyLoaded();

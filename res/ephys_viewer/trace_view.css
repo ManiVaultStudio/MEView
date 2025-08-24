@@ -28,3 +28,5 @@ html, body {
     width: fit-content;
     padding: 0;
 }
+
+.identity h1{margin:0; font-size:18px}

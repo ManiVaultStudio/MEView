@@ -16,6 +16,8 @@
         <file>ephys_viewer/spinner.js</file>
     </qresource>
     <qresource prefix="me_viewer">
+        <file>ephys_viewer/bootstrap.min.css</file>
         <file>js_libs/qwebchannel.tools.js</file>
+        <file>js_libs/d3@7.js</file>
     </qresource>
 </RCC>

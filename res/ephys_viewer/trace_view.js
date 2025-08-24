@@ -14,21 +14,24 @@ function setSweepOptions(jsonDoc)
 
     let graphObj = jsonDoc["graph"]
     
-    let recordings = graphObj["recordings"];
-    var numGraphs  = recordings.length;
-    
     // Clear existing options
     spinner.innerHTML = "";
-    
-        // Add new options
-    for (let i = 0; i < numGraphs; i++) {
-        let recording = recordings[i];
-        let sweepNum = parseInt(recording["sweepNumber"], 10);
         
-        let option = document.createElement("option");
-        option.value = i;
-        option.text = "Sweep " + sweepNum;
-        spinner.appendChild(option);
+    if ("recordings" in graphObj)
+    {
+        let recordings = graphObj["recordings"];
+        var numGraphs  = recordings.length;
+                
+        // Add new options
+        for (let i = 0; i < numGraphs; i++) {
+            let recording = recordings[i];
+            let sweepNum = parseInt(recording["sweepNumber"], 10);
+            
+            let option = document.createElement("option");
+            option.value = i;
+            option.text = "Sweep " + sweepNum;
+            spinner.appendChild(option);
+        }
     }
 }
 
@@ -63,7 +66,7 @@ function drawTrace(jsonDoc)
             var margin = { top: 40, right: 10, bottom: 20, left: 45 },
                 width = chartWidth - margin.left - margin.right,
                 height = stimHeight - margin.top - margin.bottom;
-            
+
             // Append the SVG object to the container
             var svg = d3.select(selector)
                 .append("svg")
@@ -72,11 +75,11 @@ function drawTrace(jsonDoc)
                 .style("display", "block")
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-            
+
             let titleData = graphObj[keyTitle];
             let stimExtentX = graphObj[keyStimExtentX];
             let stimExtentY = graphObj[keyStimExtentY];
-            
+
             // Add chart title
             svg.append("text")
                 .attr("x", width / 2)
@@ -85,7 +88,7 @@ function drawTrace(jsonDoc)
                 .style("font-size", "12px")
                 .style("font-weight", "bold")
                 .text(titleData || ""); // default to empty string if title not provided
-            
+
             // Define scales
             var x = d3.scaleLinear()
                 .domain(stimExtentX)
@@ -103,7 +106,7 @@ function drawTrace(jsonDoc)
             // Add Y axis
             svg.append("g")
                 .call(d3.axisLeft(y).ticks(4));
-            
+
             // Add X axis label
             svg.append("text")
                 .attr("x", width / 2) // Center the label
@@ -111,7 +114,7 @@ function drawTrace(jsonDoc)
                 .style("text-anchor", "middle") // Center the text
                 .style("font-size", "10px") // Make text smaller
                 .text(""); // Unit
-        
+
             // Add Y axis label
             svg.append("text")
                 .attr("transform", "rotate(-90)") // Rotate the text for Y-axis
@@ -121,7 +124,7 @@ function drawTrace(jsonDoc)
                 .style("text-anchor", "middle") // Center align text
                 .style("font-size", "10px") // Make text smaller
                 .text("pA"); // Unit
-                
+
             return svg;
         }
         
@@ -196,10 +199,24 @@ function drawTrace(jsonDoc)
             const pe = performance.now()
             
             log(`Call to drawGraph took ${pe - pm6} ${pm6 - pm5} ${pm5 - pm4} ${pm4 - pm3} ${pm3 - pm2} ${pm2 - pm1}  ${pm1 - ps} milliseconds`)
-                
+            log("draw acq")
             return svg;
         }
+
+        const cellIdLabel = document.getElementById('cellIdLabel');
+        if (cellIdLabel)
+        {
+            let cellId = graphObj["cellId"];
+            cellIdLabel.textContent = cellId;
+        }
         
+        const clusterLabel = document.getElementById('clusterLabel');
+        if (clusterLabel)
+        {
+            let cluster = graphObj["cluster"];
+            clusterLabel.textContent = cluster;
+        }
+
         const spinnerEl = document.getElementById('spinner');
         let selectedSweep = 0;
         if (spinnerEl)
@@ -212,94 +229,99 @@ function drawTrace(jsonDoc)
           // If you prefer the numeric value (1..N) that you set in spinner.js:
           // selectedSweep = Math.max(0, (parseInt(spinnerEl.value, 10) || 1) - 1);
         }
-        
-        stimSvg = drawStimulusGraph(selector, graphObj);
-        acqSvg = drawAcquisitionGraph(selector, graphObj);
-        
-        let recordings = graphObj["recordings"];
-        var numGraphs  = recordings.length;
-        
-        let acqExtentX = graphObj[keyAcqExtentX];
-        let acqExtentY = graphObj[keyAcqExtentY];
-        
-        let stimExtentX = graphObj[keyStimExtentX];
-        let stimExtentY = graphObj[keyStimExtentY];
-        
-        log("NumGraphs " + numGraphs);
-        
-        // STIMULI
-        for (let i = 0; i < numGraphs; i++)
-        {
-            let recording = recordings[i];
-            
-            let stim_xData = recording[keyStim]["xData"];
-            let stim_yData = recording[keyStim]["yData"];
-            let stim_data = stim_xData.map((x, i) => ({ x: x, y: stim_yData[i] }));
-            
-            // Set dimensions and margins
-            var margin = { top: 40, right: 10, bottom: 20, left: 45 },
-                width = chartWidth - margin.left - margin.right,
-                height = stimHeight - margin.top - margin.bottom;
-                
-            // Define scales
-            var x = d3.scaleLinear()
-                .domain(stimExtentX)
-                .range([0, width]);
 
-            var y = d3.scaleLinear()
-                .domain(stimExtentY)
-                .range([height, 0]);
-            
-            let color = (i == selectedSweep) ? "orangered" : "grey";
-            let opacity = (i == selectedSweep) ? 1.0 : 0.2;
-            // Add the acquisition line
-            stimSvg.append("path")
-                .datum(stim_data)
-                .attr("fill", "none")
-                .attr("stroke", color)
-                .attr("stroke-width", 1.5)
-                .attr("stroke-opacity", opacity)
-                .attr("d", d3.line()
-                    .x(d => x(d.x))
-                    .y(d => y(d.y))
-                );
-        }
-        // ACQUISITIONS
-        for (let i = 0; i < numGraphs; i++)
+        if ("recordings" in graphObj)
         {
-            let recording = recordings[i];
+            stimSvg = drawStimulusGraph(selector, graphObj);
+            acqSvg = drawAcquisitionGraph(selector, graphObj);
+        
+            log("draw recordings")
+            let recordings = graphObj["recordings"];
+            var numGraphs  = recordings.length;
             
-            let acq_xData = recording[keyAcq]["xData"];
-            let acq_yData = recording[keyAcq]["yData"];
-            let acq_data = acq_xData.map((x, i) => ({ x: x, y: acq_yData[i] }));
+            let acqExtentX = graphObj[keyAcqExtentX];
+            let acqExtentY = graphObj[keyAcqExtentY];
             
-            var margin = { top: 20, right: 10, bottom: 40, left: 45 },
-                width = chartWidth - margin.left - margin.right,
-                height = acqHeight - margin.top - margin.bottom;
+            let stimExtentX = graphObj[keyStimExtentX];
+            let stimExtentY = graphObj[keyStimExtentY];
+            
+            log("NumGraphs " + numGraphs);
+            
+            // STIMULI
+            for (let i = 0; i < numGraphs; i++)
+            {
+                let recording = recordings[i];
                 
-            // Define scales
-            var x = d3.scaleLinear()
-                .domain(acqExtentX)
-                .range([0, width]);
+                let stim_xData = recording[keyStim]["xData"];
+                let stim_yData = recording[keyStim]["yData"];
+                let stim_data = stim_xData.map((x, i) => ({ x: x, y: stim_yData[i] }));
+                
+                // Set dimensions and margins
+                var margin = { top: 40, right: 10, bottom: 20, left: 45 },
+                    width = chartWidth - margin.left - margin.right,
+                    height = stimHeight - margin.top - margin.bottom;
+                    
+                // Define scales
+                var x = d3.scaleLinear()
+                    .domain(stimExtentX)
+                    .range([0, width]);
 
-            var y = d3.scaleLinear()
-                .domain(acqExtentY)
-                .range([height, 0]);
-            
-            let color = (i == selectedSweep) ? "steelblue" : "grey";
-            let opacity = (i == selectedSweep) ? 1.0 : 0.1;
-            // Add the acquisition line
-            acqSvg.append("path")
-                .datum(acq_data)
-                .attr("fill", "none")
-                .attr("stroke", color)
-                .attr("stroke-width", 1.0)
-                .attr("stroke-opacity", opacity)
-                .attr("d", d3.line()
-                    .x(d => x(d.x))
-                    .y(d => y(d.y))
-                );
+                var y = d3.scaleLinear()
+                    .domain(stimExtentY)
+                    .range([height, 0]);
+                
+                let color = (i == selectedSweep) ? "orangered" : "grey";
+                let opacity = (i == selectedSweep) ? 1.0 : 0.2;
+                // Add the acquisition line
+                stimSvg.append("path")
+                    .datum(stim_data)
+                    .attr("fill", "none")
+                    .attr("stroke", color)
+                    .attr("stroke-width", 1.5)
+                    .attr("stroke-opacity", opacity)
+                    .attr("d", d3.line()
+                        .x(d => x(d.x))
+                        .y(d => y(d.y))
+                    );
+            }
+            // ACQUISITIONS
+            for (let i = 0; i < numGraphs; i++)
+            {
+                let recording = recordings[i];
+                
+                let acq_xData = recording[keyAcq]["xData"];
+                let acq_yData = recording[keyAcq]["yData"];
+                let acq_data = acq_xData.map((x, i) => ({ x: x, y: acq_yData[i] }));
+                
+                var margin = { top: 20, right: 10, bottom: 40, left: 45 },
+                    width = chartWidth - margin.left - margin.right,
+                    height = acqHeight - margin.top - margin.bottom;
+                    
+                // Define scales
+                var x = d3.scaleLinear()
+                    .domain(acqExtentX)
+                    .range([0, width]);
+
+                var y = d3.scaleLinear()
+                    .domain(acqExtentY)
+                    .range([height, 0]);
+                
+                let color = (i == selectedSweep) ? "steelblue" : "grey";
+                let opacity = (i == selectedSweep) ? 1.0 : 0.1;
+                // Add the acquisition line
+                acqSvg.append("path")
+                    .datum(acq_data)
+                    .attr("fill", "none")
+                    .attr("stroke", color)
+                    .attr("stroke-width", 1.0)
+                    .attr("stroke-opacity", opacity)
+                    .attr("d", d3.line()
+                        .x(d => x(d.x))
+                        .y(d => y(d.y))
+                    );
+            }
         }
+        
     }
 
 

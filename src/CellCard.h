@@ -10,17 +10,12 @@
 #include <QVBoxLayout>
 #include <QLabel>
 
-class HoverPopup : public QWidget
+class CellCard : public QWidget
 {
 public:
-    HoverPopup(QWidget* parent = nullptr);
+    CellCard();
 
-    void setCell(Cell& cell);
-
-protected:
-    void leaveEvent(QEvent* event) override;
-
-    void paintEvent(QPaintEvent*) override;
+    void SetCell(Cell& cell);
 
 private:
     QVBoxLayout* _layout;
@@ -29,6 +24,4 @@ private:
     QLabel* _clusterLabel;
     EphysWebWidget* _ephysWebWidget;
     mv::gui::IntegralAction* _spinnerWidget;
-
-    QWidget* innerCard = nullptr;
 };

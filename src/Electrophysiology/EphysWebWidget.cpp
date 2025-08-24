@@ -99,51 +99,67 @@ void EphysWebWidget::setNumSweeps(int numSweeps)
     //_commObject.setNumSweeps(numSweeps);
 }
 
-void EphysWebWidget::setData(const Experiment& experiment, const std::vector<uint32_t>& sweeps)
+void EphysWebWidget::setCell(const Cell& cell)
 {
     Timer t("SetData");
 
-    // Build list of recordings that should be included in the cell's graph
-    QJsonArray recordingArray;
-
-    float axMin = std::numeric_limits<float>::max();
-    float axMax = -std::numeric_limits<float>::max();
-    float ayMin = std::numeric_limits<float>::max();
-    float ayMax = -std::numeric_limits<float>::max();
-
-    float sxMin = std::numeric_limits<float>::max();
-    float sxMax = -std::numeric_limits<float>::max();
-    float syMin = std::numeric_limits<float>::max();
-    float syMax = -std::numeric_limits<float>::max();
-
-    for (uint32_t sweepIndex : sweeps)
-    {
-        // Per cell get its acquisitions and stimuli and determine what to render
-        const Recording& stimulus = experiment.getStimuli()[sweepIndex];
-        const Recording& acquisition = experiment.getAcquisitions()[sweepIndex];
-
-        addRecordingToArray(recordingArray, acquisition, stimulus);
-
-        if (acquisition.GetData().xMin < axMin) axMin = acquisition.GetData().xMin;
-        if (acquisition.GetData().xMax > axMax) axMax = acquisition.GetData().xMax;
-        if (acquisition.GetData().yMin < ayMin) ayMin = acquisition.GetData().yMin;
-        if (acquisition.GetData().yMax > ayMax) ayMax = acquisition.GetData().yMax;
-
-        if (stimulus.GetData().xMin < sxMin) sxMin = stimulus.GetData().xMin;
-        if (stimulus.GetData().xMax > sxMax) sxMax = stimulus.GetData().xMax;
-        if (stimulus.GetData().yMin < syMin) syMin = stimulus.GetData().yMin;
-        if (stimulus.GetData().yMax > syMax) syMax = stimulus.GetData().yMax;
-    }
-
     QJsonObject graphObj;
+    graphObj["cellId"] = cell.cellId;
+    graphObj["cluster"] = cell.cluster;
     graphObj["title"] = "Long Square";
-    graphObj["recordings"] = recordingArray;
 
-    // Store graph extents
-    graphObj["stimExtentX"] = QJsonArray{ sxMin, sxMax };
-    graphObj["stimExtentY"] = QJsonArray{ syMin, syMax };
-    graphObj["acqExtentX"] = QJsonArray{ axMin, axMax };
-    graphObj["acqExtentY"] = QJsonArray{ ayMin, ayMax };
+    if (cell.ephysTraces != nullptr)
+    {
+        const Experiment& experiment = *cell.ephysTraces;
+
+        const std::vector<Recording>& stimuli = experiment.getStimuli();
+
+        std::vector<uint32_t> sweeps = experiment.getStimsetSweeps("X4PS_SupraThresh");
+
+        std::sort(sweeps.begin(), sweeps.end(), [&](uint32_t a, uint32_t b) {
+            return stimuli[a].GetSweepNumber() < stimuli[b].GetSweepNumber();
+        });
+
+        // Build list of recordings that should be included in the cell's graph
+        QJsonArray recordingArray;
+
+        float axMin = std::numeric_limits<float>::max();
+        float axMax = -std::numeric_limits<float>::max();
+        float ayMin = std::numeric_limits<float>::max();
+        float ayMax = -std::numeric_limits<float>::max();
+
+        float sxMin = std::numeric_limits<float>::max();
+        float sxMax = -std::numeric_limits<float>::max();
+        float syMin = std::numeric_limits<float>::max();
+        float syMax = -std::numeric_limits<float>::max();
+
+        for (uint32_t sweepIndex : sweeps)
+        {
+            // Per cell get its acquisitions and stimuli and determine what to render
+            const Recording& stimulus = experiment.getStimuli()[sweepIndex];
+            const Recording& acquisition = experiment.getAcquisitions()[sweepIndex];
+
+            addRecordingToArray(recordingArray, acquisition, stimulus);
+
+            if (acquisition.GetData().xMin < axMin) axMin = acquisition.GetData().xMin;
+            if (acquisition.GetData().xMax > axMax) axMax = acquisition.GetData().xMax;
+            if (acquisition.GetData().yMin < ayMin) ayMin = acquisition.GetData().yMin;
+            if (acquisition.GetData().yMax > ayMax) ayMax = acquisition.GetData().yMax;
+
+            if (stimulus.GetData().xMin < sxMin) sxMin = stimulus.GetData().xMin;
+            if (stimulus.GetData().xMax > sxMax) sxMax = stimulus.GetData().xMax;
+            if (stimulus.GetData().yMin < syMin) syMin = stimulus.GetData().yMin;
+            if (stimulus.GetData().yMax > syMax) syMax = stimulus.GetData().yMax;
+        }
+
+        graphObj["recordings"] = recordingArray;
+
+        // Store graph extents
+        graphObj["stimExtentX"] = QJsonArray{ sxMin, sxMax };
+        graphObj["stimExtentY"] = QJsonArray{ syMin, syMax };
+        graphObj["acqExtentX"] = QJsonArray{ axMin, axMax };
+        graphObj["acqExtentY"] = QJsonArray{ ayMin, ayMax };
+    }
 
     QJsonObject rootObj;
     rootObj.insert("graph", graphObj);

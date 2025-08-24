@@ -4,7 +4,9 @@
 
 #include "LayerDrawing.h"
 #include "EMRenderer.h"
-#include "HoverPopup.h"
+//#include "HoverPopup.h"
+#include "RoundedPopup.h"
+#include "CellCard.h"
 
 #include "widgets/OpenGLWidget.h"
 
@@ -49,5 +51,6 @@ private:
 
     float t = 0;
 
-    HoverPopup* popup = nullptr;
+    RoundedPopup* popup = nullptr;
+    CellCard* cellCard = nullptr;
 };

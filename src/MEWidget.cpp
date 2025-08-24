@@ -15,7 +15,9 @@ MEWidget::MEWidget() :
     setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
 
     setMouseTracking(true);
-    popup = new HoverPopup();
+    cellCard = new CellCard();
+    popup = new RoundedPopup();
+    popup->SetWidget(cellCard);
 }
 
 void MEWidget::setCells(const std::vector<Cell>& cells)
@@ -114,34 +116,35 @@ void MEWidget::onWidgetCleanup()
 
 void MEWidget::mousePressEvent(QMouseEvent* event)
 {
-    //if (event->button() == Qt::LeftButton)
-    //{
-    //    QPoint localPos = event->pos(); // position inside the widget
-    //    QPoint globalPos = mapToGlobal(localPos);
+    if (event->button() == Qt::LeftButton)
+    {
+        QPoint localPos = event->pos(); // position inside the widget
+        QPoint globalPos = mapToGlobal(localPos);
 
-    //    std::vector<float> cellLocations = _emRenderer.GetHorizontalCellLocations();
-    //    Cell* cell = nullptr;
-    //    float closestDist = std::numeric_limits<float>::max();
-    //    for (int i = 0; i < cellLocations.size(); i++)
-    //    {
-    //        int xCoord = cellLocations[i] / devicePixelRatioF(); // Non-dpr coord
-    //        float dist = abs(xCoord - localPos.x());
-    //        qDebug() << "X:" << xCoord << "Mx: " << localPos.x();
-    //        if (dist < closestDist)
-    //        {
-    //            closestDist = dist;
-    //            cell = &_cells[i];
-    //        }
-    //    }
+        std::vector<float> cellLocations = _emRenderer.GetHorizontalCellLocations();
+        Cell* cell = nullptr;
+        float closestDist = std::numeric_limits<float>::max();
+        for (int i = 0; i < cellLocations.size(); i++)
+        {
+            int xCoord = cellLocations[i] / devicePixelRatioF(); // Non-dpr coord
+            float dist = abs(xCoord - localPos.x());
+            //qDebug() << "X:" << xCoord << "Mx: " << localPos.x();
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                cell = &_cells[i];
+                qDebug() << "IIII: " << i << cell->cellId;
+            }
+        }
 
-    //    if (cell != nullptr)
-    //    {
-    //        popup->move(globalPos + QPoint(10, -200));
-    //        popup->show();
+        if (cell != nullptr)
+        {
+            popup->move(globalPos + QPoint(10, -200));
+            popup->show();
 
-    //        popup->setCell(*cell);
-    //    }
-    //}
+            cellCard->SetCell(*cell);
+        }
+    }
     QWidget::mousePressEvent(event);
 }
 

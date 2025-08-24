@@ -43,8 +43,12 @@ set(PLUGIN_SOURCES
     src/MorphologyDescription.cpp
     src/SettingsAction.h
     src/SettingsAction.cpp
+    src/RoundedPopup.h
+    src/RoundedPopup.cpp
     src/HoverPopup.h
     src/HoverPopup.cpp
+    src/CellCard.h
+    src/CellCard.cpp
     src/Scene.h
     src/Scene.cpp
     src/LRUCache.h
