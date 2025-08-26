@@ -153,7 +153,7 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
         mpro.numVertices = (int)ls.segments.size();
         mpro.extents = cellMorphology.extents[type];
     }
-    qDebug() << "Number of line segments in hash " << lineSegmentsHash.size();
+    // qDebug() << "Number of line segments in hash " << lineSegmentsHash.size();
 }
 
 void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recording& recording, bool isStim)

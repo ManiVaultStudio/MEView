@@ -36,12 +36,12 @@ private:
 
 };
 
-class EphysWebWidget : public mv::gui::WebWidget
+class CellCardWidget : public mv::gui::WebWidget
 {
     Q_OBJECT
 public:
-    EphysWebWidget();
-    ~EphysWebWidget();
+    CellCardWidget();
+    ~CellCardWidget();
 
     JSCommunicationObject& getCommObject() { return _commObject; }
 

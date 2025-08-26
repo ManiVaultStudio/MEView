@@ -2,7 +2,7 @@
 
 #include "Scene.h"
 
-#include "Electrophysiology/EphysWebWidget.h"
+#include "CellCard/CellCardWidget.h"
 
 #include <actions/IntegralAction.h>
 
@@ -22,6 +22,7 @@ private:
 
     QLabel* _cellLabel;
     QLabel* _clusterLabel;
-    EphysWebWidget* _ephysWebWidget;
-    mv::gui::IntegralAction* _spinnerWidget;
+
+    CellCardWidget* _widget;
+    //mv::gui::IntegralAction* _spinnerWidget;
 };

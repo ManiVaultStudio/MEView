@@ -1,4 +1,4 @@
-#include "EphysWebWidget.h"
+#include "CellCardWidget.h"
 
 #include "MEView.h"
 
@@ -19,6 +19,25 @@ QStringList oldFormatStims = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINE
 
 QStringList subStims = { "X1PS_SubThresh" };
 QStringList includedStimsets = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO", "X3LP_Rheo", "X4PS_SupraThresh" };
+
+/**
+* JSON Structure
+* 
+* - cell
+*    - cellId
+*    - cluster
+*    - ephys
+*       - stimset
+*       - bounds
+*       - recordings[]
+*           - sweepNumber
+*           - stimulus
+*               - xData[]
+*               - yData[]
+*           - acquisition
+*               - xData[]
+*               - yData[]
+*/
 
 namespace
 {
@@ -67,11 +86,11 @@ JSCommunicationObject::JSCommunicationObject()
 // EphysWebWidget
 // =============================================================================
 
-EphysWebWidget::EphysWebWidget() :
+CellCardWidget::CellCardWidget() :
     _commObject(),
     _scene(Scene::getInstance())
 {
-    connect(this, &WebWidget::webPageFullyLoaded, this, &EphysWebWidget::onWebPageFullyLoaded);
+    connect(this, &WebWidget::webPageFullyLoaded, this, &CellCardWidget::onWebPageFullyLoaded);
     qDebug() << "Connect to event";
     // For more info on drag&drop behavior, see the ExampleViewPlugin project
     setAcceptDrops(true);
@@ -89,24 +108,24 @@ EphysWebWidget::EphysWebWidget() :
     setMinimumHeight(240);
 }
 
-EphysWebWidget::~EphysWebWidget()
+CellCardWidget::~CellCardWidget()
 {
 
 }
 
-void EphysWebWidget::setNumSweeps(int numSweeps)
+void CellCardWidget::setNumSweeps(int numSweeps)
 {
     //_commObject.setNumSweeps(numSweeps);
 }
 
-void EphysWebWidget::setCell(const Cell& cell)
+void CellCardWidget::setCell(const Cell& cell)
 {
     Timer t("SetData");
 
-    QJsonObject graphObj;
-    graphObj["cellId"] = cell.cellId;
-    graphObj["cluster"] = cell.cluster;
-    graphObj["title"] = "Long Square";
+    QJsonObject cellObj;
+    cellObj["cellId"] = cell.cellId;
+    cellObj["cluster"] = cell.cluster;
+    //cellObj["title"] = "Long Square";
 
     if (cell.ephysTraces != nullptr)
     {
@@ -152,17 +171,22 @@ void EphysWebWidget::setCell(const Cell& cell)
             if (stimulus.GetData().yMax > syMax) syMax = stimulus.GetData().yMax;
         }
 
-        graphObj["recordings"] = recordingArray;
+        QJsonObject ephysObj;
+
+        ephysObj["stimset"] = "X4PS_SupraThresh";
+        ephysObj["recordings"] = recordingArray;
 
         // Store graph extents
-        graphObj["stimExtentX"] = QJsonArray{ sxMin, sxMax };
-        graphObj["stimExtentY"] = QJsonArray{ syMin, syMax };
-        graphObj["acqExtentX"] = QJsonArray{ axMin, axMax };
-        graphObj["acqExtentY"] = QJsonArray{ ayMin, ayMax };
+        ephysObj["stimExtentX"] = QJsonArray{ sxMin, sxMax };
+        ephysObj["stimExtentY"] = QJsonArray{ syMin, syMax };
+        ephysObj["acqExtentX"] = QJsonArray{ axMin, axMax };
+        ephysObj["acqExtentY"] = QJsonArray{ ayMin, ayMax };
+
+        cellObj.insert("ephys", ephysObj);
     }
 
     QJsonObject rootObj;
-    rootObj.insert("graph", graphObj);
+    rootObj.insert("cell", cellObj);
 
     QJsonDocument doc(rootObj);
     QString strJson(doc.toJson(QJsonDocument::Indented));
@@ -179,7 +203,7 @@ void JSCommunicationObject::js_partitionHovered(const QString& data) {
     }
 }
 
-void EphysWebWidget::onWebPageFullyLoaded()
+void CellCardWidget::onWebPageFullyLoaded()
 {
     qDebug() << "EphysWebWidget::onWebPageFullyLoaded: Web page completely loaded.";
     //emit webPageLoaded();
@@ -187,18 +211,18 @@ void EphysWebWidget::onWebPageFullyLoaded()
     qDebug() << "EphysWebWidget size: " << width() << height();
 }
 
-void EphysWebWidget::onPartitionHovered(QString name)
+void CellCardWidget::onPartitionHovered(QString name)
 {
     qDebug() << "You hovered over partition: " << name;
 }
 
-void EphysWebWidget::resizeEvent(QResizeEvent* event)
+void CellCardWidget::resizeEvent(QResizeEvent* event)
 {
     (void)event;
     //applyAspectRatio();
 }
 
-void EphysWebWidget::applyAspectRatio()
+void CellCardWidget::applyAspectRatio()
 {
     int w = this->width();
     int h = this->height();

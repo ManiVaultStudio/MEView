@@ -7,7 +7,6 @@
 #include "NeuronDescriptor.h"
 
 #include "Scene.h"
-#include "Electrophysiology/EphysWebWidget.h"
 
 #include <ViewPlugin.h>
 
@@ -71,8 +70,6 @@ private:
 
     Scene&                          _scene;
 
-    //MorphologyWidget*               _morphologyWidget;
-    //EphysWebWidget*                 _ephysWidget;
     MEWidget*                       _meWidget;
 };
 

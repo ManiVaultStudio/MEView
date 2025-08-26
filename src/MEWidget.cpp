@@ -133,7 +133,6 @@ void MEWidget::mousePressEvent(QMouseEvent* event)
             {
                 closestDist = dist;
                 cell = &_cells[i];
-                qDebug() << "IIII: " << i << cell->cellId;
             }
         }
 

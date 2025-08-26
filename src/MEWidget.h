@@ -6,7 +6,7 @@
 #include "EMRenderer.h"
 //#include "HoverPopup.h"
 #include "RoundedPopup.h"
-#include "CellCard.h"
+#include "CellCard/CellCard.h"
 
 #include "widgets/OpenGLWidget.h"
 

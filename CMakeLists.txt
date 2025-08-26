@@ -34,8 +34,6 @@ find_package(ManiVault COMPONENTS Core PointData TextData CONFIG REQUIRED)
 set(PLUGIN_SOURCES
     src/MEView.h
     src/MEView.cpp
-    #src/MorphologyWidget.h
-    #src/MorphologyWidget.cpp
     src/MEWidget.h
     src/MEWidget.cpp
     src/NeuronDescriptor.h
@@ -45,34 +43,17 @@ set(PLUGIN_SOURCES
     src/SettingsAction.cpp
     src/RoundedPopup.h
     src/RoundedPopup.cpp
-    src/HoverPopup.h
-    src/HoverPopup.cpp
-    src/CellCard.h
-    src/CellCard.cpp
     src/Scene.h
     src/Scene.cpp
     src/LRUCache.h
-    #src/Query.h
-    #src/Query.cpp
-    #src/ImageQuery.h
     src/LayerDepthsReader.h
     src/LayerDepthsReader.cpp
     src/MEView.json
 )
 
 set(RENDER_SOURCES
-    #src/MorphologyRenderer.h
-    #src/MorphologyRenderer.cpp
-    #src/MorphologyLineRenderer.h
-    #src/MorphologyLineRenderer.cpp
-    #src/MorphologyTubeRenderer.h
-    #src/MorphologyTubeRenderer.cpp
     src/EMRenderer.h
     src/EMRenderer.cpp
-    #src/TraceRenderer.h
-    #src/TraceRenderer.cpp
-    #src/MorphologyLineSegments.h
-    #src/MorphologyLineSegments.cpp
     src/LayerDrawing.h
     src/LayerDrawing.cpp
     src/Rendering/CellRenderObject.h
@@ -88,10 +69,15 @@ set(RENDER_SOURCES
 set(EPHYS_SOURCES
     src/Electrophysiology/EphysWidget.h
     src/Electrophysiology/EphysWidget.cpp
-    src/Electrophysiology/EphysWebWidget.h
-    src/Electrophysiology/EphysWebWidget.cpp
     #src/Electrophysiology/TraceRenderer.h
     #src/Electrophysiology/TraceRenderer.cpp
+)
+
+set(CELL_CARD_SOURCES
+    src/CellCard/CellCard.h
+    src/CellCard/CellCard.cpp
+    src/CellCard/CellCardWidget.h
+    src/CellCard/CellCardWidget.cpp
 )
 
 set(QRESOURCES
@@ -102,12 +88,13 @@ QT6_ADD_RESOURCES(RESOURCE_FILES ${QRESOURCES})
 source_group( Plugin FILES ${PLUGIN_SOURCES})
 source_group( Rendering FILES ${RENDER_SOURCES})
 source_group( Electrophysiology FILES ${EPHYS_SOURCES})
+source_group( CellCard FILES ${CELL_CARD_SOURCES})
 
 # -----------------------------------------------------------------------------
 # CMake Target
 # -----------------------------------------------------------------------------
 # Create dynamic library for the plugin
-add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${RENDER_SOURCES} ${EPHYS_SOURCES} ${RESOURCE_FILES})
+add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${RENDER_SOURCES} ${EPHYS_SOURCES} ${CELL_CARD_SOURCES} ${RESOURCE_FILES})
 
 # -----------------------------------------------------------------------------
 # Target include directories

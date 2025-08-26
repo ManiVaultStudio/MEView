@@ -10,9 +10,15 @@ try {
 
         // register signals
         QtBridge.setData.connect(function () {
-            const data_json = JSON.parse(arguments[0]);
-            setSweepOptions(data_json);
-            drawTrace(data_json);
+            const jsonDoc = JSON.parse(arguments[0]);
+            
+            if ("cell" in jsonDoc)
+            {
+                let cellObj = jsonDoc["cell"];
+                
+                setSweepOptions(cellObj);
+                drawCellCard(cellObj);
+            }
         });
         QtBridge.setFilterInJS.connect(function () { drawChart(arguments[0]); });
         QtBridge.setHeaderOptions.connect(function () { setHeaderOptions(arguments[0]); });
@@ -23,7 +29,7 @@ try {
         notifyBridgeAvailable();
     });
 } catch (error) {
-    log("TaxonomyView: qwebchannel: could not connect qt");
+    log("CellCard: qwebchannel: could not connect qt");
 }
 
 // The slot js_available is defined by ManiVault's WebWidget and will
@@ -33,7 +39,7 @@ function notifyBridgeAvailable() {
         QtBridge.js_available();
     }
     else {
-        log("TaxonomyView: qwebchannel: QtBridge is not available - something went wrong");
+        log("CellCard: qwebchannel: QtBridge is not available - something went wrong");
     }
 }
 

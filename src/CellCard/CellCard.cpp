@@ -2,14 +2,14 @@
 
 CellCard::CellCard()
 {
-    _ephysWebWidget = new EphysWebWidget();
-    _ephysWebWidget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
+    _widget = new CellCardWidget();
+    _widget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
 
     setObjectName("card");
     setStyleSheet("#card { background: white; border-radius: 12px; border: 1px solid #999; }");
 
     _layout = new QVBoxLayout(this);
-    _layout->addWidget(_ephysWebWidget);
+    _layout->addWidget(_widget);
     setLayout(_layout);
 
     // Soft shadow
@@ -26,8 +26,8 @@ void CellCard::SetCell(Cell& cell)
     //_clusterLabel->setText("Cluster: " + cell.cluster);
     qDebug() << "Set Cell" << cell.cellId;
 
-    //_ephysWebWidget->setNumSweeps(sweeps.size());
-    _ephysWebWidget->setCell(cell);
+    //_widget->setNumSweeps(sweeps.size());
+    _widget->setCell(cell);
 
     //if (cell.ephysTraces != nullptr)
     //{
