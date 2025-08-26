@@ -3,7 +3,7 @@
 CellCard::CellCard()
 {
     _widget = new CellCardWidget();
-    _widget->setPage(":me_viewer/ephys_viewer/trace_view.html", "qrc:/me_viewer/ephys_viewer/");
+    _widget->setPage(":me_view/web/cellcard/cellcard.html", "qrc:/me_view/web/cellcard/");
 
     setObjectName("card");
     setStyleSheet("#card { background: white; border-radius: 12px; border: 1px solid #999; }");

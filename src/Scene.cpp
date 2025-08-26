@@ -46,7 +46,7 @@ Scene::Scene() :
     _cellMetadataDataset()
 {
     // Load average layer depth
-    _cortexStructure = LayerDepthsReader::load(":/me_viewer/human_average_layer_depths.json");
+    _cortexStructure = LayerDepthsReader::load(":/me_view/human_average_layer_depths.json");
 }
 
 bool Scene::hasAllRequiredDatasets(QStringList& missingDatasets)

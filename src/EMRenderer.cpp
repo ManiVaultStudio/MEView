@@ -35,9 +35,9 @@ void EMRenderer::init()
 
     // Load shaders
     bool loaded = true;
-    loaded &= _lineShader.loadShaderFromFile(":me_viewer/shaders/PassThrough.vert", ":me_viewer/shaders/Lines.frag");
-    loaded &= _traceShader.loadShaderFromFile(":me_viewer/shaders/Trace.vert", ":me_viewer/shaders/Trace.frag");
-    //loaded &= _quadShader.loadShaderFromFile(":me_viewer/shaders/Quad.vert", ":me_viewer/shaders/Quad.frag");
+    loaded &= _lineShader.loadShaderFromFile(":me_view/shaders/PassThrough.vert", ":me_view/shaders/Lines.frag");
+    loaded &= _traceShader.loadShaderFromFile(":me_view/shaders/Trace.vert", ":me_view/shaders/Trace.frag");
+    //loaded &= _quadShader.loadShaderFromFile(":me_view/shaders/Quad.vert", ":me_view/shaders/Quad.frag");
 
     if (!loaded) {
         qCritical() << "Failed to load one of the morphology shaders";
