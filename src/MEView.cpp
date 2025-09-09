@@ -42,12 +42,12 @@ void MEView::init()
     connect(&_scene, &Scene::allRequiredDatasetsLoaded, this, &MEView::onInitialLoad);
     connect(_meWidget, &MEWidget::widgetInitialized, this, &MEView::onInitialLoad);
 
-    _primaryToolbarAction.addAction(&_settingsAction.getShowAxonsToggle());
+    _primaryToolbarAction.addAction(&_settingsAction.getProcessesOption());
     _primaryToolbarAction.addAction(&_settingsAction.getStimSetsAction());
 
-    connect(&_settingsAction.getShowAxonsToggle(), &ToggleAction::toggled, this, [this](bool toggled) { _meWidget->showAxons(toggled); });
+    connect(&_settingsAction.getProcessesOption(), &OptionsAction::selectedOptionsChanged, this, [this](const QStringList& selectedOptions) { _meWidget->GetRenderer().SetEnabledProcesses(selectedOptions); });
     connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().setCurrentStimset(_settingsAction.getStimSetsAction().getCurrentText()); });
-    
+
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
 

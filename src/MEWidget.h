@@ -25,7 +25,6 @@ public:
     void setSelectedCells(const std::vector<Cell>& cells);
 
     void SetCortical(bool isCortical);
-    void showAxons(bool enabled);
 
 protected: // mv::gui::OpenGLWidget overrides
     virtual void onWidgetInitialized() override;

@@ -6,9 +6,9 @@ window.traceState = {
 
 let selectedSweep = 0;
 
-const chartWidth = 180
-const acqHeight = 160
-const stimHeight = 120
+const chartWidth = 240
+const acqHeight = 180
+const stimHeight = 160
 
 const GRAPH_ELEMENT_NAME = "container";
 

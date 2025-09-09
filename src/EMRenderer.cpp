@@ -92,8 +92,12 @@ void EMRenderer::update(float t)
     float xOffset = 0;
 
     std::vector<CellMorphology::Type> ignoredTypes;
-    if (!_showAxons)
+    if (!_enabledProcesses.contains("Axon"))
         ignoredTypes.push_back(CellMorphology::Type::Axon);
+    if (!_enabledProcesses.contains("Apical Dendrite"))
+        ignoredTypes.push_back(CellMorphology::Type::ApicalDendrite);
+    if (!_enabledProcesses.contains("Basal Dendrite"))
+        ignoredTypes.push_back(CellMorphology::Type::BasalDendrite);
 
     _horizontalCellLocations.clear();
 
@@ -145,7 +149,11 @@ void EMRenderer::update(float t)
         for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)
         {
             CellMorphology::Type type = it.key();
-            if (type == CellMorphology::Type::Axon && !_showAxons)
+            if (type == CellMorphology::Type::Axon && !_enabledProcesses.contains("Axon"))
+                continue;
+            if (type == CellMorphology::Type::ApicalDendrite && !_enabledProcesses.contains("Apical Dendrite"))
+                continue;
+            if (type == CellMorphology::Type::BasalDendrite && !_enabledProcesses.contains("Basal Dendrite"))
                 continue;
             MorphologyProcessRenderObject mpro = it.value();
             _lineShader.uniform1i("type", (int)type);
@@ -231,9 +239,9 @@ void EMRenderer::update(float t)
     _fullViewport.End();
 }
 
-void EMRenderer::showAxons(bool enabled)
+void EMRenderer::SetEnabledProcesses(const QStringList& enabledProcesses)
 {
-    _showAxons = enabled;
+    _enabledProcesses = enabledProcesses;
 
     RequestNewWidgetWidth();
 }
@@ -323,8 +331,12 @@ void EMRenderer::RequestNewWidgetWidth()
     BuildListOfCellRenderObjects(_renderState._selectedCells, cellRenderObjects);
 
     std::vector<CellMorphology::Type> ignoredTypes;
-    if (!_showAxons)
+    if (!_enabledProcesses.contains("Axon"))
         ignoredTypes.push_back(CellMorphology::Type::Axon);
+    if (!_enabledProcesses.contains("Apical Dendrite"))
+        ignoredTypes.push_back(CellMorphology::Type::ApicalDendrite);
+    if (!_enabledProcesses.contains("Basal Dendrite"))
+        ignoredTypes.push_back(CellMorphology::Type::BasalDendrite);
 
     // Compute new widget width
     float newWidgetWidthToRequest = 0;

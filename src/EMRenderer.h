@@ -10,8 +10,11 @@
 #include "graphics/Shader.h"
 #include "graphics/Vector3f.h"
 
+#include <CellMorphologyData/CellMorphology.h>
+
 #include <QOpenGLFunctions_3_3_Core>
 #include <QMatrix4x4>
+#include <QStringList>
 
 class EMRenderer : public QObject, protected QOpenGLFunctions_3_3_Core
 {
@@ -37,7 +40,7 @@ public:
     std::vector<float> GetHorizontalCellLocations();
 
 public: // UI State
-    void showAxons(bool enabled);
+    void SetEnabledProcesses(const QStringList& enabledProcesses);
     void setCurrentStimset(const QString& stimset);
 
 private:
@@ -68,8 +71,8 @@ private:
 
     RenderObjectBuilder _renderObjectBuilder;
     RenderState _renderState;
+    QStringList _enabledProcesses;
 
     // UI State
-    bool _showAxons = true;
     QString _currentStimset = "";
 };

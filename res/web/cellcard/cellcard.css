@@ -8,11 +8,15 @@ html, body {
     padding-left: 8px;
 }
 
+.centerdiv {
+    text-align: center;
+}
+
 #traceRow {
     display: inline-block;
     white-space: nowrap;
     height: 100vh;
-    margin: 0;
+    margin: 16px 0px 8px 12px;
 }
 
 :root {

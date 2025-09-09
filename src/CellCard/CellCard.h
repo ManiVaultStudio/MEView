@@ -20,9 +20,5 @@ public:
 private:
     QVBoxLayout* _layout;
 
-    QLabel* _cellLabel;
-    QLabel* _clusterLabel;
-
     CellCardWidget* _widget;
-    //mv::gui::IntegralAction* _spinnerWidget;
 };

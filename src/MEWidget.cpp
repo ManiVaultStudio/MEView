@@ -47,11 +47,6 @@ void MEWidget::SetCortical(bool isCortical)
     _emRenderer.SetCortical(isCortical);
 }
 
-void MEWidget::showAxons(bool enabled)
-{
-    _emRenderer.showAxons(enabled);
-}
-
 void MEWidget::onWidgetInitialized()
 {
     _emRenderer.init();
