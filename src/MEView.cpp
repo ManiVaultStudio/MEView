@@ -48,6 +48,8 @@ void MEView::init()
     connect(&_settingsAction.getProcessesOption(), &OptionsAction::selectedOptionsChanged, this, [this](const QStringList& selectedOptions) { _meWidget->GetRenderer().SetEnabledProcesses(selectedOptions); });
     connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().setCurrentStimset(_settingsAction.getStimSetsAction().getCurrentText()); });
 
+    _meWidget->GetRenderer().SetEnabledProcesses({ "Axon", "Apical Dendrite", "Basal Dendrite" });
+
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
 
