@@ -8,13 +8,14 @@ let selectedSweep = 0;
 
 const chartWidth = 240
 const acqHeight = 180
-const stimHeight = 160
+const stimHeight = 140
 
 const GRAPH_ELEMENT_NAME = "container";
 
 // Data keys
 const KEY_CELL = "cell";
 const KEY_CELL_ID = "cellId";
+const KEY_CELL_NAME = "cellName";
 const KEY_CELL_TYPE = "cluster";
 const KEY_EPHYS = "ephys";
 const KEY_ACQ = "acquisition";
@@ -307,6 +308,7 @@ function drawCellCard(cellObj)
     // Draw cell metadata
     setLabelContent("cellIdLabel", cellObj[KEY_CELL_ID]);
     setLabelContent("clusterLabel", cellObj[KEY_CELL_TYPE]);
+    setLabelContent("cellNameLabel", cellObj[KEY_CELL_NAME]);
 
     // Initialize spinner
     const spinnerEl = document.getElementById('spinner');

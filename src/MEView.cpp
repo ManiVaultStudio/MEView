@@ -236,6 +236,7 @@ void MEView::onCellSelectionChanged()
     }
 
     auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
+    auto& cellNameColumn = _scene.getCellMetadataDataset()->getColumn("cell_name");
 
     // FIXME
     QString columnName = _scene.getCellMetadataDataset()->hasColumn("Cluster") ? "Cluster" : "Group";
@@ -252,8 +253,9 @@ void MEView::onCellSelectionChanged()
         cell.ephysTraces = ephysIndex >= 0 ? &_scene.getEphysTraces()->getData()[ephysIndex] : nullptr;
 
         int metaIndex = metaSelectionIndices[i];
-        cell.cellId = metaIndex >= 0 ? cellIdColumn[metaSelectionIndices[i]] : "Missing";
-        cell.cluster = metaIndex >= 0 ? clusterColumn[metaSelectionIndices[i]] : "Missing";
+        cell.cellId = metaIndex >= 0 ? cellIdColumn[metaIndex] : "Missing";
+        cell.cellName = metaIndex >= 0 ? cellNameColumn[metaIndex] : "Missing";
+        cell.cluster = metaIndex >= 0 ? clusterColumn[metaIndex] : "Missing";
     }
 
     bool isCortical = false;

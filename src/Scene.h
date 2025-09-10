@@ -15,6 +15,7 @@ class Cell
 {
 public:
     QString cellId;
+    QString cellName;
     QString cluster;
     const CellMorphology* morphology;
     const Experiment* ephysTraces;

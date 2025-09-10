@@ -98,7 +98,7 @@ void EMRenderer::update(float t)
         ignoredTypes.push_back(CellMorphology::Type::ApicalDendrite);
     if (!_enabledProcesses.contains("Basal Dendrite"))
         ignoredTypes.push_back(CellMorphology::Type::BasalDendrite);
-
+    
     _horizontalCellLocations.clear();
 
     for (int i = 0; i < cellRenderObjects.size(); i++)
@@ -149,12 +149,9 @@ void EMRenderer::update(float t)
         for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)
         {
             CellMorphology::Type type = it.key();
-            if (type == CellMorphology::Type::Axon && !_enabledProcesses.contains("Axon"))
+            if (std::find(ignoredTypes.begin(), ignoredTypes.end(), type) != ignoredTypes.end())
                 continue;
-            if (type == CellMorphology::Type::ApicalDendrite && !_enabledProcesses.contains("Apical Dendrite"))
-                continue;
-            if (type == CellMorphology::Type::BasalDendrite && !_enabledProcesses.contains("Basal Dendrite"))
-                continue;
+
             MorphologyProcessRenderObject mpro = it.value();
             _lineShader.uniform1i("type", (int)type);
             glBindVertexArray(mpro.vao);

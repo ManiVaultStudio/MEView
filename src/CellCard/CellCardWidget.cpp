@@ -124,6 +124,7 @@ void CellCardWidget::setCell(const Cell& cell)
 
     QJsonObject cellObj;
     cellObj["cellId"] = cell.cellId;
+    cellObj["cellName"] = cell.cellName;
     cellObj["cluster"] = cell.cluster;
     //cellObj["title"] = "Long Square";
 
