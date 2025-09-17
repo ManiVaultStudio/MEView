@@ -57,12 +57,15 @@ bool Scene::hasAllRequiredDatasets(QStringList& missingDatasets)
         missingDatasets.push_back("Morphology Features");
     if (!_ephysFeatures.isValid())
         missingDatasets.push_back("Ephys Features");
-    if (!_ephysTraces.isValid())
-        missingDatasets.push_back("Ephys Traces");
     if (!_cellMetadataDataset.isValid())
         missingDatasets.push_back("Cell Metadata");
 
     return missingDatasets.empty(); // true if empty
+}
+
+bool Scene::hasEphysTraceDataset()
+{
+    return _ephysTraces.isValid();
 }
 
 void Scene::offerCandidateDataset(Dataset<DatasetImpl> candidateDataset)

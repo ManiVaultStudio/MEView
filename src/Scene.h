@@ -67,6 +67,7 @@ signals:
 
 public:
     bool hasAllRequiredDatasets(QStringList& missingDatasets);
+    bool hasEphysTraceDataset();
 
     mv::Dataset<CellMorphologies>&      getMorphologyDataset()              { return _morphologyDataset; }
     mv::Dataset<Points>&                getMorphologyFeatureDataset()       { return _morphologyFeatureDataset; }
