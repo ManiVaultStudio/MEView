@@ -201,13 +201,13 @@ void EMRenderer::update(float t)
                 // Acquisition
                 _modelMatrix.setToIdentity();
                 _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
-                _modelMatrix.translate(-0.25, 0, 0);
-                _modelMatrix.scale(0.5f / acqRO.extents.getWidth(), 0.4f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
+                _modelMatrix.translate(-0.3, 0, 0);
+                _modelMatrix.scale(0.6f / acqRO.extents.getWidth(), 0.4f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
                 _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0);
 
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
-                _traceShader.uniform3f("lineColor", 0.2f, 0.4f, 0.839f);
+                _traceShader.uniform3f("lineColor", 0.27f, 0.51f, 0.71f);
 
                 glBindVertexArray(acqRO.vao);
                 glDrawArrays(GL_LINE_STRIP, 0, acqRO.numVertices);
@@ -215,8 +215,8 @@ void EMRenderer::update(float t)
                 // Stimulus
                 _modelMatrix.setToIdentity();
                 _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
-                _modelMatrix.translate(-0.25, 0.5, 0);
-                _modelMatrix.scale(0.5f / stimRO.extents.getWidth(), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
+                _modelMatrix.translate(-0.3, 0.5, 0);
+                _modelMatrix.scale(0.6f / stimRO.extents.getWidth(), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
                 _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
