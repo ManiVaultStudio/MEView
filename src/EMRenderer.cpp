@@ -4,16 +4,6 @@
 
 namespace
 {
-    QMatrix4x4 MapYRangeToUnit(float bottom, float top)
-    {
-        // We want to map from [bottom, top] to [0, 1].
-        // So therefore to map bottom to 0, translate by -bottom, then scale by 1/fabs(top-bottom).
-        QMatrix4x4 M;
-        M.scale(1.0f / fabs(top - bottom));
-        M.translate(0, bottom, 0);
-        return M;
-    }
-
     float computeMaxCellHeight(const std::vector<CellRenderObject*>& cellRenderObjects)
     {
         float maxHeight = std::numeric_limits<float>::min();

@@ -34,7 +34,8 @@ void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
     const CortexStructure& cortexStructure = _scene.getCortexStructure();
 
     QPen axisPen(QColor(80, 80, 80, 255), 2, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
-    QPen midPen(QColor(80, 80, 80, 255), 1, Qt::DashLine, Qt::FlatCap, Qt::RoundJoin);
+    QPen midPen(QColor(80, 80, 80, 80), 1, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+    midPen.setCosmetic(true);
 
     //int lightness = 240;
     std::vector<int> lineHeights(cortexStructure._layerDepths.size() + 1);
@@ -67,7 +68,10 @@ void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
             int midPoint = (bottomY + lineY) / 2;
 
             if (isCortical)
+            {
+                painter.setPen(axisPen);
                 painter.drawText(MARGIN - 28, midPoint + 8, "L" + QString::number(i + 1));
+            }
         }
 
         //painter.fillRect(MARGIN, topY, chartWidth, abs(topY - bottomY), QColor::fromHsl(0, 0, lightness));
@@ -80,7 +84,23 @@ void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
     painter.drawLine(MARGIN, topMargin, MARGIN, _parent->height() - bottomMargin);
 }
 
+static qreal snapToDeviceRow(const QPainter& p, qreal y)
+{
+    const QTransform dev = p.deviceTransform();
+    const qreal devY = dev.map(QPointF(0, y)).y();        // logical -> device
+    const qreal snappedDevY = std::floor(devY) + 0.5;     // center of device pixel row
+    const QTransform inv = dev.inverted();
+    return inv.map(QPointF(0, snappedDevY)).y();          // device -> logical
+}
+
 void LayerDrawing::drawHorizontalLine(QPainter& painter, float y)
 {
-    painter.drawLine(MARGIN, y, _parent->width() - MARGIN, y);
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, false);
+
+    // Draw line centered at a pixel, so it doesn't bleed onto multiple pixels
+    const qreal py = snapToDeviceRow(painter, y);
+    painter.drawLine(QPointF(MARGIN, py), QPointF(_parent->width() - MARGIN, py));
+
+    painter.restore();
 }
