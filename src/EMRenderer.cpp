@@ -327,6 +327,10 @@ void EMRenderer::BuildListOfCellRenderObjects(const std::vector<Cell>& cells, st
 
 void EMRenderer::RequestNewWidgetWidth()
 {
+    // If the QOpenGLFunctions are not yet initialized, don't try to request a size yet
+    if (!isInitialized())
+        return;
+
     std::vector<CellRenderObject*> cellRenderObjects;
     BuildListOfCellRenderObjects(_renderState._selectedCells, cellRenderObjects);
 
@@ -359,6 +363,11 @@ void EMRenderer::RequestNewWidgetWidth()
     QVector4D clipSpace = (_morphProjMatrix * QVector4D(newWidgetWidthToRequest / morphHeight, 0, 0, 1));
     QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
     newWidgetWidthToRequest = _morphologyViewport.GetScreenCoordinates(ndc).x();
+
+    // Limit new width request to GPU limits
+    GLint maxTextureSize;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+    newWidgetWidthToRequest = newWidgetWidthToRequest > maxTextureSize ? maxTextureSize : newWidgetWidthToRequest;
 
     float aspectRatioRequest = newWidgetWidthToRequest / _fullViewport.GetHeight();
 
