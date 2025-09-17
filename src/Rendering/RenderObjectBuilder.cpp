@@ -80,10 +80,11 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
         // Find the soma position and radius
         for (int i = 0; i < cellMorphology.ids.size(); i++)
         {
-            mv::Vector3f position = cellMorphology.positions.at(i);
-            float radius = cellMorphology.radii.at(i);
+            int id = cellMorphology.idMap.at(cellMorphology.ids[i]);
+            mv::Vector3f position = cellMorphology.positions.at(id);
+            float radius = cellMorphology.radii.at(id);
 
-            if (cellMorphology.types.at(i) == (int)CellMorphology::Type::Soma)
+            if (cellMorphology.types.at(id) == (int)CellMorphology::Type::Soma)
             {
                 mro.somaPosition = position;
                 mro.somaRadius = radius;
@@ -91,6 +92,7 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
             }
         }
 
+        // Generate line segments
         for (int i = 1; i < cellMorphology.parents.size(); i++)
         {
             if (cellMorphology.parents[i] == -1) // New root found, there is no line segment here so skip it
@@ -101,6 +103,9 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
 
             int itype = cellMorphology.types[id];
             CellMorphology::Type type = CellMorphology::TypeFromInt(itype);
+
+            if (type == CellMorphology::Type::Soma)
+                continue;
 
             float radius = cellMorphology.radii[id];
 
