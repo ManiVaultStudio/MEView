@@ -165,6 +165,8 @@ void EMRenderer::update(float t)
     _morphologyViewport.End();
 
     // TRACES
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     _traceViewport.Begin();
 
     _traceShader.bind();
@@ -229,6 +231,7 @@ void EMRenderer::update(float t)
 
         xOffset += maxWidth;
     }
+    glDisable(GL_BLEND);
 
     glBindVertexArray(0);
     _traceShader.release();
