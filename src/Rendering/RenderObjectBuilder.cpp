@@ -13,6 +13,17 @@ namespace
         std::vector<mv::Vector3f>   segments;
         std::vector<float>          segmentRadii;
     };
+
+    float ComputeTracePriority(const TimeSeries& ts)
+    {
+        // Compute amount of variation in the acquisition
+        float variation = 0;
+        for (int i = 1; i < ts.xSeries.size(); i++)
+        {
+            variation += fabs(ts.ySeries[i] - ts.ySeries[i - 1]);
+        }
+        return variation;
+    }
 }
 
 RenderObjectBuilder::RenderObjectBuilder(
@@ -63,6 +74,7 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
 
             BuildTraceObject(stimTRO, experiment.getStimuli()[i], true);
             BuildTraceObject(acqTRO, experiment.getAcquisitions()[i], false);
+            stimTRO.priority = acqTRO.priority;
 
             cro.stimulusObjects.push_back(stimTRO);
             cro.acquisitionsObjects.push_back(acqTRO);
@@ -175,6 +187,8 @@ void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recordi
     {
         vertices.emplace_back(ts.xSeries[i], ts.ySeries[i], 0);
     }
+    if (!isStim)
+        tro.priority = ComputeTracePriority(ts);
 
     //qDebug() << "Trace VBO size: " << (vertices.size() * sizeof(mv::Vector3f)) / 1000 << "kb";
     // Initialize VAO and VBOs

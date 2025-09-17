@@ -27,6 +27,26 @@ namespace
         }
         return maxHeight;
     }
+
+    int FindHighestPriorityStimulus(const CellRenderObject& cro, QString currentStimset)
+    {
+        float maxPriority = -std::numeric_limits<float>::max();
+        int stimulusIndex = -1;
+        for (int i = 0; i < cro.stimulusObjects.size(); i++)
+        {
+            const TraceRenderObject& stimRO = cro.stimulusObjects[i];
+
+            if (stimRO.stimulusDescription == currentStimset)
+            {
+                if (stimRO.priority > maxPriority)
+                {
+                    maxPriority = stimRO.priority;
+                    stimulusIndex = i;
+                }
+            }
+        }
+        return stimulusIndex;
+    }
 }
 
 void EMRenderer::init()
@@ -62,7 +82,7 @@ void EMRenderer::resize(int w, int h, float pixelRatio)
     }
     {
         int margin = 48 * pixelRatio;
-        int topMargin = h - (quarter - (16 * pixelRatio));
+        int topMargin = h - (quarter - (8 * pixelRatio));
         int bottomMargin = 16 * pixelRatio;
         _traceViewport.Set(margin, bottomMargin, w, h - topMargin - bottomMargin);
     }
@@ -183,6 +203,8 @@ void EMRenderer::update(float t)
         mv::Vector3f dimensions = extent.emax - extent.emin;
         float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
 
+        int stimIndex = FindHighestPriorityStimulus(*cro, _currentStimset);
+
         for (int i = 0; i < cro->stimulusObjects.size(); i++)
         {
             TraceRenderObject& stimRO = cro->stimulusObjects[i];
@@ -208,7 +230,9 @@ void EMRenderer::update(float t)
 
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
-                _traceShader.uniform3f("lineColor", 0.27f, 0.51f, 0.71f);
+                Vector3f acqColor = i == stimIndex ? Vector3f(0.27f, 0.51f, 0.71f) : Vector3f(0.5f);
+                _traceShader.uniform3f("lineColor", acqColor);
+                _traceShader.uniform1f("alpha", i == stimIndex ? 1.0f : 0.1f);
 
                 glBindVertexArray(acqRO.vao);
                 glDrawArrays(GL_LINE_STRIP, 0, acqRO.numVertices);
@@ -221,12 +245,11 @@ void EMRenderer::update(float t)
                 _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
-                _traceShader.uniform3f("lineColor", 0.839f, 0.4f, 0.2f);
+                Vector3f stimColor = i == stimIndex ? Vector3f(0.839f, 0.4f, 0.2f) : Vector3f(0.5f);
+                _traceShader.uniform3f("lineColor", stimColor);
 
                 glBindVertexArray(stimRO.vao);
                 glDrawArrays(GL_LINE_STRIP, 0, stimRO.numVertices);
-
-                break;
             }
         }
 

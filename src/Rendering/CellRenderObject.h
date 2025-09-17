@@ -47,6 +47,8 @@ struct TraceRenderObject
 
     mv::Bounds extents;
 
+    float priority;
+
     QString stimulusDescription;
 };
 
