@@ -75,6 +75,9 @@ void EMRenderer::resize(int w, int h, float pixelRatio)
 
 void EMRenderer::update(float t)
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     _fullViewport.Begin();
 
     _lineShader.bind();
@@ -165,8 +168,6 @@ void EMRenderer::update(float t)
     _morphologyViewport.End();
 
     // TRACES
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     _traceViewport.Begin();
 
     _traceShader.bind();
