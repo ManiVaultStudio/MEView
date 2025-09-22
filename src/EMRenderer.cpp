@@ -45,7 +45,7 @@ void EMRenderer::init()
 
     // Load shaders
     bool loaded = true;
-    loaded &= _lineShader.loadShaderFromFile(":me_view/shaders/PassThrough.vert", ":me_view/shaders/Lines.frag");
+    loaded &= _lineShader.loadShaderFromFile(":me_view/shaders/PassThrough.vert", ":me_view/shaders/LineGeometry.geom", ":me_view/shaders/Lines.frag");
     loaded &= _traceShader.loadShaderFromFile(":me_view/shaders/Trace.vert", ":me_view/shaders/Trace.frag");
     //loaded &= _quadShader.loadShaderFromFile(":me_view/shaders/Quad.vert", ":me_view/shaders/Quad.frag");
 
@@ -88,6 +88,8 @@ void EMRenderer::update(float t)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    glDepthFunc(GL_LESS);
+    glDisable(GL_CULL_FACE);
     _fullViewport.Begin();
 
     _lineShader.bind();
@@ -101,6 +103,8 @@ void EMRenderer::update(float t)
     _morphologyViewport.Begin();
 
     _lineShader.uniformMatrix4f("projMatrix", _morphProjMatrix.constData());
+    _lineShader.uniform2f("viewportSize", _morphologyViewport.GetWidth(), _morphologyViewport.GetHeight());
+    _lineShader.uniform1f("thickness", 3.0f);
 
     float xOffset = 0;
 

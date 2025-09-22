@@ -10,7 +10,9 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in float radius;
 
 out float pass_radius;
-out vec3 pass_color;
+out vec4 vPass_color;
+
+out vec3 vPosView;
 
 void main()
 {
@@ -39,7 +41,9 @@ void main()
         color = cellTypeColor;
     }
 
-    pass_color = color;
+    vec4 posView = modelMatrix * vec4(position, 1.0);
+    vPosView = posView.xyz;  
 
+    vPass_color = color;
     gl_Position = projMatrix * modelMatrix * vec4(position, 1);
 }

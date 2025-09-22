@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="me_view">
         <file>shaders/PassThrough.vert</file>
+        <file>shaders/LineGeometry.geom</file>
         <file>shaders/Lines.frag</file>
         <file>shaders/Trace.vert</file>
         <file>shaders/Trace.frag</file>
