@@ -54,6 +54,7 @@ private:
     Scene& _scene;
 
     mv::ShaderProgram _lineShader;
+    mv::ShaderProgram _somaShader;
     mv::ShaderProgram _traceShader;
     //mv::ShaderProgram _quadShader;
 
@@ -72,6 +73,8 @@ private:
     RenderObjectBuilder _renderObjectBuilder;
     RenderState _renderState;
     QStringList _enabledProcesses;
+
+    GLuint _somaVAO = 0;
 
     // UI State
     QString _currentStimset = "";

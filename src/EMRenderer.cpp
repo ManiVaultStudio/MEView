@@ -37,6 +37,43 @@ namespace
         }
         return stimulusIndex;
     }
+
+    GLuint CreateSomaVAO(QOpenGLFunctions_3_3_Core* f)
+    {
+        GLuint vao, vbo, tbo;
+        f->glGenVertexArrays(1, &vao);
+        f->glBindVertexArray(vao);
+
+        std::vector<Vector3f> vertices
+        {
+            Vector3f(-1, -1, 0),
+            Vector3f(1, -1, 0),
+            Vector3f(-1, 1, 0),
+            Vector3f(1, 1, 0)
+        };
+
+        std::vector<Vector2f> textureCoords
+        {
+            Vector2f(0, 0),
+            Vector2f(1, 0),
+            Vector2f(0, 1),
+            Vector2f(1, 1)
+        };
+        qDebug() << vertices.size();
+        f->glGenBuffers(1, &vbo);
+        f->glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        f->glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(mv::Vector3f), vertices.data(), GL_STATIC_DRAW);
+        f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        f->glEnableVertexAttribArray(0);
+
+        f->glGenBuffers(1, &tbo);
+        f->glBindBuffer(GL_ARRAY_BUFFER, tbo);
+        f->glBufferData(GL_ARRAY_BUFFER, textureCoords.size() * sizeof(mv::Vector2f), textureCoords.data(), GL_STATIC_DRAW);
+        f->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        f->glEnableVertexAttribArray(1);
+
+        return vao;
+    }
 }
 
 void EMRenderer::init()
@@ -46,12 +83,15 @@ void EMRenderer::init()
     // Load shaders
     bool loaded = true;
     loaded &= _lineShader.loadShaderFromFile(":me_view/shaders/PassThrough.vert", ":me_view/shaders/Lines.frag");
+    loaded &= _somaShader.loadShaderFromFile(":me_view/shaders/Soma.vert", ":me_view/shaders/Soma.frag");
     loaded &= _traceShader.loadShaderFromFile(":me_view/shaders/Trace.vert", ":me_view/shaders/Trace.frag");
     //loaded &= _quadShader.loadShaderFromFile(":me_view/shaders/Quad.vert", ":me_view/shaders/Quad.frag");
 
     if (!loaded) {
         qCritical() << "Failed to load one of the morphology shaders";
     }
+
+    _somaVAO = CreateSomaVAO(this);
 
     glEnable(GL_LINE_SMOOTH);
 }
@@ -87,6 +127,7 @@ void EMRenderer::update(float t)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glEnable(GL_DEPTH_TEST);
 
     _fullViewport.Begin();
 
@@ -114,6 +155,7 @@ void EMRenderer::update(float t)
     
     _horizontalCellLocations.clear();
 
+    std::vector<Vector3f> somaPositions;
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
         CellRenderObject* cro = cellRenderObjects[i];
@@ -171,13 +213,31 @@ void EMRenderer::update(float t)
             glDrawArrays(GL_LINES, 0, mpro.numVertices);
         }
 
+        // Save soma positions
+        QVector4D somaPosition = _modelMatrix * QVector4D(cro->morphologyObject.somaPosition.x, cro->morphologyObject.somaPosition.y, cro->morphologyObject.somaPosition.z, 1);
+        somaPositions.push_back(Vector3f(somaPosition.x(), somaPosition.y(), somaPosition.z()));
+
         xOffset += maxWidth;
     }
     _lineShader.release();
 
+    // Soma rendering
+    _somaShader.bind();
+    _somaShader.uniformMatrix4f("projMatrix", _morphProjMatrix.constData());
+    glBindVertexArray(_somaVAO);
+    
+    for (const Vector3f& somaPosition : somaPositions)
+    {
+        _somaShader.uniform3f("somaPosition", somaPosition);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
+
+    _somaShader.release();
+
     _morphologyViewport.End();
 
     // TRACES
+    glDisable(GL_DEPTH_TEST);
     _traceViewport.Begin();
 
     _traceShader.bind();

@@ -18,14 +18,8 @@ void main()
     
     vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
 
-    // Soma
-    if (type == 1)
-    {
-        color = vec3(0.706, 0.22, 0.38);
-        color = vec4(0.9, 0.0, 0.0, 1.0);
-    }
     // Axon
-    else if (type == 2)
+    if (type == 2)
     {
         color = vec4(0.56, 0.56, 0.56, 0.1);
     }
@@ -38,6 +32,11 @@ void main()
     else if (type == 4)
     {
         color = vec4(cellTypeColor, 1.0);
+    }
+    // Unhandled case
+    else
+    {
+        color = vec4(1.0, 0.0, 1.0, 1.0);
     }
 
     pass_color = color;

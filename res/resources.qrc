@@ -2,6 +2,8 @@
     <qresource prefix="me_view">
         <file>shaders/PassThrough.vert</file>
         <file>shaders/Lines.frag</file>
+        <file>shaders/Soma.vert</file>
+        <file>shaders/Soma.frag</file>
         <file>shaders/Trace.vert</file>
         <file>shaders/Trace.frag</file>
         <file>shaders/Quad.vert</file>
