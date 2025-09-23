@@ -234,16 +234,52 @@ void MEView::onCellSelectionChanged()
     const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
 
     const auto& selectionIndices = morphologyDataset->getSelectionIndices();
+
+    bool isCortical = false;
+    if (_scene.getMorphologyDataset()->hasProperty("isCortical"))
+        isCortical = true;
+
+    std::vector<int> metaSelectionIndices;
+    for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
+    {
+        mv::BiMap& morphBiMap = selGroup.getBiMap(_scene.getMorphologyDataset());
+        mv::BiMap& metaBiMap = selGroup.getBiMap(_scene.getCellMetadataDataset());
+
+        std::vector<QString> keys = morphBiMap.getKeysByValues(selectionIndices);
+
+        metaSelectionIndices = metaBiMap.getValuesByKeysWithMissingValue(keys, -1);
+    }
+
     std::vector<uint32_t> sortedSelectionIndices = selectionIndices;
 
-    // Reorder selection based on soma depth
-    std::sort(sortedSelectionIndices.begin(), sortedSelectionIndices.end(), [&morphologies](const uint32_t& a, const uint32_t& b)
+    // FIXME
+    QString columnName = _scene.getCellMetadataDataset()->hasColumn("Cluster") ? "Cluster" : "Group";
+    auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
+
+    if (isCortical)
     {
-        return morphologies[a].somaPosition.y > morphologies[b].somaPosition.y;
-    });
+        std::vector<uint32_t> sortIndices(selectionIndices.size());
+        std::iota(sortIndices.begin(), sortIndices.end(), 0);
+        // Try to sort cluster names according to layer
+        std::sort(sortIndices.begin(), sortIndices.end(), [&morphologies, &clusterColumn, selectionIndices, metaSelectionIndices](const uint32_t& a, const uint32_t& b)
+            {
+                uint32_t metaIndexA = metaSelectionIndices[a];
+                uint32_t metaIndexB = metaSelectionIndices[b];
+
+                if (QString::localeAwareCompare(clusterColumn[metaIndexA], clusterColumn[metaIndexB]) == 0)
+                    return morphologies[selectionIndices[a]].somaPosition.y > morphologies[selectionIndices[b]].somaPosition.y;
+
+                return QString::localeAwareCompare(clusterColumn[metaIndexA], clusterColumn[metaIndexB]) < 0;
+            });
+
+        for (int i = 0; i < sortIndices.size(); i++)
+        {
+            sortedSelectionIndices[i] = selectionIndices[sortIndices[i]];
+        }
+    }
 
     // Find common selected points
-    std::vector<int> metaSelectionIndices;
+    std::vector<int> sortedMetaSelectionIndices;
 
     for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
     {
@@ -253,7 +289,7 @@ void MEView::onCellSelectionChanged()
 
         std::vector<QString> keys = morphBiMap.getKeysByValues(sortedSelectionIndices);
 
-        metaSelectionIndices = metaBiMap.getValuesByKeysWithMissingValue(keys, -1);
+        sortedMetaSelectionIndices = metaBiMap.getValuesByKeysWithMissingValue(keys, -1);
     }
 
     auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
@@ -263,10 +299,6 @@ void MEView::onCellSelectionChanged()
     if (loadCellNames)
         cellNameColumn = &_scene.getCellMetadataDataset()->getColumn("cell_name");
 
-    // FIXME
-    QString columnName = _scene.getCellMetadataDataset()->hasColumn("Cluster") ? "Cluster" : "Group";
-    auto& clusterColumn =  _scene.getCellMetadataDataset()->getColumn(columnName);
-
     // Construct vector of cells containing all necessary information
     std::vector<Cell> cells(sortedSelectionIndices.size());
     for (int i = 0; i < cells.size(); i++)
@@ -274,7 +306,7 @@ void MEView::onCellSelectionChanged()
         Cell& cell = cells[i];
         cell.morphology = &morphologies[sortedSelectionIndices[i]];
 
-        int metaIndex = metaSelectionIndices[i];
+        int metaIndex = sortedMetaSelectionIndices[i];
         cell.cellId = metaIndex >= 0 ? cellIdColumn[metaIndex] : "Missing";
         if (loadCellNames && metaIndex >= 0)
             cell.cellName = (*cellNameColumn)[metaIndex];
@@ -305,10 +337,6 @@ void MEView::onCellSelectionChanged()
             cell.ephysTraces = ephysIndex >= 0 ? &_scene.getEphysTraces()->getData()[ephysIndex] : nullptr;
         }
     }
-
-    bool isCortical = false;
-    if (_scene.getMorphologyDataset()->hasProperty("isCortical"))
-        isCortical = true;
 
     _meWidget->SetCortical(isCortical);
     _meWidget->setSelectedCells(cells);
