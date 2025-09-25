@@ -66,7 +66,6 @@ void MEWidget::onWidgetInitialized()
 
 void MEWidget::onWidgetResized(int w, int h)
 {
-    qDebug() << "Widget resize";
     _width = w; _height = h;
     _emRenderer.resize(w, h, devicePixelRatioF());
 }

@@ -81,6 +81,7 @@ public:
 
 public:
     std::vector<Cell> allCells;
+    std::unordered_map<uint32_t, uint32_t> metaToCellMap;
     std::vector<Cell> selectedCells;
 
 private: // Morphology

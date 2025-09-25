@@ -223,6 +223,8 @@ void MEView::onInitialLoad()
         }
 
         if (cell.morphology || cell.ephysTraces)
+        {
+            _scene.metaToCellMap[metaIndices[i]] = cells.size();
             cells.push_back(cell);
     }
 
@@ -249,41 +251,26 @@ void MEView::onCellSelectionChanged()
     mv::Dataset<Text> metaDataset = _scene.getCellMetadataDataset();
     std::vector<uint32_t> metaIndices = metaDataset->getSelectionIndices();
 
-    auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
-    std::vector<QString> cellIds;
+    std::vector<int> cellSelectionIndices;
+
+    // Translate metadataset selection indices to allCells selection indices
     for (uint32_t metaIndex : metaIndices)
-        cellIds.push_back(cellIdColumn[metaIndex]);
-
-    std::vector<int> selectionIndices;
-
-    for (int i = 0; i < _scene.allCells.size(); i++)
-    {
-        const Cell& cell = _scene.allCells[i];
-
-        for (int j = 0; j < cellIds.size(); j++)
-        {
-            const QString& cellId = cellIds[j];
-
-            if (cell.cellId == cellId)
-            {
-                selectionIndices.push_back(i);
-            }
-        }
-    }
+        if (_scene.metaToCellMap.find(metaIndex) != _scene.metaToCellMap.end())
+            cellSelectionIndices.push_back(_scene.metaToCellMap.at(metaIndex));
 
     ///////////////
     // Sort cortical morphologies
     mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
     const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
 
-    std::vector<uint32_t> sortIndices(selectionIndices.size());
+    std::vector<uint32_t> sortIndices(cellSelectionIndices.size());
     std::iota(sortIndices.begin(), sortIndices.end(), 0);
 
     // Try to sort cluster names according to layer
-    std::sort(sortIndices.begin(), sortIndices.end(), [this, selectionIndices](const uint32_t& a, const uint32_t& b)
+    std::sort(sortIndices.begin(), sortIndices.end(), [this, cellSelectionIndices](const uint32_t& a, const uint32_t& b)
         {
-            Cell& cellA = _scene.allCells[selectionIndices[a]];
-            Cell& cellB = _scene.allCells[selectionIndices[b]];
+            Cell& cellA = _scene.allCells[cellSelectionIndices[a]];
+            Cell& cellB = _scene.allCells[cellSelectionIndices[b]];
 
             if (QString::localeAwareCompare(cellA.cluster, cellB.cluster) == 0 && cellA.morphology && cellB.morphology)
                 return cellA.morphology->somaPosition.y > cellB.morphology->somaPosition.y;
@@ -294,7 +281,7 @@ void MEView::onCellSelectionChanged()
     std::vector<uint32_t> sortedIndices(sortIndices.size());
     for (int i = 0; i < sortIndices.size(); i++)
     {
-        sortedIndices[i] = selectionIndices[sortIndices[i]];
+        sortedIndices[i] = cellSelectionIndices[sortIndices[i]];
     }
 
     _meWidget->SetCortical(isCortical);

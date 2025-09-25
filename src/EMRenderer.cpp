@@ -99,7 +99,6 @@ void EMRenderer::init()
 void EMRenderer::resize(int w, int h, float pixelRatio)
 {
     float aspectRatio = (float)w / h;
-    qDebug() << "Resize called";
 
     _fullViewport.Set(0, 0, w, h);
 
@@ -458,15 +457,7 @@ void EMRenderer::RequestNewWidgetWidth()
 
     // Compute new widget width
     float newWidgetWidthToRequest = _xCoords[_xCoords.size() - 1] + 0.6; // FIXME little hack for extra space
-    //for (int i = 0; i < cellRenderObjects.size(); i++)
-    //{
-    //    cellRenderObjects[i]->morphologyObject.ComputeExtents(ignoredTypes);
-    //    CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.totalExtent;
-    //    mv::Vector3f dimensions = extent.emax - extent.emin;
 
-    //    newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
-    //}
-    qDebug() << "New width request: " << newWidgetWidthToRequest;
     if (newWidgetWidthToRequest == 0)
         return;
 
