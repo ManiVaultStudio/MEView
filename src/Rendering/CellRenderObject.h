@@ -66,4 +66,6 @@ public:
 
     std::vector<TraceRenderObject> stimulusObjects;
     std::vector<TraceRenderObject> acquisitionsObjects;
+
+    bool hasMorphology = false;
 };

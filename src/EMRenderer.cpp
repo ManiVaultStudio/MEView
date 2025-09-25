@@ -143,8 +143,6 @@ void EMRenderer::update(float t)
 
     _lineShader.uniformMatrix4f("projMatrix", _morphProjMatrix.constData());
 
-    float xOffset = 0;
-
     std::vector<CellMorphology::Type> ignoredTypes;
     if (!_enabledProcesses.contains("Axon"))
         ignoredTypes.push_back(CellMorphology::Type::Axon);
@@ -153,71 +151,108 @@ void EMRenderer::update(float t)
     if (!_enabledProcesses.contains("Basal Dendrite"))
         ignoredTypes.push_back(CellMorphology::Type::BasalDendrite);
     
+    // Compute drawing locations
+    std::vector<float> xCoords;
     _horizontalCellLocations.clear();
+    float xOffset = 0;
+    float minWidth = 0.3f;
+    for (int i = 0; i < cellRenderObjects.size(); i++)
+    {
+        CellRenderObject* cro = cellRenderObjects[i];
+
+        float xCoord = 0;
+        if (cro->hasMorphology)
+        {
+            cro->morphologyObject.ComputeExtents(ignoredTypes);
+            const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
+
+            mv::Vector3f dimensions = extent.emax - extent.emin;
+            float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
+
+            float height;
+            if (_isCortical)
+                height = _scene.getCortexStructure().getDepthRange();
+            else
+                height = maxCellHeight;
+
+            if (_isCortical)
+            {
+                float depthRange = _scene.getCortexStructure().getDepthRange();
+                xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / depthRange);
+                xOffset += std::max(minWidth, maxWidth / depthRange);
+            }
+            else
+            {
+                xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / maxCellHeight);
+                xOffset += std::max(minWidth, maxWidth / maxCellHeight);
+            }
+        }
+        else
+        {
+            float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
+            // FIXME why is this /2 necessary?
+            xCoord = xOffset + 0.15f;
+            xOffset += 0.3f;
+        }
+        {
+            QVector4D clipSpace = (_morphProjMatrix * QVector4D(xCoord, 0, 0, 1));
+            QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
+            float xsCoord = _morphologyViewport.GetScreenCoordinates(ndc).x();
+            _horizontalCellLocations.push_back(xsCoord);
+        }
+
+        xCoords.push_back(xCoord);
+    }
 
     std::vector<Vector3f> somaPositions;
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
         CellRenderObject* cro = cellRenderObjects[i];
 
-        cro->morphologyObject.ComputeExtents(ignoredTypes);
-        const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
-
-        mv::Vector3f dimensions = extent.emax - extent.emin;
-
-        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
-
-        float xCoord = 0;
-        // Map from the original cell to its height being [0, 1], and the other dimensions proportional
-        _modelMatrix.setToIdentity();
-        if (_isCortical)
+        if (cro->hasMorphology)
         {
-            float depthRange = _scene.getCortexStructure().getDepthRange();
-            QMatrix4x4 cortexMatrix = _scene.getCortexStructure().mapCellToStructure(cro->morphologyObject.somaPosition, extent.center);
+            cro->morphologyObject.ComputeExtents(ignoredTypes);
+            const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
 
-            _modelMatrix.translate((xOffset + maxWidth / 2) / depthRange, 0, 0);
-            _modelMatrix.rotate(t, 0, 1, 0);
-            _modelMatrix *= cortexMatrix;
+            float xCoord = xCoords[i];
+            // Map from the original cell to its height being [0, 1], and the other dimensions proportional
+            _modelMatrix.setToIdentity();
+            if (_isCortical)
+            {
+                float depthRange = _scene.getCortexStructure().getDepthRange();
+                QMatrix4x4 cortexMatrix = _scene.getCortexStructure().mapCellToStructure(cro->morphologyObject.somaPosition, extent.center);
 
-            xCoord = (xOffset + maxWidth / 2) / depthRange;
+                _modelMatrix.translate(xCoord, 0, 0);
+                _modelMatrix.rotate(t, 0, 1, 0);
+                _modelMatrix *= cortexMatrix;
+            }
+            else
+            {
+                _modelMatrix.translate(xCoord, 0, 0);
+                _modelMatrix.rotate(t, 0, 1, 0);
+                _modelMatrix.scale(1.0f / maxCellHeight);
+                _modelMatrix.translate(-extent.center.x, -extent.emin.y, -extent.center.z);
+            }
+            _lineShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
+
+            _lineShader.uniform3f("cellTypeColor", cro->cellTypeColor);
+
+            for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)
+            {
+                CellMorphology::Type type = it.key();
+                if (std::find(ignoredTypes.begin(), ignoredTypes.end(), type) != ignoredTypes.end())
+                    continue;
+
+                MorphologyProcessRenderObject mpro = it.value();
+                _lineShader.uniform1i("type", (int)type);
+                glBindVertexArray(mpro.vao);
+                glDrawArrays(GL_LINES, 0, mpro.numVertices);
+            }
+
+            // Save soma positions
+            QVector4D somaPosition = _modelMatrix * QVector4D(cro->morphologyObject.somaPosition.x, cro->morphologyObject.somaPosition.y, cro->morphologyObject.somaPosition.z, 1);
+            somaPositions.push_back(Vector3f(somaPosition.x(), somaPosition.y(), somaPosition.z()));
         }
-        else
-        {
-            _modelMatrix.translate((xOffset + maxWidth / 2) / maxCellHeight, 0, 0);
-            _modelMatrix.rotate(t, 0, 1, 0);
-            _modelMatrix.scale(1.0f / maxCellHeight);
-            _modelMatrix.translate(-extent.center.x, -extent.emin.y, -extent.center.z);
-
-            xCoord = (xOffset + maxWidth / 2) / maxCellHeight;
-        }
-        _lineShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
-
-        {
-            QVector4D clipSpace = (_morphProjMatrix * QVector4D(xCoord, 0, 0, 1));
-            QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
-            xCoord = _morphologyViewport.GetScreenCoordinates(ndc).x();
-            _horizontalCellLocations.push_back(xCoord);
-        }
-
-        _lineShader.uniform3f("cellTypeColor", cro->cellTypeColor);
-
-        for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)
-        {
-            CellMorphology::Type type = it.key();
-            if (std::find(ignoredTypes.begin(), ignoredTypes.end(), type) != ignoredTypes.end())
-                continue;
-
-            MorphologyProcessRenderObject mpro = it.value();
-            _lineShader.uniform1i("type", (int)type);
-            glBindVertexArray(mpro.vao);
-            glDrawArrays(GL_LINES, 0, mpro.numVertices);
-        }
-
-        // Save soma positions
-        QVector4D somaPosition = _modelMatrix * QVector4D(cro->morphologyObject.somaPosition.x, cro->morphologyObject.somaPosition.y, cro->morphologyObject.somaPosition.z, 1);
-        somaPositions.push_back(Vector3f(somaPosition.x(), somaPosition.y(), somaPosition.z()));
-
-        xOffset += maxWidth;
     }
     _lineShader.release();
 
@@ -244,14 +279,11 @@ void EMRenderer::update(float t)
 
     _traceShader.uniformMatrix4f("projMatrix", _traceProjMatrix.constData());
 
-    xOffset = 0;
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
         CellRenderObject* cro = cellRenderObjects[i];
 
-        const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
-        mv::Vector3f dimensions = extent.emax - extent.emin;
-        float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
+        float xCoord = xCoords[i];
 
         int stimIndex = FindHighestPriorityStimulus(*cro, _currentStimset);
 
@@ -265,18 +297,13 @@ void EMRenderer::update(float t)
 
                 float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
 
-                float height;
-                if (_isCortical)
-                    height = _scene.getCortexStructure().getDepthRange();
-                else
-                    height = maxCellHeight;
-
                 // Acquisition
                 _modelMatrix.setToIdentity();
-                _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
+                _modelMatrix.translate(xCoord * r, 0, 0);
                 _modelMatrix.translate(-0.3, 0, 0);
-                _modelMatrix.scale(0.6f / acqRO.extents.getWidth(), 0.4f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1);
-                _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0);
+                _modelMatrix.scale(0.6f, 0.4f, 1);
+                _modelMatrix.scale(1.0f / acqRO.extents.getWidth(), 1.0f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1.0f); // Rescale to [0, 1]
+                _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0); // Map bottom-left corner to 0,0
 
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
@@ -289,7 +316,7 @@ void EMRenderer::update(float t)
 
                 // Stimulus
                 _modelMatrix.setToIdentity();
-                _modelMatrix.translate((xOffset + maxWidth / 2) / height * r, 0, 0);
+                _modelMatrix.translate(xCoord * r, 0, 0);
                 _modelMatrix.translate(-0.3, 0.5, 0);
                 _modelMatrix.scale(0.6f / stimRO.extents.getWidth(), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
                 _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
@@ -302,8 +329,6 @@ void EMRenderer::update(float t)
                 glDrawArrays(GL_LINE_STRIP, 0, stimRO.numVertices);
             }
         }
-
-        xOffset += maxWidth;
     }
     glDisable(GL_BLEND);
 
@@ -335,22 +360,22 @@ std::vector<float> EMRenderer::GetHorizontalCellLocations()
     return _horizontalCellLocations;
 }
 
-void EMRenderer::SetSelectedCellIds(const std::vector<Cell>& cells)
+void EMRenderer::SetSelectedCellIds(const std::vector<uint32_t>& indices)
 {
     // Build list of selected cell render object references
     std::vector<CellRenderObject*> cellRenderObjects;
-    BuildListOfCellRenderObjects(cells, cellRenderObjects);
+    BuildListOfCellRenderObjects(_scene.selectedCells, cellRenderObjects);
 
-    _renderState._selectedCells = cells;
+    _renderState._selectedCells = _scene.selectedCells;
 
     // Compute stimulus chart height
     _renderState._stimChartRangeMin = std::numeric_limits<float>::max();
     _renderState._stimChartRangeMax = -std::numeric_limits<float>::max();
     _renderState._acqChartRangeMin = std::numeric_limits<float>::max();
     _renderState._acqChartRangeMax = -std::numeric_limits<float>::max();
-    for (int i = 0; i < cells.size(); i++)
+    for (int i = 0; i < _scene.selectedCells.size(); i++)
     {
-        const Cell& cell = cells[i];
+        const Cell& cell = _scene.selectedCells[i];
         if (cell.ephysTraces != nullptr)
         {
             const Experiment& experiment = *cell.ephysTraces;

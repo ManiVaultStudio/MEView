@@ -36,7 +36,7 @@ public:
 
     void SetCortical(bool isCortical);
     void BuildRenderObjects(const std::vector<Cell>& cells);
-    void SetSelectedCellIds(const std::vector<Cell>& cells);
+    void SetSelectedCellIds(const std::vector<uint32_t>& indices);
     std::vector<float> GetHorizontalCellLocations();
 
 public: // UI State

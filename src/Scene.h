@@ -79,6 +79,10 @@ public:
 
     void offerCandidateDataset(mv::Dataset<mv::DatasetImpl> candidateDataset);
 
+public:
+    std::vector<Cell> allCells;
+    std::vector<Cell> selectedCells;
+
 private: // Morphology
     mv::Dataset<CellMorphologies>   _morphologyDataset;             /** Morphology data */
     mv::Dataset<Points>             _morphologyFeatureDataset;      /** Morphology feature data */

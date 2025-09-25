@@ -54,10 +54,11 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
     if (cell.morphology != nullptr)
     {
         const CellMorphology& cellMorphology = *cell.morphology;
-
+        
         BuildMorphologyObject(cro.morphologyObject, cellMorphology);
 
         cro.cellTypeColor = cellMorphology.cellTypeColor;
+        cro.hasMorphology = true;
     }
     if (cell.ephysTraces != nullptr)
     {

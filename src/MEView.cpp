@@ -115,8 +115,20 @@ void MEView::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
-void MEView::setStimulusSetOptions(const QSet<QString>& stimSets)
+void MEView::setStimulusSetOptions()
 {
+    // Find out which stimulus sets are available, and set them in the combobox
+    mv::Dataset<EphysExperiments> ephysTraces = _scene.getEphysTraces();
+
+    QSet<QString> stimSets;
+    for (const Experiment& experiment : ephysTraces->getData())
+    {
+        const std::vector<Recording>& recordings = experiment.getStimuli();
+        for (const Recording& recording : recordings)
+            stimSets.insert(recording.GetStimulusDescription());
+    }
+    qDebug() << stimSets;
+
     qDebug() << "setStimulusSetOptions" << stimSets.size();
     QStringList stimSetList = QStringList(stimSets.begin(), stimSets.end());
     _settingsAction.getStimSetsAction().setOptions(stimSetList);
@@ -141,82 +153,81 @@ void MEView::onInitialLoad()
         qWarning() << "[MEView] is missing datasets: " << missingDatasets << " or the widget was not initialized yet.";
         return;
     }
-
+    
     if (_scene.hasEphysTraceDataset())
     {
-        // Find out which stimulus sets are available, and set them in the combobox
-        mv::Dataset<EphysExperiments> ephysTraces = _scene.getEphysTraces();
-
-        QSet<QString> stimSets;
-        for (const Experiment& experiment : ephysTraces->getData())
-        {
-            const std::vector<Recording>& recordings = experiment.getStimuli();
-            for (const Recording& recording : recordings)
-                stimSets.insert(recording.GetStimulusDescription());
-        }
-        qDebug() << stimSets;
-        setStimulusSetOptions(stimSets);
+        setStimulusSetOptions();
     }
 
     // Compose all cells, send them to renderer for uploading to GPU
-    // ...
+    mv::Dataset<Text> metaDataset = _scene.getCellMetadataDataset();
+
+    std::vector<uint32_t> metaIndices(metaDataset->getNumRows());
+    std::iota(metaIndices.begin(), metaIndices.end(), 0);
+    
     mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
     const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
+    mv::Dataset<EphysExperiments> ephysTraceDataset = _scene.getEphysTraces();
 
     // Find common selected points
-    std::vector<uint32_t> morphIndices(morphologies.size());
-    std::iota(morphIndices.begin(), morphIndices.end(), 0);
-
-    std::vector<int> metaIndices;
+    std::vector<int> morphIndices;
+    std::vector<int> ephysIndices;
 
     for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
     {
+        mv::BiMap& metaBiMap = selGroup.getBiMap(metaDataset);
+
+        std::vector<QString> keys = metaBiMap.getKeysByValues(metaIndices);
+
         mv::BiMap& morphBiMap = selGroup.getBiMap(morphologyDataset);
-        mv::BiMap& metaBiMap = selGroup.getBiMap(_scene.getCellMetadataDataset());
+        morphIndices = morphBiMap.getValuesByKeysWithMissingValue(keys, -1);
 
-        std::vector<QString> keys = morphBiMap.getKeysByValues(morphIndices);
-
-        metaIndices = metaBiMap.getValuesByKeysWithMissingValue(keys, -1);
+        if (ephysTraceDataset.isValid())
+        {
+            mv::BiMap& ephysBiMap = selGroup.getBiMap(ephysTraceDataset);
+            ephysIndices = ephysBiMap.getValuesByKeysWithMissingValue(keys, -1);
+        }
     }
 
     auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
+    // FIXME
+    QString columnName = _scene.getCellMetadataDataset()->hasColumn("Cluster") ? "Cluster" : "Group";
+    auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
+    // Cell names
+    bool loadCellNames = _scene.getCellMetadataDataset()->hasColumn("cell_name");
+    const std::vector<QString>* cellNameColumn = nullptr;
+    if (loadCellNames)
+        cellNameColumn = &_scene.getCellMetadataDataset()->getColumn("cell_name");
 
     // Construct vector of cells containing all necessary information
-    std::vector<Cell> cells(morphIndices.size());
-    for (int i = 0; i < cells.size(); i++)
+    std::vector<Cell> cells;
+    for (int i = 0; i < metaIndices.size(); i++)
     {
-        Cell& cell = cells[i];
-        cell.morphology = &morphologies[i];
+        Cell cell;
+        cell.cellId = cellIdColumn[i];
+        cell.cluster = clusterColumn[i];
+        cell.cellName = loadCellNames ? (*cellNameColumn)[i] : "Missing";
 
-        int metaIndex = metaIndices[i];
-        cell.cellId = metaIndex >= 0 ? cellIdColumn[metaIndex] : "Missing";
-    }
-
-    // Do the same procedure in case we also have traces
-    if (_scene.hasEphysTraceDataset())
-    {
-        mv::Dataset<EphysExperiments> ephysTraceDataset = _scene.getEphysTraces();
-        std::vector<int> ephysIndices;
-
-        for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
+        int morphIndex = morphIndices[i];
+        cell.morphology = nullptr;
+        if (morphIndex != -1)
         {
-            mv::BiMap& morphBiMap = selGroup.getBiMap(morphologyDataset);
-            mv::BiMap& ephysBiMap = selGroup.getBiMap(ephysTraceDataset);
-
-            std::vector<QString> keys = morphBiMap.getKeysByValues(morphIndices);
-
-            ephysIndices = ephysBiMap.getValuesByKeysWithMissingValue(keys, -1);
+            cell.morphology = &morphologies[morphIndex];
         }
-        for (int i = 0; i < cells.size(); i++)
-        {
-            Cell& cell = cells[i];
 
+        // If we have ephys traces store them in the cell
+        if (ephysTraceDataset.isValid())
+        {
             int ephysIndex = ephysIndices[i];
             cell.ephysTraces = ephysIndex >= 0 ? &_scene.getEphysTraces()->getData()[ephysIndex] : nullptr;
         }
+
+        if (cell.morphology || cell.ephysTraces)
+            cells.push_back(cell);
     }
 
-    _meWidget->setCells(cells);
+    _scene.allCells = cells;
+    _meWidget->setCells(_scene.allCells);
 }
 
 void MEView::onCellSelectionChanged()
@@ -229,117 +240,66 @@ void MEView::onCellSelectionChanged()
         return;
     }
     qDebug() << "onCellSelectionChanged";
-    // Find appropriate selection indices in the morphology and ephys data
-    mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
-    const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
-
-    const auto& selectionIndices = morphologyDataset->getSelectionIndices();
 
     bool isCortical = false;
     if (_scene.getMorphologyDataset()->hasProperty("isCortical"))
         isCortical = true;
 
-    std::vector<int> metaSelectionIndices;
-    for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
-    {
-        mv::BiMap& morphBiMap = selGroup.getBiMap(_scene.getMorphologyDataset());
-        mv::BiMap& metaBiMap = selGroup.getBiMap(_scene.getCellMetadataDataset());
-
-        std::vector<QString> keys = morphBiMap.getKeysByValues(selectionIndices);
-
-        metaSelectionIndices = metaBiMap.getValuesByKeysWithMissingValue(keys, -1);
-    }
-
-    std::vector<uint32_t> sortedSelectionIndices = selectionIndices;
-
-    // FIXME
-    QString columnName = _scene.getCellMetadataDataset()->hasColumn("Cluster") ? "Cluster" : "Group";
-    auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
-
-    if (isCortical)
-    {
-        std::vector<uint32_t> sortIndices(selectionIndices.size());
-        std::iota(sortIndices.begin(), sortIndices.end(), 0);
-        // Try to sort cluster names according to layer
-        std::sort(sortIndices.begin(), sortIndices.end(), [&morphologies, &clusterColumn, selectionIndices, metaSelectionIndices](const uint32_t& a, const uint32_t& b)
-            {
-                uint32_t metaIndexA = metaSelectionIndices[a];
-                uint32_t metaIndexB = metaSelectionIndices[b];
-
-                if (QString::localeAwareCompare(clusterColumn[metaIndexA], clusterColumn[metaIndexB]) == 0)
-                    return morphologies[selectionIndices[a]].somaPosition.y > morphologies[selectionIndices[b]].somaPosition.y;
-
-                return QString::localeAwareCompare(clusterColumn[metaIndexA], clusterColumn[metaIndexB]) < 0;
-            });
-
-        for (int i = 0; i < sortIndices.size(); i++)
-        {
-            sortedSelectionIndices[i] = selectionIndices[sortIndices[i]];
-        }
-    }
-
-    // Find common selected points
-    std::vector<int> sortedMetaSelectionIndices;
-
-    for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
-    {
-        mv::BiMap& morphBiMap = selGroup.getBiMap(_scene.getMorphologyDataset());
-        mv::BiMap& ephysBiMap = selGroup.getBiMap(_scene.getEphysTraces());
-        mv::BiMap& metaBiMap = selGroup.getBiMap(_scene.getCellMetadataDataset());
-
-        std::vector<QString> keys = morphBiMap.getKeysByValues(sortedSelectionIndices);
-
-        sortedMetaSelectionIndices = metaBiMap.getValuesByKeysWithMissingValue(keys, -1);
-    }
+    // Find cell IDs
+    mv::Dataset<Text> metaDataset = _scene.getCellMetadataDataset();
+    std::vector<uint32_t> metaIndices = metaDataset->getSelectionIndices();
 
     auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
-    bool loadCellNames = _scene.getCellMetadataDataset()->hasColumn("cell_name");
+    std::vector<QString> cellIds;
+    for (uint32_t metaIndex : metaIndices)
+        cellIds.push_back(cellIdColumn[metaIndex]);
 
-    const std::vector<QString>* cellNameColumn = nullptr;
-    if (loadCellNames)
-        cellNameColumn = &_scene.getCellMetadataDataset()->getColumn("cell_name");
+    std::vector<int> selectionIndices;
 
-    // Construct vector of cells containing all necessary information
-    std::vector<Cell> cells(sortedSelectionIndices.size());
-    for (int i = 0; i < cells.size(); i++)
+    for (int i = 0; i < _scene.allCells.size(); i++)
     {
-        Cell& cell = cells[i];
-        cell.morphology = &morphologies[sortedSelectionIndices[i]];
+        const Cell& cell = _scene.allCells[i];
 
-        int metaIndex = sortedMetaSelectionIndices[i];
-        cell.cellId = metaIndex >= 0 ? cellIdColumn[metaIndex] : "Missing";
-        if (loadCellNames && metaIndex >= 0)
-            cell.cellName = (*cellNameColumn)[metaIndex];
-        else
-            cell.cellName = "Missing";
-        cell.cluster = metaIndex >= 0 ? clusterColumn[metaIndex] : "Missing";
+        for (int j = 0; j < cellIds.size(); j++)
+        {
+            const QString& cellId = cellIds[j];
+
+            if (cell.cellId == cellId)
+            {
+                selectionIndices.push_back(i);
+            }
+        }
     }
-    qDebug() << "Selected cells: " << cells.size();
-    // Same procedure as above, adding ephys traces if present
-    if (_scene.hasEphysTraceDataset())
+
+    ///////////////
+    // Sort cortical morphologies
+    mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
+    const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
+
+    std::vector<uint32_t> sortIndices(selectionIndices.size());
+    std::iota(sortIndices.begin(), sortIndices.end(), 0);
+
+    // Try to sort cluster names according to layer
+    std::sort(sortIndices.begin(), sortIndices.end(), [this, selectionIndices](const uint32_t& a, const uint32_t& b)
+        {
+            Cell& cellA = _scene.allCells[selectionIndices[a]];
+            Cell& cellB = _scene.allCells[selectionIndices[b]];
+
+            if (QString::localeAwareCompare(cellA.cluster, cellB.cluster) == 0 && cellA.morphology && cellB.morphology)
+                return cellA.morphology->somaPosition.y > cellB.morphology->somaPosition.y;
+
+            return QString::localeAwareCompare(cellA.cluster, cellB.cluster) < 0;
+        });
+
+    std::vector<uint32_t> sortedIndices(sortIndices.size());
+    for (int i = 0; i < sortIndices.size(); i++)
     {
-        std::vector<int> ephysSelectionIndices;
-
-        for (mv::KeyBasedSelectionGroup& selGroup : mv::events().getSelectionGroups())
-        {
-            mv::BiMap& morphBiMap = selGroup.getBiMap(_scene.getMorphologyDataset());
-            mv::BiMap& ephysBiMap = selGroup.getBiMap(_scene.getEphysTraces());
-
-            std::vector<QString> keys = morphBiMap.getKeysByValues(sortedSelectionIndices);
-
-            ephysSelectionIndices = ephysBiMap.getValuesByKeysWithMissingValue(keys, -1);
-        }
-        for (int i = 0; i < cells.size(); i++)
-        {
-            Cell& cell = cells[i];
-
-            int ephysIndex = ephysSelectionIndices[i];
-            cell.ephysTraces = ephysIndex >= 0 ? &_scene.getEphysTraces()->getData()[ephysIndex] : nullptr;
-        }
+        sortedIndices[i] = selectionIndices[sortIndices[i]];
     }
 
     _meWidget->SetCortical(isCortical);
-    _meWidget->setSelectedCells(cells);
+
+    _meWidget->setSelectedCells(sortedIndices);
 }
 
 ViewPlugin* CellMorphologyPluginFactory::produce()

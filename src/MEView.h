@@ -51,7 +51,7 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-    void setStimulusSetOptions(const QSet<QString>& stimSets);
+    void setStimulusSetOptions();
 
     /**
      * Invoked when a data event occurs

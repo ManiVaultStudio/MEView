@@ -3,6 +3,7 @@
 #include <QSizePolicy>
 
 MEWidget::MEWidget() :
+    _scene(Scene::getInstance()),
     _emRenderer(),
     _layerDrawing(this),
     _width(1),
@@ -29,15 +30,21 @@ void MEWidget::setCells(const std::vector<Cell>& cells)
     _emRenderer.BuildRenderObjects(cells);
 }
 
-void MEWidget::setSelectedCells(const std::vector<Cell>& cells)
+void MEWidget::setSelectedCells(const std::vector<uint32_t>& indices)
 {
     //if (!isWidgetInitialized()) // Shouldn't be necessary
     //    return;
 
-    _cells = cells;
+    //_cells = cells;
+
+    _scene.selectedCells.clear();
+    for (uint32_t cellIndex : indices)
+    {
+        _scene.selectedCells.push_back(_scene.allCells[cellIndex]);
+    }
 
     // makeCurrent(); // Shouldn't be necessary
-    _emRenderer.SetSelectedCellIds(cells);
+    _emRenderer.SetSelectedCellIds(indices);
 }
 
 void MEWidget::SetCortical(bool isCortical)
@@ -92,14 +99,14 @@ void MEWidget::onWidgetRendered()
         int yCoord = 16;
 
         QFontMetrics fm(painter.font());
-        int textWidth = fm.horizontalAdvance(_cells[i].cluster);
+        int textWidth = fm.horizontalAdvance(_scene.selectedCells[i].cluster);
         int textHeight = fm.height();
 
         // Calculate top-left corner to draw the text so that it is centered
         int x = xCoord - textWidth / 2;
         int y = yCoord + fm.ascent() - textHeight / 2;
 
-        painter.drawText(x, y, _cells[i].cluster);
+        painter.drawText(x, y, _scene.selectedCells[i].cluster);
     }
 
     painter.end();
@@ -127,7 +134,7 @@ void MEWidget::mousePressEvent(QMouseEvent* event)
             if (dist < closestDist)
             {
                 closestDist = dist;
-                cell = &_cells[i];
+                cell = &_scene.selectedCells[i];
             }
         }
 

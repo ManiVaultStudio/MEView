@@ -22,7 +22,7 @@ public:
     /** Set the indices of which morphologies should be shown */
     void setCells(const std::vector<Cell>& cells);
 
-    void setSelectedCells(const std::vector<Cell>& cells);
+    void setSelectedCells(const std::vector<uint32_t>& indices);
 
     void SetCortical(bool isCortical);
 
@@ -40,9 +40,9 @@ public slots:
     void onNewAspectRatioRequested(float aspectRatio);
 
 private:
-    int _width, _height;
+    Scene& _scene;
 
-    std::vector<Cell> _cells;
+    int _width, _height;
 
     bool _isCortical;
     LayerDrawing _layerDrawing;
