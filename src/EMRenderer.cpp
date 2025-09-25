@@ -341,8 +341,6 @@ void EMRenderer::SetSelectedCellIds(const std::vector<uint32_t>& indices)
 
                     if (acq.GetData().yMin < _renderState._acqChartRangeMin) _renderState._acqChartRangeMin = acq.GetData().yMin;
                     if (acq.GetData().yMax > _renderState._acqChartRangeMax) _renderState._acqChartRangeMax = acq.GetData().yMax;
-
-                    break;
                 }
             }
         }
