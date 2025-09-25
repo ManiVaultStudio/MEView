@@ -47,7 +47,7 @@ void MEView::init()
 
     connect(&_settingsAction.getProcessesOption(), &OptionsAction::selectedOptionsChanged, this, [this](const QStringList& selectedOptions) { _meWidget->GetRenderer().SetEnabledProcesses(selectedOptions); });
     connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().setCurrentStimset(_settingsAction.getStimSetsAction().getCurrentText()); });
-
+    connect(&_settingsAction.getShowNoMorphsAction(), &ToggleAction::toggled, this, [this](bool toggled) { onCellSelectionChanged(); });
     _meWidget->GetRenderer().SetEnabledProcesses({ "Axon", "Apical Dendrite", "Basal Dendrite" });
 
     layout->setContentsMargins(0, 0, 0, 0);
@@ -226,6 +226,7 @@ void MEView::onInitialLoad()
         {
             _scene.metaToCellMap[metaIndices[i]] = cells.size();
             cells.push_back(cell);
+        }
     }
 
     _scene.allCells = cells;

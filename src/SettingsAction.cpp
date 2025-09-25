@@ -8,7 +8,8 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     _lineRendererButton(this, "Line Renderer"),
     _realRendererButton(this, "True Renderer"),
     _processesOption(this, "Displayed processes", QStringList{ "Apical Dendrite", "Basal Dendrite", "Axon" }, QStringList{"Apical Dendrite", "Basal Dendrite", "Axon" }),
-    _stimSetsAction(this, "Stim sets")
+    _stimSetsAction(this, "Stim sets"),
+    _showCellsWithoutMorph(this, "Show all cells", false)
 {
 
 }
