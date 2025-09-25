@@ -248,8 +248,8 @@ void EMRenderer::update(float t)
                 _modelMatrix.translate(xCoord * r, 0, 0);
                 _modelMatrix.translate(-0.3, 0, 0);
                 _modelMatrix.scale(0.6f, 0.4f, 1);
-                _modelMatrix.scale(1.0f / acqRO.extents.getWidth(), 1.0f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1.0f); // Rescale to [0, 1]
-                _modelMatrix.translate(-acqRO.extents.getLeft(), -_renderState._acqChartRangeMin, 0); // Map bottom-left corner to 0,0
+                _modelMatrix.scale(1.0f / (cro->_acqChartDomainMax - cro->_acqChartDomainMin), 1.0f / (_renderState._acqChartRangeMax - _renderState._acqChartRangeMin), 1.0f); // Rescale to [0, 1]
+                _modelMatrix.translate(-cro->_acqChartDomainMin, -_renderState._acqChartRangeMin, 0); // Map bottom-left corner to 0,0
 
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
@@ -264,8 +264,8 @@ void EMRenderer::update(float t)
                 _modelMatrix.setToIdentity();
                 _modelMatrix.translate(xCoord * r, 0, 0);
                 _modelMatrix.translate(-0.3, 0.5, 0);
-                _modelMatrix.scale(0.6f / stimRO.extents.getWidth(), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
-                _modelMatrix.translate(-stimRO.extents.getLeft(), -_renderState._stimChartRangeMin, 0);
+                _modelMatrix.scale(0.6f / (cro->_stimChartDomainMax - cro->_stimChartDomainMin), 0.4f / (_renderState._stimChartRangeMax - _renderState._stimChartRangeMin), 1);
+                _modelMatrix.translate(-cro->_stimChartDomainMin, -_renderState._stimChartRangeMin, 0);
                 _traceShader.uniformMatrix4f("modelMatrix", _modelMatrix.constData());
 
                 Vector3f stimColor = i == stimIndex ? Vector3f(0.839f, 0.4f, 0.2f) : Vector3f(0.5f);
@@ -329,15 +329,27 @@ void EMRenderer::SetSelectedCellIds(const std::vector<uint32_t>& indices)
             if (experiment.getStimuli().empty())
                 continue;
 
+            CellRenderObject* cro = cellRenderObjects[i];
+            cro->_stimChartDomainMin = std::numeric_limits<float>::max();
+            cro->_stimChartDomainMax = -std::numeric_limits<float>::max();
+            cro->_acqChartDomainMin = std::numeric_limits<float>::max();
+            cro->_acqChartDomainMax = -std::numeric_limits<float>::max();
+
             for (int j = 0; j < experiment.getStimuli().size(); j++)
             {
                 const Recording& stim = experiment.getStimuli()[j];
                 if (stim.GetStimulusDescription() == _currentStimset)
                 {
+                    if (stim.GetData().xMin < cro->_stimChartDomainMin) cro->_stimChartDomainMin = stim.GetData().xMin;
+                    if (stim.GetData().xMax > cro->_stimChartDomainMax) cro->_stimChartDomainMax = stim.GetData().xMax;
+
                     if (stim.GetData().yMin < _renderState._stimChartRangeMin) _renderState._stimChartRangeMin = stim.GetData().yMin;
                     if (stim.GetData().yMax > _renderState._stimChartRangeMax) _renderState._stimChartRangeMax = stim.GetData().yMax;
 
                     const Recording& acq = experiment.getAcquisitions()[j];
+
+                    if (acq.GetData().xMin < cro->_acqChartDomainMin) cro->_acqChartDomainMin = acq.GetData().xMin;
+                    if (acq.GetData().xMax > cro->_acqChartDomainMax) cro->_acqChartDomainMax = acq.GetData().xMax;
 
                     if (acq.GetData().yMin < _renderState._acqChartRangeMin) _renderState._acqChartRangeMin = acq.GetData().yMin;
                     if (acq.GetData().yMax > _renderState._acqChartRangeMax) _renderState._acqChartRangeMax = acq.GetData().yMax;

@@ -68,4 +68,9 @@ public:
     std::vector<TraceRenderObject> acquisitionsObjects;
 
     bool hasMorphology = false;
+
+    float _stimChartDomainMin = -1;
+    float _stimChartDomainMax = 1;
+    float _acqChartDomainMin = -1;
+    float _acqChartDomainMax = 1;
 };
