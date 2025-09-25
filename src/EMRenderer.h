@@ -37,6 +37,7 @@ public:
     void SetCortical(bool isCortical);
     void BuildRenderObjects(const std::vector<Cell>& cells);
     void SetSelectedCellIds(const std::vector<uint32_t>& indices);
+    void ComputeRenderLocations(const std::vector<CellRenderObject*>& cellRenderObjects);
     std::vector<float> GetHorizontalCellLocations();
 
 public: // UI State
@@ -65,6 +66,7 @@ private:
     bool _isCortical = false;
 
     std::vector<float> _horizontalCellLocations;
+    std::vector<float> _xCoords;
 
     RenderRegion _fullViewport;
     RenderRegion _morphologyViewport;

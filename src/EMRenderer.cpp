@@ -150,59 +150,6 @@ void EMRenderer::update(float t)
         ignoredTypes.push_back(CellMorphology::Type::ApicalDendrite);
     if (!_enabledProcesses.contains("Basal Dendrite"))
         ignoredTypes.push_back(CellMorphology::Type::BasalDendrite);
-    
-    // Compute drawing locations
-    std::vector<float> xCoords;
-    _horizontalCellLocations.clear();
-    float xOffset = 0;
-    float minWidth = 0.3f;
-    for (int i = 0; i < cellRenderObjects.size(); i++)
-    {
-        CellRenderObject* cro = cellRenderObjects[i];
-
-        float xCoord = 0;
-        if (cro->hasMorphology)
-        {
-            cro->morphologyObject.ComputeExtents(ignoredTypes);
-            const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
-
-            mv::Vector3f dimensions = extent.emax - extent.emin;
-            float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
-
-            float height;
-            if (_isCortical)
-                height = _scene.getCortexStructure().getDepthRange();
-            else
-                height = maxCellHeight;
-
-            if (_isCortical)
-            {
-                float depthRange = _scene.getCortexStructure().getDepthRange();
-                xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / depthRange);
-                xOffset += std::max(minWidth, maxWidth / depthRange);
-            }
-            else
-            {
-                xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / maxCellHeight);
-                xOffset += std::max(minWidth, maxWidth / maxCellHeight);
-            }
-        }
-        else
-        {
-            float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
-            // FIXME why is this /2 necessary?
-            xCoord = xOffset + 0.15f;
-            xOffset += 0.3f;
-        }
-        {
-            QVector4D clipSpace = (_morphProjMatrix * QVector4D(xCoord, 0, 0, 1));
-            QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
-            float xsCoord = _morphologyViewport.GetScreenCoordinates(ndc).x();
-            _horizontalCellLocations.push_back(xsCoord);
-        }
-
-        xCoords.push_back(xCoord);
-    }
 
     std::vector<Vector3f> somaPositions;
     for (int i = 0; i < cellRenderObjects.size(); i++)
@@ -214,7 +161,7 @@ void EMRenderer::update(float t)
             cro->morphologyObject.ComputeExtents(ignoredTypes);
             const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
 
-            float xCoord = xCoords[i];
+            float xCoord = _xCoords[i];
             // Map from the original cell to its height being [0, 1], and the other dimensions proportional
             _modelMatrix.setToIdentity();
             if (_isCortical)
@@ -283,7 +230,7 @@ void EMRenderer::update(float t)
     {
         CellRenderObject* cro = cellRenderObjects[i];
 
-        float xCoord = xCoords[i];
+        float xCoord = _xCoords[i];
 
         int stimIndex = FindHighestPriorityStimulus(*cro, _currentStimset);
 
@@ -405,6 +352,72 @@ void EMRenderer::SetSelectedCellIds(const std::vector<uint32_t>& indices)
     RequestNewWidgetWidth();
 }
 
+void EMRenderer::ComputeRenderLocations(const std::vector<CellRenderObject*>& cellRenderObjects)
+{
+    float maxCellHeight = computeMaxCellHeight(cellRenderObjects);
+
+    std::vector<CellMorphology::Type> ignoredTypes;
+    if (!_enabledProcesses.contains("Axon"))
+        ignoredTypes.push_back(CellMorphology::Type::Axon);
+    if (!_enabledProcesses.contains("Apical Dendrite"))
+        ignoredTypes.push_back(CellMorphology::Type::ApicalDendrite);
+    if (!_enabledProcesses.contains("Basal Dendrite"))
+        ignoredTypes.push_back(CellMorphology::Type::BasalDendrite);
+
+    // Compute drawing locations
+    _xCoords.clear();
+    _horizontalCellLocations.clear();
+    float xOffset = 0;
+    float minWidth = 0.3f;
+    for (int i = 0; i < cellRenderObjects.size(); i++)
+    {
+        CellRenderObject* cro = cellRenderObjects[i];
+
+        float xCoord = 0;
+        if (cro->hasMorphology)
+        {
+            cro->morphologyObject.ComputeExtents(ignoredTypes);
+            const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
+
+            mv::Vector3f dimensions = extent.emax - extent.emin;
+            float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
+
+            float height;
+            if (_isCortical)
+                height = _scene.getCortexStructure().getDepthRange();
+            else
+                height = maxCellHeight;
+
+            if (_isCortical)
+            {
+                float depthRange = _scene.getCortexStructure().getDepthRange();
+                xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / depthRange);
+                xOffset += std::max(minWidth, maxWidth / depthRange);
+            }
+            else
+            {
+                xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / maxCellHeight);
+                xOffset += std::max(minWidth, maxWidth / maxCellHeight);
+            }
+        }
+        else
+        {
+            float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
+            // FIXME why is this /2 necessary?
+            xCoord = xOffset + 0.15f;
+            xOffset += 0.3f;
+        }
+        {
+            QVector4D clipSpace = (_morphProjMatrix * QVector4D(xCoord, 0, 0, 1));
+            QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
+            float xsCoord = _morphologyViewport.GetScreenCoordinates(ndc).x();
+            _horizontalCellLocations.push_back(xsCoord);
+        }
+
+        _xCoords.push_back(xCoord);
+    }
+}
+
 void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
 {
     _renderObjectBuilder.BuildCellRenderObjects(cells);
@@ -441,25 +454,27 @@ void EMRenderer::RequestNewWidgetWidth()
     if (!_enabledProcesses.contains("Basal Dendrite"))
         ignoredTypes.push_back(CellMorphology::Type::BasalDendrite);
 
+    ComputeRenderLocations(cellRenderObjects);
+
     // Compute new widget width
-    float newWidgetWidthToRequest = 0;
-    for (int i = 0; i < cellRenderObjects.size(); i++)
-    {
-        cellRenderObjects[i]->morphologyObject.ComputeExtents(ignoredTypes);
-        CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.totalExtent;
-        mv::Vector3f dimensions = extent.emax - extent.emin;
+    float newWidgetWidthToRequest = _xCoords[_xCoords.size() - 1] + 0.6; // FIXME little hack for extra space
+    //for (int i = 0; i < cellRenderObjects.size(); i++)
+    //{
+    //    cellRenderObjects[i]->morphologyObject.ComputeExtents(ignoredTypes);
+    //    CellMorphology::Extent extent = cellRenderObjects[i]->morphologyObject.totalExtent;
+    //    mv::Vector3f dimensions = extent.emax - extent.emin;
 
-        newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
-    }
-
+    //    newWidgetWidthToRequest += sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.8f;
+    //}
+    qDebug() << "New width request: " << newWidgetWidthToRequest;
     if (newWidgetWidthToRequest == 0)
         return;
 
     _morphProjMatrix.setToIdentity();
     _morphProjMatrix.ortho(0, _morphologyViewport.GetAspectRatio(), 0, 1, -1, 1);
 
-    float morphHeight = _isCortical ? _scene.getCortexStructure().getDepthRange() : computeMaxCellHeight(cellRenderObjects);
-    QVector4D clipSpace = (_morphProjMatrix * QVector4D(newWidgetWidthToRequest / morphHeight, 0, 0, 1));
+    //float morphHeight = _isCortical ? _scene.getCortexStructure().getDepthRange() : computeMaxCellHeight(cellRenderObjects);
+    QVector4D clipSpace = (_morphProjMatrix * QVector4D(newWidgetWidthToRequest, 0, 0, 1));
     QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
     newWidgetWidthToRequest = _morphologyViewport.GetScreenCoordinates(ndc).x();
 
