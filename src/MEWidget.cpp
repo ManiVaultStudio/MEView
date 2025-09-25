@@ -128,7 +128,7 @@ void MEWidget::mousePressEvent(QMouseEvent* event)
         float closestDist = std::numeric_limits<float>::max();
         for (int i = 0; i < cellLocations.size(); i++)
         {
-            int xCoord = cellLocations[i];// / devicePixelRatioF(); // Non-dpr coord
+            int xCoord = cellLocations[i] / devicePixelRatioF(); // Non-dpr coord
             float dist = abs(xCoord - localPos.x());
             //qDebug() << "X:" << xCoord << "Mx: " << localPos.x();
             if (dist < closestDist)
