@@ -109,7 +109,7 @@ add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${RENDER_SOURCES} ${EPHYS_S
 # -----------------------------------------------------------------------------
 # Include ManiVault headers, including system data plugins
 target_include_directories(${PROJECT_NAME} PRIVATE "${ManiVault_INCLUDE_DIR}")
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src")
+target_include_directories(${PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/src")
 #target_include_directories(${PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/3rdparty/curl/include/")
 target_include_directories(${PROJECT_NAME} PRIVATE "${MV_CMD_INSTALL_DIR}/$<CONFIGURATION>/include/")
 target_include_directories(${PROJECT_NAME} PRIVATE "${MV_EPD_INSTALL_DIR}/$<CONFIGURATION>/include/")

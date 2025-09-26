@@ -11,7 +11,7 @@ RoundedPopup::RoundedPopup(QWidget* parent) :
     setFixedWidth(400);
 
     _layout = new QVBoxLayout(this);
-    _layout->setContentsMargins(16, 16, 16, 16); // space for the “card” + shadow
+    _layout->setContentsMargins(16, 16, 16, 16); // space for the card + shadow
 }
 
 void RoundedPopup::SetWidget(QWidget* widget)
