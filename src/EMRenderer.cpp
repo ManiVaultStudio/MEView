@@ -377,7 +377,7 @@ void EMRenderer::ComputeRenderLocations(const std::vector<CellRenderObject*>& ce
     _xCoords.clear();
     _horizontalCellLocations.clear();
     float xOffset = 0;
-    float minWidth = 0.3f;
+    float minWidth = _isCortical ? 0.3f : 0.6f;
     for (int i = 0; i < cellRenderObjects.size(); i++)
     {
         CellRenderObject* cro = cellRenderObjects[i];
@@ -413,8 +413,8 @@ void EMRenderer::ComputeRenderLocations(const std::vector<CellRenderObject*>& ce
         {
             float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
             // FIXME why is this /2 necessary?
-            xCoord = xOffset + 0.15f;
-            xOffset += 0.3f;
+            xCoord = xOffset + (_isCortical ? 0.15f : 0.3f);
+            xOffset += (_isCortical ? 0.3f : 0.6f);
         }
         {
             QVector4D clipSpace = (_morphProjMatrix * QVector4D(xCoord, 0, 0, 1));

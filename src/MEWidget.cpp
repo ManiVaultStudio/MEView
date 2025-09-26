@@ -105,7 +105,10 @@ void MEWidget::onWidgetRendered()
         int x = xCoord - textWidth / 2;
         int y = yCoord + fm.ascent() - textHeight / 2;
 
-        painter.drawText(x, y, _scene.selectedCells[i].cluster);
+        const QRect boundingRect = QRect(xCoord - 50, yCoord - 12, 100, 28);
+        painter.drawText(boundingRect, Qt::AlignCenter | Qt::AlignTop | Qt::TextWordWrap, _scene.selectedCells[i].cluster);
+
+        //painter.drawText(x, y, _scene.selectedCells[i].cluster);
     }
 
     painter.end();
