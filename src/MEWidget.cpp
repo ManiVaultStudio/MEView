@@ -2,6 +2,11 @@
 
 #include <QSizePolicy>
 
+namespace
+{
+    QFont textFont("Segoe UI", 9, 400, false);
+}
+
 MEWidget::MEWidget() :
     _scene(Scene::getInstance()),
     _emRenderer(),
@@ -76,7 +81,9 @@ void MEWidget::onWidgetRendered()
     t += 0.3f;
 
     QPainter painter(this);
-
+#ifdef _WIN32
+    painter.setFont(textFont);
+#endif
     painter.beginNativePainting();
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
