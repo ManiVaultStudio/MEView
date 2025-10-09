@@ -465,6 +465,9 @@ void EMRenderer::RequestNewWidgetWidth()
 
     ComputeRenderLocations(cellRenderObjects);
 
+    if (_xCoords.empty())
+        return;
+
     // Compute new widget width
     float newWidgetWidthToRequest = _xCoords[_xCoords.size() - 1] + 0.6; // FIXME little hack for extra space
 
