@@ -168,6 +168,6 @@ void MEWidget::onNewAspectRatioRequested(float aspectRatio)
 {
     // Should be set in pre-scaled coordinates, because 32 pixels here results in 40px at 125%
     int newWidth = aspectRatio * (_height / devicePixelRatioF());
-    qDebug() << "Requested new width: " << newWidth;
+
     setMinimumWidth(newWidth);
 }

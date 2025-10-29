@@ -191,7 +191,7 @@ void MEView::onInitialLoad()
 
     auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
     // FIXME
-    QString columnName = _scene.getCellMetadataDataset()->hasColumn("Cluster") ? "Cluster" : "Group";
+    QString columnName = _scene.getCellMetadataDataset()->hasColumn("Supertype") ? "Supertype" : "Group";
     auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
     // Cell names
     bool loadCellNames = _scene.getCellMetadataDataset()->hasColumn("cell_name");
@@ -242,7 +242,6 @@ void MEView::onCellSelectionChanged()
         qWarning() << "[MEViewer] Missing datasets:" << missingDatasets;
         return;
     }
-    qDebug() << "onCellSelectionChanged";
 
     bool isCortical = false;
     if (_scene.getMorphologyDataset()->hasProperty("isCortical"))
