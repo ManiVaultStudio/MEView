@@ -294,6 +294,8 @@ void EMRenderer::SetEnabledProcesses(const QStringList& enabledProcesses)
 void EMRenderer::setCurrentStimset(const QString& stimSet)
 {
     _currentStimset = stimSet;
+
+    RecalculateTraceBounds();
 }
 
 void EMRenderer::SetCortical(bool isCortical)
@@ -306,13 +308,11 @@ std::vector<float> EMRenderer::GetHorizontalCellLocations()
     return _horizontalCellLocations;
 }
 
-void EMRenderer::SetSelectedCellIds(const std::vector<uint32_t>& indices)
+void EMRenderer::RecalculateTraceBounds()
 {
     // Build list of selected cell render object references
     std::vector<CellRenderObject*> cellRenderObjects;
     BuildListOfCellRenderObjects(_scene.selectedCells, cellRenderObjects);
-
-    _renderState._selectedCells = _scene.selectedCells;
 
     // Compute stimulus chart height
     _renderState._stimChartRangeMin = std::numeric_limits<float>::max();
@@ -357,6 +357,17 @@ void EMRenderer::SetSelectedCellIds(const std::vector<uint32_t>& indices)
             }
         }
     }
+}
+
+void EMRenderer::SetSelectedCellIds(const std::vector<uint32_t>& indices)
+{
+    // Build list of selected cell render object references
+    std::vector<CellRenderObject*> cellRenderObjects;
+    BuildListOfCellRenderObjects(_scene.selectedCells, cellRenderObjects);
+
+    _renderState._selectedCells = _scene.selectedCells;
+
+    RecalculateTraceBounds();
 
     RequestNewWidgetWidth();
 }

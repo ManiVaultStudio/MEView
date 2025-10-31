@@ -36,6 +36,7 @@ public:
 
     void SetCortical(bool isCortical);
     void BuildRenderObjects(const std::vector<Cell>& cells);
+    void RecalculateTraceBounds();
     void SetSelectedCellIds(const std::vector<uint32_t>& indices);
     void ComputeRenderLocations(const std::vector<CellRenderObject*>& cellRenderObjects);
     std::vector<float> GetHorizontalCellLocations();
