@@ -1,5 +1,7 @@
 #include "Rendering/RenderRegion.h"
 
+#include "graphics/Bounds.h"
+
 #include <QMatrix4x4>
 
 RenderRegion::RenderRegion(QOpenGLFunctions_3_3_Core* f) :
@@ -14,11 +16,24 @@ void RenderRegion::Set(int x, int y, int w, int h)
     _y = y;
     _w = w;
     _h = h;
+
+    _projMatrix.setToIdentity();
+    _projMatrix.ortho(0, GetAspectRatio(), 0, 1, -3, 3);
+}
+
+void RenderRegion::Set(mv::Bounds bounds)
+{
+    Set(bounds.getLeft(), bounds.getBottom(), bounds.getWidth(), bounds.getHeight());
 }
 
 float RenderRegion::GetAspectRatio()
 {
     return (float)_w / _h;
+}
+
+QMatrix4x4& RenderRegion::GetProjectionMatrix()
+{
+    return _projMatrix;
 }
 
 QVector4D RenderRegion::GetScreenCoordinates(QVector4D ndc)

@@ -9,13 +9,13 @@ namespace
 
 MEWidget::MEWidget() :
     _scene(Scene::getInstance()),
-    _emRenderer(),
+    _meRenderer(),
     _layerDrawing(this),
     _width(1),
     _height(1),
     _isCortical(false)
 {
-    connect(&_emRenderer, &EMRenderer::requestNewAspectRatio, this, &MEWidget::onNewAspectRatioRequested);
+    connect(&_meRenderer, &MERenderer::RequestNewAspectRatio, this, &MEWidget::onNewAspectRatioRequested);
 
     //setMinimumSize(10, 10);
     setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
@@ -32,36 +32,30 @@ void MEWidget::setCells(const std::vector<Cell>& cells)
         return;
 
     makeCurrent();
-    _emRenderer.BuildRenderObjects(cells);
+    _meRenderer.BuildRenderObjects(cells);
 }
 
 void MEWidget::setSelectedCells(const std::vector<uint32_t>& indices)
 {
-    //if (!isWidgetInitialized()) // Shouldn't be necessary
-    //    return;
-
-    //_cells = cells;
-
     _scene.selectedCells.clear();
     for (uint32_t cellIndex : indices)
     {
         _scene.selectedCells.push_back(_scene.allCells[cellIndex]);
     }
 
-    // makeCurrent(); // Shouldn't be necessary
-    _emRenderer.SetSelectedCellIds(indices);
+    _meRenderer.SetSelectedCellIds(indices);
 }
 
 void MEWidget::SetCortical(bool isCortical)
 {
     _isCortical = isCortical;
 
-    _emRenderer.SetCortical(isCortical);
+    _meRenderer.SetCortical(isCortical);
 }
 
 void MEWidget::onWidgetInitialized()
 {
-    _emRenderer.init();
+    _meRenderer.Init();
 
     // Start 40 fps render timer
     QTimer* updateTimer = new QTimer();
@@ -72,7 +66,7 @@ void MEWidget::onWidgetInitialized()
 void MEWidget::onWidgetResized(int w, int h)
 {
     _width = w; _height = h;
-    _emRenderer.resize(w, h, devicePixelRatioF());
+    _meRenderer.Resize(w, h, devicePixelRatioF());
 }
 
 void MEWidget::onWidgetRendered()
@@ -93,30 +87,14 @@ void MEWidget::onWidgetRendered()
     
     _layerDrawing.setDepthRange(scene.getCortexStructure().getMinDepth(), scene.getCortexStructure().getMaxDepth());
     _layerDrawing.drawAxes(painter, _isCortical);
+    //_layerDrawing.drawSeparations(painter, _isCortical);
 
     painter.beginNativePainting();
-    _emRenderer.update(t);
+    _meRenderer.Update(t, painter);
     painter.endNativePainting();
 
-    std::vector<float> horizontalCellLocations = _emRenderer.GetHorizontalCellLocations();
-    for (int i = 0; i < horizontalCellLocations.size(); i++)
-    {
-        int xCoord = horizontalCellLocations[i] / devicePixelRatioF();
-        int yCoord = 16;
-
-        QFontMetrics fm(painter.font());
-        int textWidth = fm.horizontalAdvance(_scene.selectedCells[i].cluster);
-        int textHeight = fm.height();
-
-        // Calculate top-left corner to draw the text so that it is centered
-        int x = xCoord - textWidth / 2;
-        int y = yCoord + fm.ascent() - textHeight / 2;
-
-        const QRect boundingRect = QRect(xCoord - 50, yCoord - 12, 100, 28);
-        painter.drawText(boundingRect, Qt::AlignCenter | Qt::AlignTop | Qt::TextWordWrap, _scene.selectedCells[i].cluster);
-
-        //painter.drawText(x, y, _scene.selectedCells[i].cluster);
-    }
+    _meRenderer.RenderLabels(painter);
+    _meRenderer.RenderSeparations(painter);
 
     painter.end();
 }
@@ -132,7 +110,7 @@ void MEWidget::mousePressEvent(QMouseEvent* event)
         QPoint localPos = event->pos(); // position inside the widget
         QPoint globalPos = mapToGlobal(localPos);
 
-        std::vector<float> cellLocations = _emRenderer.GetHorizontalCellLocations();
+        std::vector<float> cellLocations = _meRenderer.GetHorizontalCellLocations();
         Cell* cell = nullptr;
         float closestDist = std::numeric_limits<float>::max();
         for (int i = 0; i < cellLocations.size(); i++)

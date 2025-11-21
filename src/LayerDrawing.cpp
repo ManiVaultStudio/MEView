@@ -84,6 +84,11 @@ void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
     painter.drawLine(MARGIN, topMargin, MARGIN, _parent->height() - bottomMargin);
 }
 
+void LayerDrawing::drawSeparations(QPainter& painter, bool isCortical)
+{
+    drawVerticalLine(painter, 200);
+}
+
 static qreal snapToDeviceRow(const QPainter& p, qreal y)
 {
     const QTransform dev = p.deviceTransform();
@@ -101,6 +106,27 @@ void LayerDrawing::drawHorizontalLine(QPainter& painter, float y)
     // Draw line centered at a pixel, so it doesn't bleed onto multiple pixels
     const qreal py = snapToDeviceRow(painter, y);
     painter.drawLine(QPointF(MARGIN, py), QPointF(_parent->width() - MARGIN, py));
+
+    painter.restore();
+}
+
+void LayerDrawing::drawVerticalLine(QPainter& painter, float x)
+{
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, false);
+
+    int topMargin = 32; // Non-pixel ratio margin
+    int bottomMargin = _parent->height() / 3.0f; // Pixel ratio margin
+    int chartHeight = _parent->height() - topMargin - bottomMargin;
+
+    // Draw line centered at a pixel, so it doesn't bleed onto multiple pixels
+    const qreal px = snapToDeviceRow(painter, x);
+    QPen pen;
+    pen.setColor(Qt::gray);
+    pen.setWidth(2);
+    pen.setStyle(Qt::DashLine);
+    painter.setPen(pen);
+    painter.drawLine(QPointF(px, topMargin), QPointF(px, chartHeight + topMargin));
 
     painter.restore();
 }

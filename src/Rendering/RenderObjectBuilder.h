@@ -13,9 +13,11 @@ class RenderObjectBuilder
 {
 public:
     RenderObjectBuilder(QOpenGLFunctions_3_3_Core* f, RenderState* renderState);
+    RenderObjectBuilder(QOpenGLFunctions_3_3_Core* f);
 
 public:
-    void BuildCellRenderObjects(const std::vector<Cell>& cells);
+    GLuint BuildCellSoma();
+    void BuildCellRenderObjects(const std::vector<Cell>& cells, QHash<QString, CellRenderObject>& cellRenderObjects);
     void BuildCellRenderObject(CellRenderObject& cro, const Cell& cell);
 
     void BuildMorphologyObject(MorphologyRenderObject& mro, const CellMorphology& cellMorpology);

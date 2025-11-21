@@ -440,7 +440,7 @@ void EMRenderer::ComputeRenderLocations(const std::vector<CellRenderObject*>& ce
 
 void EMRenderer::BuildRenderObjects(const std::vector<Cell>& cells)
 {
-    _renderObjectBuilder.BuildCellRenderObjects(cells);
+    _renderObjectBuilder.BuildCellRenderObjects(cells, _renderState._cellRenderObjects);
 }
 
 void EMRenderer::BuildListOfCellRenderObjects(const std::vector<Cell>& cells, std::vector<CellRenderObject*>& cellRenderObjects)

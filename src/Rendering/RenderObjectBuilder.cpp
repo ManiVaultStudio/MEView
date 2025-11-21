@@ -36,16 +36,59 @@ RenderObjectBuilder::RenderObjectBuilder(
 
 }
 
-void RenderObjectBuilder::BuildCellRenderObjects(const std::vector<Cell>& cells)
+RenderObjectBuilder::RenderObjectBuilder(QOpenGLFunctions_3_3_Core* f) :
+    _f(f)
+{
+
+}
+
+GLuint RenderObjectBuilder::BuildCellSoma()
+{
+    GLuint vao, vbo, tbo;
+    _f->glGenVertexArrays(1, &vao);
+    _f->glBindVertexArray(vao);
+
+    std::vector<Vector3f> vertices
+    {
+        Vector3f(-1, -1, 0),
+        Vector3f(1, -1, 0),
+        Vector3f(-1, 1, 0),
+        Vector3f(1, 1, 0)
+    };
+
+    std::vector<Vector2f> textureCoords
+    {
+        Vector2f(0, 0),
+        Vector2f(1, 0),
+        Vector2f(0, 1),
+        Vector2f(1, 1)
+    };
+    qDebug() << vertices.size();
+    _f->glGenBuffers(1, &vbo);
+    _f->glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    _f->glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(mv::Vector3f), vertices.data(), GL_STATIC_DRAW);
+    _f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    _f->glEnableVertexAttribArray(0);
+
+    _f->glGenBuffers(1, &tbo);
+    _f->glBindBuffer(GL_ARRAY_BUFFER, tbo);
+    _f->glBufferData(GL_ARRAY_BUFFER, textureCoords.size() * sizeof(mv::Vector2f), textureCoords.data(), GL_STATIC_DRAW);
+    _f->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    _f->glEnableVertexAttribArray(1);
+
+    return vao;
+}
+
+void RenderObjectBuilder::BuildCellRenderObjects(const std::vector<Cell>& cells, QHash<QString, CellRenderObject>& cellRenderObjects)
 {
     for (const Cell& cell : cells)
     {
         CellRenderObject cro;
         BuildCellRenderObject(cro, cell);
 
-        _renderState->_cellRenderObjects[cell.cellId] = cro;
+        cellRenderObjects[cell.cellId] = cro;
     }
-    qDebug() << "Built all render objects" << _renderState->_cellRenderObjects.size();
+    qDebug() << "Built all render objects" << cellRenderObjects.size();
 }
 
 void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cell& cell)

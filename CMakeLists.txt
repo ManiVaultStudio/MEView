@@ -52,16 +52,18 @@ set(PLUGIN_SOURCES
 )
 
 set(RENDER_SOURCES
-    src/EMRenderer.h
-    src/EMRenderer.cpp
     src/LayerDrawing.h
     src/LayerDrawing.cpp
+    src/Rendering/MERenderer.h
+    src/Rendering/MERenderer.cpp
     src/Rendering/CellRenderObject.h
     src/Rendering/CellRenderObject.cpp
     src/Rendering/RenderObjectBuilder.h
     src/Rendering/RenderObjectBuilder.cpp
     src/Rendering/RenderState.h
     src/Rendering/RenderState.cpp
+    src/Rendering/RenderContext.h
+    src/Rendering/RenderContext.cpp
     src/Rendering/RenderRegion.h
     src/Rendering/RenderRegion.cpp
 )

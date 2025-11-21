@@ -3,7 +3,7 @@
 #include "Scene.h"
 
 #include "LayerDrawing.h"
-#include "EMRenderer.h"
+#include "Rendering/MERenderer.h"
 //#include "HoverPopup.h"
 #include "RoundedPopup.h"
 #include "CellCard/CellCard.h"
@@ -17,7 +17,7 @@ class MEWidget : public mv::gui::OpenGLWidget
 public:
     MEWidget();
 
-    EMRenderer& GetRenderer() { return _emRenderer; }
+    MERenderer& GetRenderer() { return _meRenderer; }
 
     /** Set the indices of which morphologies should be shown */
     void setCells(const std::vector<Cell>& cells);
@@ -46,7 +46,7 @@ private:
 
     bool _isCortical;
     LayerDrawing _layerDrawing;
-    EMRenderer _emRenderer;
+    MERenderer _meRenderer;
 
     float t = 0;
 

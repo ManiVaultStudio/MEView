@@ -15,9 +15,11 @@ public:
     void setDepthRange(float minDepth, float maxDepth);
 
     void drawAxes(QPainter& painter, bool isCortical);
+    void drawSeparations(QPainter& painter, bool isCortical);
 
 private:
     void drawHorizontalLine(QPainter& painter, float y);
+    void drawVerticalLine(QPainter& painter, float x);
 
 private:
     QWidget* _parent;
