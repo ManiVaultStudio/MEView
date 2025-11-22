@@ -2,6 +2,8 @@
 
 #include <QPainter>
 
+constexpr float DIVISION_F = 0.25f;
+
 namespace
 {
     float computeMaxCellHeight(const std::vector<CellRenderObject*>& cellRenderObjects)
@@ -73,11 +75,11 @@ void MERenderer::Resize(int w, int h, float pixelRatio)
     _pixelRatio = pixelRatio;
     _fullViewport.Set(0, 0, w, h);
 
-    int division = h / 3.0f;
+    int division = h * DIVISION_F;
 
     // left, right, bottom, top
     Bounds morphologyBounds(48 * pixelRatio, w, division, h - 32 * pixelRatio);
-    Bounds traceBounds(48 * pixelRatio, w, 16 * pixelRatio, morphologyBounds.getBottom() - (8 * pixelRatio));
+    Bounds traceBounds(48 * pixelRatio, w, 8 * pixelRatio, morphologyBounds.getBottom() - (8 * pixelRatio));
 
     _morphologyViewport.Set(morphologyBounds);
     _traceViewport.Set(traceBounds);
@@ -194,8 +196,9 @@ void MERenderer::RenderSomas()
 
 void MERenderer::RenderTraces()
 {
-    constexpr float TRACE_WIDTH = 0.6f;
-    constexpr float TRACE_HEIGHT = 0.4f;
+    constexpr float TRACE_WIDTH = 0.8f;
+    constexpr float ACQ_HEIGHT = 0.5f;
+    constexpr float STIM_HEIGHT = 0.4f;
 
     // TRACES
     glDisable(GL_DEPTH_TEST);
@@ -226,14 +229,14 @@ void MERenderer::RenderTraces()
                 // Acquisition
                 _context.modelMatrix.setToIdentity();
                 _context.modelMatrix.translate(xCoord * r, 0, 0);
-                _context.modelMatrix.translate(-TRACE_WIDTH * 0.5f, 0, 0);
-                _context.modelMatrix.scale(TRACE_WIDTH, TRACE_HEIGHT, 1);
+                _context.modelMatrix.translate(-TRACE_WIDTH * 0.5f, 0.5f, 0);
+                _context.modelMatrix.scale(TRACE_WIDTH, ACQ_HEIGHT, 1);
                 _context.modelMatrix.scale(1.0f / (cro->_acqChartDomainMax - cro->_acqChartDomainMin), 1.0f / (_acqChartRange.max - _acqChartRange.min), 1.0f); // Rescale to [0, 1]
                 _context.modelMatrix.translate(-cro->_acqChartDomainMin, -_acqChartRange.min, 0); // Map bottom-left corner to 0,0
 
                 _traceShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
 
-                Vector3f acqColor = i == stimIndex ? Vector3f(0.27f, 0.51f, 0.71f) : Vector3f(0.5f);
+                Vector3f acqColor = i == stimIndex ? cro->cellTypeColor : Vector3f(0.5f);
                 _traceShader.uniform3f("lineColor", acqColor);
                 _traceShader.uniform1f("alpha", i == stimIndex ? 1.0f : 0.1f);
 
@@ -243,12 +246,12 @@ void MERenderer::RenderTraces()
                 // Stimulus
                 _context.modelMatrix.setToIdentity();
                 _context.modelMatrix.translate(xCoord * r, 0, 0);
-                _context.modelMatrix.translate(-TRACE_WIDTH * 0.5f, 0.5f, 0);
-                _context.modelMatrix.scale(TRACE_WIDTH / (cro->_stimChartDomainMax - cro->_stimChartDomainMin), TRACE_HEIGHT / (_stimChartRange.max - _stimChartRange.min), 1);
+                _context.modelMatrix.translate(-TRACE_WIDTH * 0.5f, 0, 0);
+                _context.modelMatrix.scale(TRACE_WIDTH / (cro->_stimChartDomainMax - cro->_stimChartDomainMin), STIM_HEIGHT / (_stimChartRange.max - _stimChartRange.min), 1);
                 _context.modelMatrix.translate(-cro->_stimChartDomainMin, -_stimChartRange.min, 0);
                 _traceShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
 
-                Vector3f stimColor = i == stimIndex ? Vector3f(0.839f, 0.4f, 0.2f) : Vector3f(0.5f);
+                Vector3f stimColor = i == stimIndex ? Vector3f(0.2f, 0.2f, 0.2f) : Vector3f(0.5f);
                 _traceShader.uniform3f("lineColor", stimColor);
 
                 glBindVertexArray(stimRO.vao);
@@ -265,8 +268,8 @@ void MERenderer::RenderTraces()
 void MERenderer::RenderLabels(QPainter& painter)
 {
     float height = _fullViewport.GetHeight() / _pixelRatio;
-    int bottomMargin = height / 3.0f; // Pixel ratio margin
-    int yCoord = height - bottomMargin - 24;
+    int bottomMargin = height * DIVISION_F; // Pixel ratio margin
+    int yCoord = 8;
 
     QFontMetrics fm(painter.font());
     int textHeight = fm.height();
@@ -290,7 +293,7 @@ void MERenderer::RenderVerticalLine(QPainter& painter, float x)
     painter.setRenderHint(QPainter::Antialiasing, false);
 
     int topMargin = 32; // Non-pixel ratio margin
-    int bottomMargin = height / 3.0f; // Pixel ratio margin
+    int bottomMargin = height * DIVISION_F; // Pixel ratio margin
     int chartHeight = height - topMargin - bottomMargin;
 
     // Draw line centered at a pixel, so it doesn't bleed onto multiple pixels

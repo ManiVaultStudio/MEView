@@ -5,6 +5,10 @@
 int MARGIN = 48;
 //int TOP_MARGIN = 16;
 //int BOTTOM_MARGIN = 128;
+namespace
+{
+    constexpr float DIVISION_F = 0.25f;
+}
 
 LayerDrawing::LayerDrawing(QWidget* parent) :
     _parent(parent),
@@ -26,7 +30,7 @@ void LayerDrawing::setDepthRange(float minDepth, float maxDepth)
 void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
 {
     int topMargin = 32; // Non-pixel ratio margin
-    int bottomMargin = _parent->height() / 3.0f; // Pixel ratio margin
+    int bottomMargin = _parent->height() * DIVISION_F; // Pixel ratio margin
 
     int chartWidth = _parent->width() - MARGIN * 2;
     int chartHeight = _parent->height() - topMargin - bottomMargin;
@@ -116,7 +120,7 @@ void LayerDrawing::drawVerticalLine(QPainter& painter, float x)
     painter.setRenderHint(QPainter::Antialiasing, false);
 
     int topMargin = 32; // Non-pixel ratio margin
-    int bottomMargin = _parent->height() / 3.0f; // Pixel ratio margin
+    int bottomMargin = _parent->height() * DIVISION_F; // Pixel ratio margin
     int chartHeight = _parent->height() - topMargin - bottomMargin;
 
     // Draw line centered at a pixel, so it doesn't bleed onto multiple pixels

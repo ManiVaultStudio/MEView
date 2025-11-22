@@ -15,5 +15,5 @@ void main()
     // Smooth edge
     float alpha = 1.0 - smoothstep(0.5 - 0.05, 0.5 + 0.05, dist);
 
-    fragColor = vec4(0.9, 0.0, 0.0, alpha);
+    fragColor = vec4(0.0, 0.0, 0.0, alpha);
 }
