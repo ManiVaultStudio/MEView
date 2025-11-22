@@ -269,7 +269,7 @@ void MERenderer::RenderLabels(QPainter& painter)
 {
     float height = _fullViewport.GetHeight() / _pixelRatio;
     int bottomMargin = height * DIVISION_F; // Pixel ratio margin
-    int yCoord = 8;
+    int yCoord = 4;
 
     QFontMetrics fm(painter.font());
     int textHeight = fm.height();
