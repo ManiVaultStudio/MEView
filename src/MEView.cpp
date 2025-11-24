@@ -37,6 +37,7 @@ void MEView::init()
     auto layout = new QVBoxLayout();
 
     layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
 
     // Both signals needed to kickstart
     connect(&_scene, &Scene::allRequiredDatasetsLoaded, this, &MEView::onInitialLoad);
@@ -50,7 +51,6 @@ void MEView::init()
     connect(&_settingsAction.getShowNoMorphsAction(), &ToggleAction::toggled, this, [this](bool toggled) { onCellSelectionChanged(); });
     _meWidget->GetRenderer().SetEnabledProcesses({ "Axon", "Apical Dendrite", "Basal Dendrite" });
 
-    layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
 
     QScrollArea* scrollArea = new QScrollArea();
