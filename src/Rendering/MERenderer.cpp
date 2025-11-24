@@ -83,6 +83,8 @@ void MERenderer::Resize(int w, int h, float pixelRatio)
 
     _morphologyViewport.Set(morphologyBounds);
     _traceViewport.Set(traceBounds);
+
+    ComputeRenderLocations(_selectedCellRenderObjects);
 }
 
 void MERenderer::Update(float t, QPainter& painter)
