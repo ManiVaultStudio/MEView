@@ -37,8 +37,9 @@ void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
 
     const CortexStructure& cortexStructure = _scene.getCortexStructure();
 
-    QPen axisPen(QColor(80, 80, 80, 255), 2, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
-    QPen midPen(QColor(80, 80, 80, 80), 1, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+    QPen axisPen(QColor(200, 200, 200, 255), 2, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+    QPen textPen(QColor(120, 120, 120, 255), 2, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+    QPen midPen(QColor(220, 220, 220, 255), 1, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
     midPen.setCosmetic(true);
 
     //int lightness = 240;
@@ -46,7 +47,7 @@ void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
 
     QFont originalFont = painter.font();
     QFont layerFont = originalFont;
-    layerFont.setPointSizeF(layerFont.pointSizeF() * 1.5f);
+    layerFont.setPointSizeF(layerFont.pointSizeF() * 1.2f);
     layerFont.setBold(true);
     painter.setFont(layerFont);
     
@@ -73,7 +74,7 @@ void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
 
             if (isCortical)
             {
-                painter.setPen(axisPen);
+                painter.setPen(textPen);
                 painter.drawText(MARGIN - 28, midPoint + 8, "L" + QString::number(i + 1));
             }
         }
@@ -84,8 +85,8 @@ void LayerDrawing::drawAxes(QPainter& painter, bool isCortical)
 
     painter.setFont(originalFont);
     // Vertical axis
-    painter.setPen(axisPen);
-    painter.drawLine(MARGIN, topMargin, MARGIN, _parent->height() - bottomMargin);
+    //painter.setPen(axisPen);
+    //painter.drawLine(MARGIN, topMargin, MARGIN, _parent->height() - bottomMargin);
 }
 
 void LayerDrawing::drawSeparations(QPainter& painter, bool isCortical)

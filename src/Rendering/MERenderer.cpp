@@ -273,8 +273,16 @@ void MERenderer::RenderLabels(QPainter& painter)
     int bottomMargin = height * DIVISION_F; // Pixel ratio margin
     int yCoord = 4;
 
-    QFontMetrics fm(painter.font());
+    QFont originalFont = painter.font();
+    QFont layerFont = originalFont;
+    layerFont.setPointSizeF(layerFont.pointSizeF());
+    //layerFont.setBold(true);
+    painter.setFont(layerFont);
+
+    QFontMetrics fm(layerFont);
     int textHeight = fm.height();
+
+    QPen textPen(QColor(100, 100, 100, 255), 2, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
 
     std::vector<float> horizontalCellLocations = GetHorizontalCellLocations();
     for (int i = 0; i < horizontalCellLocations.size(); i++)
@@ -283,9 +291,16 @@ void MERenderer::RenderLabels(QPainter& painter)
 
         int textWidth = fm.horizontalAdvance(_scene.selectedCells[i].cluster);
 
+        CellRenderObject* cro = _selectedCellRenderObjects[i];
+        mv::Vector3f color = cro->cellTypeColor;
+        textPen.setColor(QColor(color.x * 0.65f * 255, color.y * 0.65f * 255, color.z * 0.65f * 255, 255));
+        painter.setPen(textPen);
+
         const QRect boundingRect = QRect(xCoord - 50, yCoord, 100, 28);
         painter.drawText(boundingRect, Qt::AlignCenter | Qt::AlignTop | Qt::TextWordWrap, _scene.selectedCells[i].cluster);
     }
+
+    painter.setFont(originalFont);
 }
 
 void MERenderer::RenderVerticalLine(QPainter& painter, float x)
@@ -301,7 +316,7 @@ void MERenderer::RenderVerticalLine(QPainter& painter, float x)
     // Draw line centered at a pixel, so it doesn't bleed onto multiple pixels
     const qreal px = x; // snapToDeviceRow(painter, x);
     QPen pen;
-    pen.setColor(Qt::gray);
+    pen.setColor(QColor(200, 200, 200, 255));
     pen.setWidth(2);
     pen.setStyle(Qt::DashLine);
     painter.setPen(pen);
