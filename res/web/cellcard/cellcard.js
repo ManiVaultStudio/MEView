@@ -10,7 +10,7 @@ const chartWidth = 240
 const acqHeight = 180
 const stimHeight = 140
 
-const GRAPH_ELEMENT_NAME = "container";
+const GRAPH_ELEMENT_NAME = "trace_container";
 
 // Data keys
 const KEY_CELL = "cell";
@@ -182,13 +182,22 @@ function drawAcquisitionGraph(ephysObj)
         .style("font-size", "10px") // Make text smaller
         .text("mV"); // Unit
 
-    log("draw acq")
     return svg;
+}
+
+function emptyGraphElement()
+{
+    var div = document.getElementById("traceCol");
+    // Clear column divs
+    while (div.firstChild)
+    {
+        div.removeChild(div.lastChild);
+    }
 }
 
 function createNewGraphElement()
 {
-    var div = document.getElementById("traceRow");
+    var div = document.getElementById("traceCol");
     // Clear column divs
     while (div.firstChild)
     {
@@ -209,8 +218,8 @@ function drawEphysGraph(ephysObj)
     let title = ephysObj["stimset"]
 
     // Draw graphs
-    stimSvg = drawStimulusGraph(title, ephysObj);
-    acqSvg = drawAcquisitionGraph(ephysObj);
+    let stimSvg = drawStimulusGraph(title, ephysObj);
+    let acqSvg = drawAcquisitionGraph(ephysObj);
 
     // Draw graph lines
     let recordings = ephysObj["recordings"];
@@ -221,8 +230,6 @@ function drawEphysGraph(ephysObj)
     
     let stimExtentX = ephysObj[KEY_STIM_EXTENT_X];
     let stimExtentY = ephysObj[KEY_STIM_EXTENT_Y];
-    
-    log("NumGraphs " + numGraphs);
     
     // STIMULI
     for (let i = 0; i < numGraphs; i++)
@@ -302,6 +309,8 @@ function drawEphysGraph(ephysObj)
 
 function drawCellCard(cellObj)
 {
+    emptyGraphElement();
+    
     // If new data is passed, persist it
     window.traceState.data = cellObj;
     
@@ -323,14 +332,16 @@ function drawCellCard(cellObj)
       // If you prefer the numeric value (1..N) that you set in spinner.js:
       // selectedSweep = Math.max(0, (parseInt(spinnerEl.value, 10) || 1) - 1);
     }
-    
+
     // Draw ephys graph
     if (KEY_EPHYS in cellObj)
-        drawEphysGraph(cellObj[KEY_EPHYS])
+        drawEphysGraph(cellObj[KEY_EPHYS]);
 }
 
 function redrawCellCard()
 {
+    emptyGraphElement();
+    
     const cellObj = window.traceState.data;
     if (!cellObj) return;
     

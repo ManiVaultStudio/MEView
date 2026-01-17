@@ -12,11 +12,23 @@ html, body {
     text-align: center;
 }
 
-#traceRow {
+#traceCol {
     display: inline-block;
     white-space: nowrap;
     height: 100vh;
-    margin: 16px 0px 8px 12px;
+    margin: 16px 0px 8px 2px;
+}
+
+#apCol {
+    display: inline-block;
+    white-space: nowrap;
+    height: 100vh;
+    margin: 16px 0px 8px 2px;
+    padding-left: 0 !important;
+}
+
+.chart-div svg {
+  display: block;   /* removes inline SVG whitespace */
 }
 
 :root {

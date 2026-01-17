@@ -18,6 +18,7 @@ try {
                 
                 setSweepOptions(cellObj);
                 drawCellCard(cellObj);
+                drawAPView(cellObj);
             }
         });
         QtBridge.setFilterInJS.connect(function () { drawChart(arguments[0]); });

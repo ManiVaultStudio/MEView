@@ -41,7 +41,7 @@ QStringList includedStimsets = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFI
 
 namespace
 {
-    void addRecordingToArray(QJsonArray& recordingArray, const Recording& acquisition, const Recording& stimulus)
+    void addRecordingToArray(QJsonArray& recordingArray, const Recording& acquisition, const Recording& stimulus, const ActionPotential* ap)
     {
         QJsonArray acqXData, acqYData, stimXData, stimYData;
         QJsonObject acquisitionObj, stimulusObj;
@@ -159,7 +159,7 @@ void CellCardWidget::setCell(const Cell& cell)
             const Recording& stimulus = experiment.getStimuli()[sweepIndex];
             const Recording& acquisition = experiment.getAcquisitions()[sweepIndex];
 
-            addRecordingToArray(recordingArray, acquisition, stimulus);
+            addRecordingToArray(recordingArray, acquisition, stimulus, experiment.getActionPotential());
 
             if (acquisition.GetData().xMin < axMin) axMin = acquisition.GetData().xMin;
             if (acquisition.GetData().xMax > axMax) axMax = acquisition.GetData().xMax;
@@ -172,10 +172,27 @@ void CellCardWidget::setCell(const Cell& cell)
             if (stimulus.GetData().yMax > syMax) syMax = stimulus.GetData().yMax;
         }
 
+        // Action potential
+        const ActionPotential* ap = experiment.getActionPotential();
+        QJsonObject actionPotentialObj;
+        if (ap)
+        {
+            QJsonArray apXData, apYData;
+            for (float x : ap->getTimeSeries())
+                apXData.append(x);
+            for (float y : ap->getVoltageSeries())
+                apYData.append(y);
+
+            actionPotentialObj["xData"] = apXData;
+            actionPotentialObj["yData"] = apYData;
+            actionPotentialObj["peakIndex"] = ap->getPeakIndex();
+        }
+
         QJsonObject ephysObj;
 
         ephysObj["stimset"] = "X4PS_SupraThresh";
         ephysObj["recordings"] = recordingArray;
+        if (ap) ephysObj["actionPotential"] = actionPotentialObj;
 
         // Store graph extents
         ephysObj["stimExtentX"] = QJsonArray{ sxMin, sxMax };

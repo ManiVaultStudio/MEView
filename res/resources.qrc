@@ -14,11 +14,17 @@
         <file>web/cellcard/cellcard.html</file>
         <file>web/cellcard/cellcard.css</file>
         <file>web/cellcard/cellcard.js</file>
+        <file>web/cellcard/ap_view.js</file>
+        <file>web/cellcard/spinner.js</file>
         <file>web/cellcard/spinner.js</file>
     </qresource>
     <qresource prefix="me_view">
         <file>web/utils/qwebchannel.tools.js</file>
         <file>web/utils/d3@7.js</file>
         <file>web/utils/bootstrap.min.css</file>
+    </qresource>
+    <qresource prefix="me_view">
+        <file>icons/show_axons.png</file>
+        <file>style.qss</file>
     </qresource>
 </RCC>

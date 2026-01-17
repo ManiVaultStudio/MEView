@@ -8,7 +8,7 @@ RoundedPopup::RoundedPopup(QWidget* parent) :
     setAttribute(Qt::WA_TranslucentBackground);
 
     setFocusPolicy(Qt::FocusPolicy::StrongFocus); // The widget accepts focus by both tabbing and clicking
-    setFixedWidth(400);
+    setFixedWidth(500);
 
     _layout = new QVBoxLayout(this);
     _layout->setContentsMargins(16, 16, 16, 16); // space for the card + shadow
