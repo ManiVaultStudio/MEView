@@ -38,18 +38,26 @@ function setSweepOptions(cellObj)
         let ephysObj = cellObj[KEY_EPHYS];
         let recordings = ephysObj["recordings"];
         var numGraphs  = recordings.length;
+
+        if (numGraphs > 0)
+        {
+            // Add new options
+            for (let i = 0; i < numGraphs; i++) {
+                let recording = recordings[i];
+                let sweepNum = parseInt(recording["sweepNumber"], 10);
                 
-        // Add new options
-        for (let i = 0; i < numGraphs; i++) {
-            let recording = recordings[i];
-            let sweepNum = parseInt(recording["sweepNumber"], 10);
-            
-            let option = document.createElement("option");
-            option.value = i;
-            option.text = "Sweep " + sweepNum;
-            spinner.appendChild(option);
+                let option = document.createElement("option");
+                option.value = i;
+                option.text = "Sweep " + sweepNum;
+                spinner.appendChild(option);
+            }
+            return;
         }
     }
+    let option = document.createElement("option");
+    option.value = -1;
+    option.text = "No sweeps available";
+    spinner.appendChild(option);
 }
 
 function setLabelContent(elementName, content)
