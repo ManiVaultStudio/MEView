@@ -98,7 +98,7 @@ function drawActionPotentialGraph(apObj)
     let yData = apObj["yData"];
     let ap_data = xData.map((x, i) => ({ x: x, y: yData[i] }));
     log("Length: " + xData.length);
-    let color = "orangered";
+    let color = "steelblue";
     let opacity = 1.0;
     // Add the acquisition line
     svg.append("path")
