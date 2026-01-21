@@ -80,6 +80,10 @@ public:
     void offerCandidateDataset(mv::Dataset<mv::DatasetImpl> candidateDataset);
 
 public:
+    QString GetCurrentStimset() { return _currentStimset; }
+    void SetCurrentStimset(QString stimset);
+
+public:
     std::vector<Cell> allCells;
     std::unordered_map<uint32_t, uint32_t> metaToCellMap;
     std::vector<Cell> selectedCells;
@@ -96,4 +100,7 @@ private: // Ephys
 
 private: // Metadata
     mv::Dataset<Text>               _cellMetadataDataset;           /** Cell metadata */
+
+private: // State
+    QString _currentStimset = "";
 };

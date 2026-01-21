@@ -2,6 +2,8 @@
 
 #include "MEView.h"
 
+#include "Scene.h"
+
 #include <util/Timer.h>
 
 #include <QLayout>
@@ -134,7 +136,7 @@ void CellCardWidget::setCell(const Cell& cell)
 
         const std::vector<Recording>& stimuli = experiment.getStimuli();
 
-        std::vector<uint32_t> sweeps = experiment.getStimsetSweeps("X4PS_SupraThresh");
+        std::vector<uint32_t> sweeps = experiment.getStimsetSweeps(Scene::getInstance().GetCurrentStimset());
 
         std::sort(sweeps.begin(), sweeps.end(), [&](uint32_t a, uint32_t b) {
             return stimuli[a].GetSweepNumber() < stimuli[b].GetSweepNumber();
@@ -190,7 +192,7 @@ void CellCardWidget::setCell(const Cell& cell)
 
         QJsonObject ephysObj;
 
-        ephysObj["stimset"] = "X4PS_SupraThresh";
+        ephysObj["stimset"] = Scene::getInstance().GetCurrentStimset();
         ephysObj["recordings"] = recordingArray;
         if (ap) ephysObj["actionPotential"] = actionPotentialObj;
 

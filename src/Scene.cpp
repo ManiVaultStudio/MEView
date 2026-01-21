@@ -89,3 +89,8 @@ void Scene::offerCandidateDataset(Dataset<DatasetImpl> candidateDataset)
         emit allRequiredDatasetsLoaded();
     }
 }
+
+void Scene::SetCurrentStimset(QString stimset)
+{
+    _currentStimset = stimset;
+}
