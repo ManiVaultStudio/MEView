@@ -1,6 +1,29 @@
 const apChartWidth = 160
 const apHeight = 160
 
+window.AP = window.AP || {};
+window.PP = window.PP || {};
+
+AP.properties = {
+  margin: { top: 40, right: 10, bottom: 40, left: 45 },
+  title: "Action Potential",
+  xRange: [0, 4],
+  yRange: [-60, 50],
+  xUnit: "Time (ms)",
+  yUnit: "Voltage (mV)",
+  lineColor: "steelblue"
+};
+
+PP.properties = {
+  margin: { top: 40, right: 10, bottom: 40, left: 45 },
+  title: "Phase Plot",
+  xRange: 0,
+  yRange: 0,
+  xUnit: "Voltage (mV)",
+  yUnit: "dV/dt (mV/ms)",
+  lineColor: "steelblue"
+};
+
 function createNewApGraphElement()
 {
     var div = document.getElementById("apCol");
@@ -28,27 +51,22 @@ function emptyApGraphElement()
     log("Emptying AP graph")
 }
 
-function drawActionPotentialGraph(apObj)
+function drawGraph(props, xData, yData)
 {
-    createNewApGraphElement()
-    
     // Set dimensions and margins
-    var margin = { top: 40, right: 10, bottom: 40, left: 45 },
-        width = apChartWidth - margin.left - margin.right,
-        height = apHeight - margin.top - margin.bottom;
-
+    var margin = props.margin,
+        width = apChartWidth - props.margin.left - props.margin.right,
+        height = apHeight - props.margin.top - props.margin.bottom;
+    
     // Append the SVG object to the container
     var svg = d3.select("#ap_container")
         .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
+        .attr("width", width + props.margin.left + props.margin.right)
+        .attr("height", height + props.margin.top + props.margin.bottom)
         .style("display", "block")
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    // let stimExtentX = ephysObj[KEY_STIM_EXTENT_X];
-    // let stimExtentY = ephysObj[KEY_STIM_EXTENT_Y];
-
+        .attr("transform", "translate(" + props.margin.left + "," + props.margin.top + ")");
+    
     // Add chart title
     svg.append("text")
         .attr("x", width / 2)
@@ -56,15 +74,15 @@ function drawActionPotentialGraph(apObj)
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
         .style("font-weight", "bold")
-        .text("Action Potential");
-
+        .text(props.title);
+    
     // Define scales
     var x = d3.scaleLinear()
-        .domain([0, 4])
+        .domain(props.xRange)
         .range([0, width]);
 
     var y = d3.scaleLinear()
-        .domain([-60, 50])
+        .domain(props.yRange)
         .range([height, 0]);
 
     // Add X axis
@@ -79,32 +97,30 @@ function drawActionPotentialGraph(apObj)
     // Add X axis label
     svg.append("text")
         .attr("x", width / 2) // Center the label
-        .attr("y", height + margin.bottom - 10) // Position below the X-axis
+        .attr("y", height + props.margin.bottom - 10) // Position below the X-axis
         .style("text-anchor", "middle") // Center the text
         .style("font-size", "10px") // Make text smaller
-        .text("Time (ms)"); // Unit
+        .text(props.xUnit); // Unit
 
     // Add Y axis label
     svg.append("text")
         .attr("transform", "rotate(-90)") // Rotate the text for Y-axis
-        .attr("y", -margin.left + 5) // Adjust positioning
+        .attr("y", -props.margin.left + 5) // Adjust positioning
         .attr("x", -height / 2) // Center the label
         .attr("dy", "1em") // Fine-tune spacing
         .style("text-anchor", "middle") // Center align text
         .style("font-size", "10px") // Make text smaller
-        .text("Voltage (mV)"); // Unit
+        .text(props.yUnit); // Unit
 
-    let xData = apObj["xData"];
-    let yData = apObj["yData"];
-    let ap_data = xData.map((x, i) => ({ x: x, y: yData[i] }));
+    let graphData = xData.map((x, i) => ({ x: x, y: yData[i] }));
     log("Length: " + xData.length);
-    let color = "steelblue";
+    
     let opacity = 1.0;
     // Add the acquisition line
     svg.append("path")
-        .datum(ap_data)
+        .datum(graphData)
         .attr("fill", "none")
-        .attr("stroke", color)
+        .attr("stroke", props.lineColor)
         .attr("stroke-width", 1.5)
         .attr("stroke-opacity", opacity)
         .attr("d", d3.line()
@@ -152,115 +168,44 @@ function transformToVoltageVsSlope(xData, yData)
   };
 }
 
-function drawActionPotentialPhasePlot(apObj)
-{
-        // Set dimensions and margins
-    var margin = { top: 40, right: 10, bottom: 40, left: 45 },
-        width = apChartWidth - margin.left - margin.right,
-        height = apHeight - margin.top - margin.bottom;
-
-    // Append the SVG object to the container
-    var svg = d3.select("#ap_container")
-        .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .style("display", "block")
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    // Add chart title
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", -margin.top / 2)
-        .attr("text-anchor", "middle")
-        .style("font-size", "12px")
-        .style("font-weight", "bold")
-        .text("Phase Plot");
-
-    // Get data
-    let xData = apObj["xData"];
-    let yData = apObj["yData"];
-    
-    const transformed = transformToVoltageVsSlope(xData, yData)
-    
-    const xRange = [Math.min(...transformed.x), Math.max(...transformed.x)];
-    const yRange = [Math.min(...transformed.y), Math.max(...transformed.y)];
-
-    // Define scales
-    var x = d3.scaleLinear()
-        .domain(xRange)
-        .range([0, width]);
-
-    var y = d3.scaleLinear()
-        .domain(yRange)
-        .range([height, 0]);
-
-    // Add X axis
-    svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(3));
-
-    // Add Y axis
-    svg.append("g")
-        .call(d3.axisLeft(y).ticks(4));
-
-    // Add X axis label
-    svg.append("text")
-        .attr("x", width / 2) // Center the label
-        .attr("y", height + margin.bottom - 10) // Position below the X-axis
-        .style("text-anchor", "middle") // Center the text
-        .style("font-size", "10px") // Make text smaller
-        .text("Voltage (mV)"); // Unit
-
-    // Add Y axis label
-    svg.append("text")
-        .attr("transform", "rotate(-90)") // Rotate the text for Y-axis
-        .attr("y", -margin.left + 5) // Adjust positioning
-        .attr("x", -height / 2) // Center the label
-        .attr("dy", "1em") // Fine-tune spacing
-        .style("text-anchor", "middle") // Center align text
-        .style("font-size", "10px") // Make text smaller
-        .text("dV/dt (mV/ms)"); // Unit
-    
-    let phase_data = transformed.x.map((x, i) => ({ x: x, y: transformed.y[i] }));
-    log("Length: " + transformed.x.length);
-    let color = "steelblue";
-    let opacity = 1.0;
-    // Add the acquisition line
-    svg.append("path")
-        .datum(phase_data)
-        .attr("fill", "none")
-        .attr("stroke", color)
-        .attr("stroke-width", 1.5)
-        .attr("stroke-opacity", opacity)
-        .attr("d", d3.line()
-            .x(d => x(d.x))
-            .y(d => y(d.y))
-        );
-
-    return svg;
-}
-
-function drawActionPotential(ephysObj)
-{
-    if ("actionPotential" in ephysObj)
-    {
-        let apObj = ephysObj["actionPotential"]
-    
-        drawActionPotentialGraph(apObj)
-        drawActionPotentialPhasePlot(apObj)
-    }
-    else
-        log("boop");
-}
-
 function drawAPView(cellObj)
 {
     emptyApGraphElement();
     
     // Draw ephys graph
     if ("ephys" in cellObj)
-        drawActionPotential(cellObj["ephys"])
+    {
+        const ephysObj = cellObj["ephys"];
+        
+        if ("actionPotential" in ephysObj)
+        {
+            let apObj = ephysObj["actionPotential"]
+        
+            createNewApGraphElement()
+            
+            // Action Potential Plot
+            drawGraph(AP.properties, apObj["xData"], apObj["yData"])
+        
+            // Phase Plot
+            const xData = apObj["xData"];
+            const yData = apObj["yData"];
+            const transformed = transformToVoltageVsSlope(xData, yData)
+            const xRange = [Math.min(...transformed.x), Math.max(...transformed.x)];
+            const yRange = [Math.min(...transformed.y), Math.max(...transformed.y)];
+            
+            PP.properties.xRange = xRange
+            PP.properties.yRange = yRange
+            
+            drawGraph(PP.properties, transformed.x, transformed.y)
+        
+            //drawActionPotentialGraph(apObj)
+            //drawActionPotentialPhasePlot(apObj)
+        }
+        else
+        {
+            log("No action potential in ephysObj");
+        }
+    }
     else
-        log("beep");
+        log("No ephys in cellObj");
 }
