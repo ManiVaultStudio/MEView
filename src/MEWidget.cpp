@@ -127,7 +127,7 @@ void MEWidget::mousePressEvent(QMouseEvent* event)
 
         if (cell != nullptr)
         {
-            popup->move(globalPos + QPoint(10, -200));
+            popup->move(globalPos + QPoint(10, -400));
             popup->show();
 
             cellCard->SetCell(*cell);

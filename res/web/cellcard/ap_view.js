@@ -28,7 +28,6 @@ function clearApSvgs()
 {
     d3.select("#ap_graph").selectAll("svg").remove();
     d3.select("#phase_graph").selectAll("svg").remove();
-    log("Emptying AP graph")
 }
 
 function drawGraph(containerSelector, props, xData, yData)
@@ -96,8 +95,7 @@ function drawGraph(containerSelector, props, xData, yData)
         return;
 
     let graphData = xData.map((x, i) => ({ x: x, y: yData[i] }));
-    log("Length: " + xData.length);
-    
+
     let opacity = 1.0;
     // Add the acquisition line
     svg.append("path")

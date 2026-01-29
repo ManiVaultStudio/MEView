@@ -42,7 +42,7 @@ function getTraceStyle(i)
   const locked = window.traceState.lockedSweep;
   const hovered = window.traceState.hoveredSweep;
   const selected = (locked >= 0) ? locked : ((hovered >= -1) ? hovered : -1);
-log("Style: " + selected + " locked: " + locked + " hovered: " + hovered);
+
   // Default: all sweeps in their own colors, full opacity
   if (selected == -1)
     return { stroke: getSweepColor(i), opacity: 1.0 };
@@ -143,7 +143,7 @@ function updateSweepButtonStyles()
 
   // Selected sweep: locked overrides hover
   const selected = (locked >= 0) ? locked : ((hovered >= -1) ? hovered : -1);
-log("Update: " + selected);
+
   palette.querySelectorAll(".sweep-btn").forEach((b) => {
     const idx = parseInt(b.dataset.index, 10);
 
