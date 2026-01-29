@@ -16,8 +16,8 @@ try {
             {
                 let cellObj = jsonDoc["cell"];
                 
-                setSweepOptions(cellObj);
-                drawCellCard(cellObj);
+                //setSweepOptions(cellObj);
+                drawEphysCard(cellObj);
                 drawAPView(cellObj);
             }
         });

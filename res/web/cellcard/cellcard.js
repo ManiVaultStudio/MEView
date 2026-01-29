@@ -1,14 +1,13 @@
 // Simple app state
 window.traceState = {
   data: null,         // last jsonDoc used to draw
-  selectedSweep: 0,   // 0-based index from the spinner
+  hoveredSweep: -1, // index of sweep currently hovered over, or -1 if none
+  lockedSweep: -1,  // clicked sweep, -1 when nothing is clicked
 };
 
-let selectedSweep = 0;
-
-const chartWidth = 240
-const acqHeight = 180
-const stimHeight = 140
+const chartWidth = 400
+const acqHeight = 100
+const stimHeight = 100
 
 const GRAPH_ELEMENT_NAME = "trace_container";
 
@@ -26,38 +25,141 @@ const KEY_STIM_EXTENT_Y = "stimExtentY";
 const KEY_ACQ_EXTENT_X = "acqExtentX";
 const KEY_ACQ_EXTENT_Y = "acqExtentY";
 
-function setSweepOptions(cellObj)
-{
-    const spinner = document.getElementById("spinner");
-    
-    // Clear existing options
-    spinner.innerHTML = "";
-    
-    if (KEY_EPHYS in cellObj)
-    {
-        let ephysObj = cellObj[KEY_EPHYS];
-        let recordings = ephysObj["recordings"];
-        var numGraphs  = recordings.length;
+const SWEEP_COLORS = [
+  "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+  "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+  "#4e79a7", "#f28e2b", "#59a14f", "#e15759", "#b07aa1",
+  "#9c755f", "#edc949", "#76b7b2", "#af7aa1", "#bab0ab"
+];
 
-        if (numGraphs > 0)
-        {
-            // Add new options
-            for (let i = 0; i < numGraphs; i++) {
-                let recording = recordings[i];
-                let sweepNum = parseInt(recording["sweepNumber"], 10);
-                
-                let option = document.createElement("option");
-                option.value = i;
-                option.text = "Sweep " + sweepNum;
-                spinner.appendChild(option);
-            }
-            return;
-        }
+function getSweepColor(i) {
+  return SWEEP_COLORS[i % SWEEP_COLORS.length];
+}
+
+// Returns { stroke, opacity } for a given sweep index
+function getTraceStyle(i)
+{
+  const locked = window.traceState.lockedSweep;
+  const hovered = window.traceState.hoveredSweep;
+  const selected = (locked >= 0) ? locked : ((hovered >= -1) ? hovered : -1);
+log("Style: " + selected + " locked: " + locked + " hovered: " + hovered);
+  // Default: all sweeps in their own colors, full opacity
+  if (selected == -1)
+    return { stroke: getSweepColor(i), opacity: 1.0 };
+
+  // Selected: selected sweep in its color full opacity; others grey + faded
+  if (i === selected) {
+    return { stroke: getSweepColor(i), opacity: 1.0 };
+  }
+
+  return { stroke: "grey", opacity: 0.05 };
+}
+
+function setSweepButtons(cellObj) {
+  const palette = document.getElementById("sweepPalette");
+  if (!palette) return;
+
+  palette.innerHTML = "";
+
+  // Default: no sweeps
+  if (!(KEY_EPHYS in cellObj)) {
+    palette.textContent = "No sweeps available";
+    return;
+  }
+
+  const ephysObj = cellObj[KEY_EPHYS];
+  const recordings = ephysObj["recordings"] || [];
+  const numSweeps = recordings.length;
+
+  if (!numSweeps) {
+    palette.textContent = "No sweeps available";
+    return;
+  }
+
+  for (let i = 0; i < numSweeps; i++) {
+    const recording = recordings[i];
+    const sweepNum = parseInt(recording["sweepNumber"], 10);
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "sweep-btn";
+    btn.style.backgroundColor = SWEEP_COLORS[i % SWEEP_COLORS.length];
+    btn.dataset.index = String(i);
+    btn.title = `Sweep ${sweepNum}`; // hover tooltip
+
+    btn.addEventListener("mouseenter", () => {
+      log("Hover, locked state: " + window.traceState.lockedSweep);
+      // If locked, hovering does nothing
+      if (window.traceState.lockedSweep >= 0) return;
+
+      window.traceState.hoveredSweep = i;
+            log("Hover f, hover state: " + window.traceState.hoveredSweep + " i: " + i);
+      redrawGraphs();
+      updateSweepButtonStyles();
+      log("Hover f, hover state: " + window.traceState.hoveredSweep);
+    });
+
+    btn.addEventListener("click", () => {
+              log("Hover, locked state: " + window.traceState.lockedSweep);
+      const locked = window.traceState.lockedSweep;
+
+      if (locked === i) {
+        // Unclick => return to default state
+        window.traceState.lockedSweep = -1;
+        window.traceState.hoveredSweep = -1;
+      } else {
+        // Click selects/locks this sweep (and replaces any previous lock)
+        window.traceState.lockedSweep = i;
+        window.traceState.hoveredSweep = -1; // hover no longer active
+      }
+      log("Hover, locked state: " + window.traceState.lockedSweep);
+      redrawGraphs();
+      updateSweepButtonStyles();
+    });
+
+    palette.appendChild(btn);
+  }
+  
+    palette.addEventListener("mouseleave", () => {
+              log("Palette hover end, locked state: " + window.traceState.lockedSweep);
+      if (window.traceState.lockedSweep >= 0) return;
+
+      window.traceState.hoveredSweep = -1;
+      redrawGraphs();
+      updateSweepButtonStyles();
+            log("Palette hover endf, hover state: " + window.traceState.hoveredSweep);
+    });
+
+    updateSweepButtonStyles();
+}
+
+function updateSweepButtonStyles()
+{
+  const palette = document.getElementById("sweepPalette");
+  if (!palette) return;
+
+  const locked = window.traceState.lockedSweep;
+  const hovered = window.traceState.hoveredSweep;
+
+  // Selected sweep: locked overrides hover
+  const selected = (locked >= 0) ? locked : ((hovered >= -1) ? hovered : -1);
+log("Update: " + selected);
+  palette.querySelectorAll(".sweep-btn").forEach((b) => {
+    const idx = parseInt(b.dataset.index, 10);
+
+    // Locked outline only when locked
+    b.classList.toggle("is-locked", locked === idx);
+
+    // Grey out all others only when a focus exists
+    const shouldGrey = (selected != -1 && idx !== selected);
+    b.classList.toggle("is-greyed", shouldGrey);
+
+    // When not greyed, show its real palette color
+    if (!shouldGrey) {
+      b.style.backgroundColor = getSweepColor(idx);
+      b.style.opacity = "1.0";
     }
-    let option = document.createElement("option");
-    option.value = -1;
-    option.text = "No sweeps available";
-    spinner.appendChild(option);
+  });
 }
 
 function setLabelContent(elementName, content)
@@ -70,7 +172,7 @@ function setLabelContent(elementName, content)
 function drawStimulusGraph(title, ephysObj)
 {
     // Set dimensions and margins
-    var margin = { top: 40, right: 10, bottom: 20, left: 45 },
+    var margin = { top: 10, right: 10, bottom: 40, left: 45 },
         width = chartWidth - margin.left - margin.right,
         height = stimHeight - margin.top - margin.bottom;
 
@@ -86,14 +188,14 @@ function drawStimulusGraph(title, ephysObj)
     let stimExtentX = ephysObj[KEY_STIM_EXTENT_X];
     let stimExtentY = ephysObj[KEY_STIM_EXTENT_Y];
 
-    // Add chart title
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", -margin.top / 2)
-        .attr("text-anchor", "middle")
-        .style("font-size", "12px")
-        .style("font-weight", "bold")
-        .text(title || ""); // default to empty string if title not provided
+    // // Add chart title
+    // svg.append("text")
+        // .attr("x", width / 2)
+        // .attr("y", -margin.top / 2)
+        // .attr("text-anchor", "middle")
+        // .style("font-size", "12px")
+        // .style("font-weight", "bold")
+        // .text(title || ""); // default to empty string if title not provided
 
     // Define scales
     var x = d3.scaleLinear()
@@ -107,7 +209,7 @@ function drawStimulusGraph(title, ephysObj)
     // Add X axis
     svg.append("g")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(3));
+        .call(d3.axisBottom(x).ticks(6));
 
     // Add Y axis
     svg.append("g")
@@ -119,7 +221,7 @@ function drawStimulusGraph(title, ephysObj)
         .attr("y", height + margin.bottom - 10) // Position below the X-axis
         .style("text-anchor", "middle") // Center the text
         .style("font-size", "10px") // Make text smaller
-        .text(""); // Unit
+        .text("Time (s)"); // Unit
 
     // Add Y axis label
     svg.append("text")
@@ -137,7 +239,7 @@ function drawStimulusGraph(title, ephysObj)
 function drawAcquisitionGraph(ephysObj)
 {
     // Set dimensions and margins
-    var margin = { top: 20, right: 10, bottom: 40, left: 45 },
+    var margin = { top: 20, right: 10, bottom: 20, left: 45 },
         width = chartWidth - margin.left - margin.right,
         height = acqHeight - margin.top - margin.bottom;
 
@@ -177,8 +279,7 @@ function drawAcquisitionGraph(ephysObj)
         .attr("x", width / 2) // Center the label
         .attr("y", height + margin.bottom - 10) // Position below the X-axis
         .style("text-anchor", "middle") // Center the text
-        .style("font-size", "10px") // Make text smaller
-        .text("ms"); // Unit
+        .style("font-size", "10px"); // Make text smaller
 
     // Add Y axis label
     svg.append("text")
@@ -195,7 +296,7 @@ function drawAcquisitionGraph(ephysObj)
 
 function emptyGraphElement()
 {
-    var div = document.getElementById("traceCol");
+    var div = document.getElementById("traceDiv");
     // Clear column divs
     while (div.firstChild)
     {
@@ -205,7 +306,7 @@ function emptyGraphElement()
 
 function createNewGraphElement()
 {
-    var div = document.getElementById("traceCol");
+    var div = document.getElementById("traceDiv");
     // Clear column divs
     while (div.firstChild)
     {
@@ -224,10 +325,13 @@ function drawEphysGraph(ephysObj)
     createNewGraphElement();
 
     let title = ephysObj["stimset"]
-
+    // Use state value
+    const selectedSweep = window.traceState.selectedSweep;
+    const selectedColor = getSweepColor(selectedSweep);
+    
     // Draw graphs
-    let stimSvg = drawStimulusGraph(title, ephysObj);
     let acqSvg = drawAcquisitionGraph(ephysObj);
+    let stimSvg = drawStimulusGraph(title, ephysObj);
 
     // Draw graph lines
     let recordings = ephysObj["recordings"];
@@ -262,8 +366,8 @@ function drawEphysGraph(ephysObj)
             .domain(stimExtentY)
             .range([height, 0]);
         
-        let color = (i == selectedSweep) ? "orangered" : "grey";
-        let opacity = (i == selectedSweep) ? 1.0 : 0.2;
+        const { stroke: color, opacity } = getTraceStyle(i);
+
         // Add the acquisition line
         stimSvg.append("path")
             .datum(stim_data)
@@ -299,8 +403,8 @@ function drawEphysGraph(ephysObj)
             .domain(acqExtentY)
             .range([height, 0]);
         
-        let color = (i == selectedSweep) ? "steelblue" : "grey";
-        let opacity = (i == selectedSweep) ? 1.0 : 0.1;
+        const { stroke: color, opacity } = getTraceStyle(i);
+        
         // Add the acquisition line
         acqSvg.append("path")
             .datum(acq_data)
@@ -315,48 +419,33 @@ function drawEphysGraph(ephysObj)
     }
 }
 
-function drawCellCard(cellObj)
+// MAIN ENTRY POINT for new data
+function drawEphysCard(cellObj)
 {
-    emptyGraphElement();
-    
-    // If new data is passed, persist it
-    window.traceState.data = cellObj;
-    
-    // Draw cell metadata
-    setLabelContent("cellIdLabel", cellObj[KEY_CELL_ID]);
-    setLabelContent("clusterLabel", cellObj[KEY_CELL_TYPE]);
-    setLabelContent("cellNameLabel", cellObj[KEY_CELL_NAME]);
+  // Persist data
+  window.traceState.data = cellObj;
+  window.traceState.lockedSweep = -1;
+  window.traceState.hoveredSweep = -1;
+  
+    // Metadata
+  setLabelContent("cellIdLabel", cellObj[KEY_CELL_ID]);
+  setLabelContent("clusterLabel", cellObj[KEY_CELL_TYPE]);
+  setLabelContent("cellNameLabel", cellObj[KEY_CELL_NAME]);
 
-    // Initialize spinner
-    const spinnerEl = document.getElementById('spinner');
-    
-    if (spinnerEl)
-    {
-      // Ensure there's a selection; if not, default to first option when available
-      if (spinnerEl.selectedIndex === -1 && spinnerEl.options.length) {
-        spinnerEl.selectedIndex = 0;
-      }
-      selectedSweep = spinnerEl.selectedIndex; // 0..N-1
-      // If you prefer the numeric value (1..N) that you set in spinner.js:
-      // selectedSweep = Math.max(0, (parseInt(spinnerEl.value, 10) || 1) - 1);
-    }
+  setSweepButtons(cellObj);
 
-    // Draw ephys graph
-    if (KEY_EPHYS in cellObj)
-        drawEphysGraph(cellObj[KEY_EPHYS]);
+  redrawGraphs();
 }
 
-function redrawCellCard()
+function redrawGraphs()
 {
     emptyGraphElement();
     
     const cellObj = window.traceState.data;
     if (!cellObj) return;
     
-    drawCellCard(cellObj);
+    // Draw ephys
+    if (KEY_EPHYS in cellObj) {
+        drawEphysGraph(cellObj[KEY_EPHYS]);
+    }
 }
-
-document.getElementById('spinner')?.addEventListener('change', () => {
-    log("Spinner changed");
-    redrawCellCard();
-});

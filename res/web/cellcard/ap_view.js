@@ -24,34 +24,14 @@ PP.properties = {
   lineColor: "steelblue"
 };
 
-function createNewApGraphElement()
+function clearApSvgs()
 {
-    var div = document.getElementById("apCol");
-    // Clear column divs
-    while (div.firstChild)
-    {
-        div.removeChild(div.lastChild);
-    }
-    log("Deleting AP graph")
-    // Generate new one
-    var newDiv = document.createElement('div');
-    newDiv.className = "chart-div"
-    newDiv.setAttribute("id", "ap_container");
-    div.appendChild(newDiv);
-}
-
-function emptyApGraphElement()
-{
-    var div = document.getElementById("apCol");
-    // Clear column divs
-    while (div.firstChild)
-    {
-        div.removeChild(div.lastChild);
-    }
+    d3.select("#ap_graph").selectAll("svg").remove();
+    d3.select("#phase_graph").selectAll("svg").remove();
     log("Emptying AP graph")
 }
 
-function drawGraph(props, xData, yData)
+function drawGraph(containerSelector, props, xData, yData)
 {
     // Set dimensions and margins
     var margin = props.margin,
@@ -59,7 +39,7 @@ function drawGraph(props, xData, yData)
         height = apHeight - props.margin.top - props.margin.bottom;
     
     // Append the SVG object to the container
-    var svg = d3.select("#ap_container")
+    var svg = d3.select(containerSelector)
         .append("svg")
         .attr("width", width + props.margin.left + props.margin.right)
         .attr("height", height + props.margin.top + props.margin.bottom)
@@ -112,6 +92,9 @@ function drawGraph(props, xData, yData)
         .style("font-size", "10px") // Make text smaller
         .text(props.yUnit); // Unit
 
+    if (xData.length == 0 || yData.length == 0)
+        return;
+
     let graphData = xData.map((x, i) => ({ x: x, y: yData[i] }));
     log("Length: " + xData.length);
     
@@ -145,12 +128,17 @@ function transformToVoltageVsSlope(xData, yData)
   if (xData.length !== yData.length) {
     throw new Error("xData and yData must have the same length");
   }
-  if (xData.length < 2) {
-    throw new Error("At least two data points are required");
-  }
-
+  
   const xTransformed = [];
   const yTransformed = [];
+  
+  if (xData.length < 2) {
+    log("AP data has less than two data points");
+      return {
+        x: xTransformed,
+        y: yTransformed
+      };
+  }
 
   for (let i = 0; i < xData.length - 1; i++) {
     const dx = xData[i + 1] - xData[i]; // ms
@@ -170,7 +158,7 @@ function transformToVoltageVsSlope(xData, yData)
 
 function drawAPView(cellObj)
 {
-    emptyApGraphElement();
+    clearApSvgs();
     
     // Draw ephys graph
     if ("ephys" in cellObj)
@@ -180,15 +168,13 @@ function drawAPView(cellObj)
         if ("actionPotential" in ephysObj)
         {
             let apObj = ephysObj["actionPotential"]
-        
-            createNewApGraphElement()
-            
-            // Action Potential Plot
-            drawGraph(AP.properties, apObj["xData"], apObj["yData"])
-        
-            // Phase Plot
             const xData = apObj["xData"];
             const yData = apObj["yData"];
+            
+            // Action Potential Plot
+            drawGraph("#ap_graph", AP.properties, xData, yData)
+        
+            // Phase Plot
             const transformed = transformToVoltageVsSlope(xData, yData)
             const xRange = [Math.min(...transformed.x), Math.max(...transformed.x)];
             const yRange = [Math.min(...transformed.y), Math.max(...transformed.y)];
@@ -196,10 +182,7 @@ function drawAPView(cellObj)
             PP.properties.xRange = xRange
             PP.properties.yRange = yRange
             
-            drawGraph(PP.properties, transformed.x, transformed.y)
-        
-            //drawActionPotentialGraph(apObj)
-            //drawActionPotentialPhasePlot(apObj)
+            drawGraph("#phase_graph", PP.properties, transformed.x, transformed.y)
         }
         else
         {

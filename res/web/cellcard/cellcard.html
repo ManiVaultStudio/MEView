@@ -31,25 +31,25 @@
                 Cell Name <strong><label id="cellNameLabel">CellName</label></strong>
             </p>
         </div>
-        <div class="controls">
-            <label class="field select-wrap">
-                <span class="label">Sweep</span>
-            </label>
-        </div>
-        <div class="col">
-            <select id="spinner" class="form-select"></select>
+        <div class="d-flex align-items-center gap-2">
+          <span class="fw-semibold">Select sweep:</span>
+          <div id="sweepPalette" class="sweep-palette" aria-label="Select sweep"></div>
         </div>
     </div>
 
-    <div class="row flex-nowrap" id="graphsRow">
-      <div class="col-auto p-0" id="traceCol"></div>
-      <div class="col-auto p-0" id="apCol"></div>
+    <div class="row">
+      <div class="col-auto p-0" id="traceDiv"></div>
     </div>
-
+    
+    <div class="row">
+      <div class="col-12 p-0">
+        <div id="ap_container" class="ap-container">
+          <div id="ap_graph" class="ap-panel"></div>
+          <div id="phase_graph" class="ap-panel"></div>
+        </div>
+      </div>
+    </div>
   </div>
-
-<!-- <script>drawTaxonomy(data_json)</script> -->
-
 </body>
 
 </html>

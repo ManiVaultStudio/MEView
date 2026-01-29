@@ -12,19 +12,26 @@ html, body {
     text-align: center;
 }
 
-#traceCol {
-    display: inline-block;
-    white-space: nowrap;
-    height: 100vh;
-    margin: 16px 0px 8px 2px;
+#traceDiv
+{
+  display: block;          /* stack naturally */
+  width: 100%;             /* take row width */
+  height: auto;            /* don’t force viewport height */
+  margin: 8px 0 8px 0px;  /* keep your spacing */
+  padding: 0;              /* avoid surprises with col padding */
+  white-space: normal;     /* nowrap no longer needed */
+  margin: 0;
 }
 
-#apCol {
-    display: inline-block;
-    white-space: nowrap;
-    height: 100vh;
-    margin: 16px 0px 8px 2px;
-    padding-left: 0 !important;
+.ap-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.ap-panel {
+  flex: 0 0 auto;   /* fixed-size SVG determines width */
 }
 
 .chart-div svg {
@@ -59,3 +66,37 @@ html, body {
 
 .field{display:flex; flex-direction:column; gap:6px}
 .label{font-size:12px; color:var(--muted)}
+
+.sweep-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.sweep-btn {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.25);
+  padding: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* IMPORTANT: no outline on hover (your requirement) */
+.sweep-btn:hover,
+.sweep-btn:focus {
+  outline: none;
+}
+
+/* Locked selection outline */
+.sweep-btn.is-locked {
+  border: 2px solid #000;
+}
+
+/* Greyed-out state (used when hover focus or locked focus is active) */
+.sweep-btn.is-greyed {
+  background-color: #bdbdbd !important; /* force grey */
+  opacity: 0.35;
+}
