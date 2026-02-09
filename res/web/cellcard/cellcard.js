@@ -19,7 +19,8 @@ const KEY_CELL_TYPE = "cluster";
 const KEY_EPHYS = "ephys";
 const KEY_ACQ = "acquisition";
 const KEY_STIM = "stimulus";
-const KEY_STIMSET = "stimset";
+const KEY_STIMTYPE = "stimtype";
+const KEY_STIMDESC = "stimDesc";
 const KEY_STIM_EXTENT_X = "stimExtentX";
 const KEY_STIM_EXTENT_Y = "stimExtentY";
 const KEY_ACQ_EXTENT_X = "acqExtentX";
@@ -36,12 +37,18 @@ function getSweepColor(i) {
   return SWEEP_COLORS[i % SWEEP_COLORS.length];
 }
 
-// Returns { stroke, opacity } for a given sweep index
-function getTraceStyle(i)
+function getSelectedIndex()
 {
   const locked = window.traceState.lockedSweep;
   const hovered = window.traceState.hoveredSweep;
   const selected = (locked >= 0) ? locked : ((hovered >= -1) ? hovered : -1);
+  return selected;
+}
+
+// Returns { stroke, opacity } for a given sweep index
+function getTraceStyle(i)
+{
+  const selected = getSelectedIndex();
 
   // Default: all sweeps in their own colors, full opacity
   if (selected == -1)
@@ -162,6 +169,45 @@ function updateSweepButtonStyles()
   });
 }
 
+function setSweepInfo(ephysObj)
+{
+  const el = document.getElementById("sweepInfo");
+  if (!el) return;
+
+  const recordings = ephysObj?.recordings || [];
+  if (!recordings.length) {
+    el.textContent = "";
+    return;
+  }
+
+  const selectedSweep = getSelectedIndex();
+
+  if (selectedSweep < 0 || selectedSweep >= recordings.length) {
+    // Default (no hover/lock): show nothing or a summary
+    el.innerHTML =
+      `Sweep: <span class="sweep-info-value">-</span> ` +
+      `&nbsp;&nbsp;Stimulus amplitude: <span class="sweep-info-value">-</span> ` +
+      `&nbsp;&nbsp;Number of spikes: <span class="sweep-info-value">-</span>`;
+    return;
+  }
+  
+  const rec = recordings[selectedSweep];
+
+  setLabelContent("stimDescLabel", rec[KEY_STIM][KEY_STIMDESC]);
+
+  const sweepNum = parseInt(rec["sweepNumber"], 10);
+  const stimAmplitude = parseFloat(rec[KEY_STIM]["stimAmplitude"])
+  const spikeCount = 0;
+
+  const ampText = (stimAmplitude == null) ? "—" : `${stimAmplitude} pA`;
+  const numSpikesText = (spikeCount == null) ? "—" : `${spikeCount}`;
+
+  el.innerHTML =
+    `Sweep: <span class="sweep-info-value">${sweepNum}</span> ` +
+    `&nbsp;&nbsp;Stimulus amplitude: <span class="sweep-info-value">${ampText}</span> ` +
+    `&nbsp;&nbsp;Number of spikes: <span class="sweep-info-value">${numSpikesText}</span>`;
+}
+
 function setLabelContent(elementName, content)
 {
     const label = document.getElementById(elementName);
@@ -233,7 +279,7 @@ function drawStimulusGraph(title, ephysObj)
         .style("font-size", "10px") // Make text smaller
         .text("pA"); // Unit
 
-    return svg;
+    return [svg, x, y];
 }
 
 function drawAcquisitionGraph(ephysObj)
@@ -291,7 +337,7 @@ function drawAcquisitionGraph(ephysObj)
         .style("font-size", "10px") // Make text smaller
         .text("mV"); // Unit
 
-    return svg;
+    return [svg, x, y];
 }
 
 function emptyGraphElement()
@@ -324,14 +370,15 @@ function drawEphysGraph(ephysObj)
 {
     createNewGraphElement();
 
-    let title = ephysObj["stimset"]
-    // Use state value
-    const selectedSweep = window.traceState.selectedSweep;
-    const selectedColor = getSweepColor(selectedSweep);
-    
+    setLabelContent("stimTypeLabel", ephysObj[KEY_STIMTYPE]);
+
+    setSweepInfo(ephysObj);
+
+    let title = ephysObj[KEY_STIMTYPE]
+
     // Draw graphs
-    let acqSvg = drawAcquisitionGraph(ephysObj);
-    let stimSvg = drawStimulusGraph(title, ephysObj);
+    let [acqSvg, acqX, acqY] = drawAcquisitionGraph(ephysObj);
+    let [stimSvg, stimX, stimY] = drawStimulusGraph(title, ephysObj);
 
     // Draw graph lines
     let recordings = ephysObj["recordings"];
@@ -352,23 +399,9 @@ function drawEphysGraph(ephysObj)
         let stim_yData = recording[KEY_STIM]["yData"];
         let stim_data = stim_xData.map((x, i) => ({ x: x, y: stim_yData[i] }));
         
-        // Set dimensions and margins
-        var margin = { top: 40, right: 10, bottom: 20, left: 45 },
-            width = chartWidth - margin.left - margin.right,
-            height = stimHeight - margin.top - margin.bottom;
-            
-        // Define scales
-        var x = d3.scaleLinear()
-            .domain(stimExtentX)
-            .range([0, width]);
-
-        var y = d3.scaleLinear()
-            .domain(stimExtentY)
-            .range([height, 0]);
-        
         const { stroke: color, opacity } = getTraceStyle(i);
 
-        // Add the acquisition line
+        // Add the stimulus line
         stimSvg.append("path")
             .datum(stim_data)
             .attr("fill", "none")
@@ -376,8 +409,8 @@ function drawEphysGraph(ephysObj)
             .attr("stroke-width", 1.5)
             .attr("stroke-opacity", opacity)
             .attr("d", d3.line()
-                .x(d => x(d.x))
-                .y(d => y(d.y))
+                .x(d => stimX(d.x))
+                .y(d => stimY(d.y))
             );
     }
     // ACQUISITIONS
@@ -388,21 +421,9 @@ function drawEphysGraph(ephysObj)
         
         let acq_xData = acqObj["xData"];
         let acq_yData = acqObj["yData"];
-        let acq_data = acq_xData.map((x, i) => ({ x: x, y: acq_yData[i] }));
-        
-        var margin = { top: 20, right: 10, bottom: 40, left: 45 },
-            width = chartWidth - margin.left - margin.right,
-            height = acqHeight - margin.top - margin.bottom;
-            
-        // Define scales
-        var x = d3.scaleLinear()
-            .domain(acqExtentX)
-            .range([0, width]);
 
-        var y = d3.scaleLinear()
-            .domain(acqExtentY)
-            .range([height, 0]);
-        
+        let acq_data = acq_xData.map((x, i) => ({ x: x, y: acq_yData[i] }));
+                
         const { stroke: color, opacity } = getTraceStyle(i);
         
         // Add the acquisition line
@@ -413,8 +434,8 @@ function drawEphysGraph(ephysObj)
             .attr("stroke-width", 1.0)
             .attr("stroke-opacity", opacity)
             .attr("d", d3.line()
-                .x(d => x(d.x))
-                .y(d => y(d.y))
+                .x(d => acqX(d.x))
+                .y(d => acqY(d.y))
             );
     }
 }
@@ -440,7 +461,7 @@ function drawEphysCard(cellObj)
 function redrawGraphs()
 {
     emptyGraphElement();
-    
+
     const cellObj = window.traceState.data;
     if (!cellObj) return;
     

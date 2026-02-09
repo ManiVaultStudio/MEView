@@ -23,6 +23,17 @@ html, body {
   margin: 0;
 }
 
+.sweep-label,
+.sweep-info {
+  font-family: inherit;   /* same font as rest of UI */
+  font-size: 14px;
+  font-weight: 400;       /* normal weight */
+}
+
+.sweep-info-value {
+  font-weight: 700;       /* only dynamic numbers bold */
+}
+
 .ap-container {
   display: flex;
   flex-direction: row;
