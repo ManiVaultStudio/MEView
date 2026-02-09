@@ -43,18 +43,18 @@ QStringList includedStimsets = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFI
 
 namespace
 {
-    void addRecordingToArray(QJsonArray& recordingArray, const Recording& acquisition, const Recording& stimulus, const ActionPotential* ap)
+    void addSweepToArray(QJsonArray& sweepArray, const Sweep& sweep, const ActionPotential* ap)
     {
         QJsonArray acqXData, acqYData, stimXData, stimYData;
         QJsonObject acquisitionObj, stimulusObj;
 
-        for (float x : acquisition.GetData().xSeries)
+        for (float x : sweep.acquisition.GetData().xSeries)
             acqXData.append(x);
-        for (float y : acquisition.GetData().ySeries)
+        for (float y : sweep.acquisition.GetData().ySeries)
             acqYData.append(y);
-        for (float x : stimulus.GetData().xSeries)
+        for (float x : sweep.stimulus.GetRecording().GetData().xSeries)
             stimXData.append(x);
-        for (float y : stimulus.GetData().ySeries)
+        for (float y : sweep.stimulus.GetRecording().GetData().ySeries)
             stimYData.append(y);
 
         acquisitionObj["xData"] = acqXData;
@@ -62,16 +62,13 @@ namespace
         stimulusObj["xData"] = stimXData;
         stimulusObj["yData"] = stimYData;
 
-        if (stimulus.GetSweepNumber() != acquisition.GetSweepNumber())
-            qWarning() << "Showing mismatching sweeps, stim: " << stimulus.GetSweepNumber() << " acq: " << acquisition.GetSweepNumber();
-
-        QJsonObject recordingObj;
-        recordingObj.insert("acquisition", acquisitionObj);
-        recordingObj.insert("stimulus", stimulusObj);
-        recordingObj.insert("sweepNumber", stimulus.GetSweepNumber());
+        QJsonObject sweepObj;
+        sweepObj.insert("acquisition", acquisitionObj);
+        sweepObj.insert("stimulus", stimulusObj);
+        sweepObj.insert("sweepNumber", sweep.GetSweepNumber());
         //recordingObj.insert("title", acquisition.GetStimulusDescription());
 
-        recordingArray.append(recordingObj);
+        sweepArray.append(sweepObj);
     }
 }
 
@@ -134,16 +131,17 @@ void CellCardWidget::setCell(const Cell& cell)
     {
         const Experiment& experiment = *cell.ephysTraces;
 
-        const std::vector<Recording>& stimuli = experiment.getStimuli();
+        const std::vector<Sweep>& sweeps = experiment.GetSweeps();
 
-        std::vector<uint32_t> sweeps = experiment.getStimsetSweeps(Scene::getInstance().GetCurrentStimset());
-
-        std::sort(sweeps.begin(), sweeps.end(), [&](uint32_t a, uint32_t b) {
-            return stimuli[a].GetSweepNumber() < stimuli[b].GetSweepNumber();
+        std::vector<uint32_t> stimSweeps = experiment.GetStimTypeSweeps(Scene::getInstance().GetCurrentStimType());
+        qDebug() << "Get current stim type: " << ToString(Scene::getInstance().GetCurrentStimType());
+        qDebug() << "Stim sweeps length: " << stimSweeps.size();
+        std::sort(stimSweeps.begin(), stimSweeps.end(), [&](uint32_t a, uint32_t b) {
+            return sweeps[a].GetSweepNumber() < sweeps[b].GetSweepNumber();
         });
 
-        // Build list of recordings that should be included in the cell's graph
-        QJsonArray recordingArray;
+        // Build list of sweeps that should be included in the cell's graph
+        QJsonArray sweepArray;
 
         float axMin = std::numeric_limits<float>::max();
         float axMax = -std::numeric_limits<float>::max();
@@ -155,23 +153,22 @@ void CellCardWidget::setCell(const Cell& cell)
         float syMin = std::numeric_limits<float>::max();
         float syMax = -std::numeric_limits<float>::max();
 
-        for (uint32_t sweepIndex : sweeps)
+        for (uint32_t sweepIndex : stimSweeps)
         {
             // Per cell get its acquisitions and stimuli and determine what to render
-            const Recording& stimulus = experiment.getStimuli()[sweepIndex];
-            const Recording& acquisition = experiment.getAcquisitions()[sweepIndex];
+            const Sweep& sweep = experiment.GetSweeps()[sweepIndex];
 
-            addRecordingToArray(recordingArray, acquisition, stimulus, experiment.getActionPotential());
+            addSweepToArray(sweepArray, sweep, experiment.getActionPotential());
 
-            if (acquisition.GetData().xMin < axMin) axMin = acquisition.GetData().xMin;
-            if (acquisition.GetData().xMax > axMax) axMax = acquisition.GetData().xMax;
-            if (acquisition.GetData().yMin < ayMin) ayMin = acquisition.GetData().yMin;
-            if (acquisition.GetData().yMax > ayMax) ayMax = acquisition.GetData().yMax;
+            if (sweep.acquisition.GetData().xMin < axMin) axMin = sweep.acquisition.GetData().xMin;
+            if (sweep.acquisition.GetData().xMax > axMax) axMax = sweep.acquisition.GetData().xMax;
+            if (sweep.acquisition.GetData().yMin < ayMin) ayMin = sweep.acquisition.GetData().yMin;
+            if (sweep.acquisition.GetData().yMax > ayMax) ayMax = sweep.acquisition.GetData().yMax;
 
-            if (stimulus.GetData().xMin < sxMin) sxMin = stimulus.GetData().xMin;
-            if (stimulus.GetData().xMax > sxMax) sxMax = stimulus.GetData().xMax;
-            if (stimulus.GetData().yMin < syMin) syMin = stimulus.GetData().yMin;
-            if (stimulus.GetData().yMax > syMax) syMax = stimulus.GetData().yMax;
+            if (sweep.stimulus.GetRecording().GetData().xMin < sxMin) sxMin = sweep.stimulus.GetRecording().GetData().xMin;
+            if (sweep.stimulus.GetRecording().GetData().xMax > sxMax) sxMax = sweep.stimulus.GetRecording().GetData().xMax;
+            if (sweep.stimulus.GetRecording().GetData().yMin < syMin) syMin = sweep.stimulus.GetRecording().GetData().yMin;
+            if (sweep.stimulus.GetRecording().GetData().yMax > syMax) syMax = sweep.stimulus.GetRecording().GetData().yMax;
         }
 
         // Action potential

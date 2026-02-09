@@ -107,17 +107,17 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
     {
         const Experiment& experiment = *cell.ephysTraces;
 
-        if (experiment.getAcquisitions().empty() || experiment.getStimuli().empty())
+        if (experiment.GetSweeps().empty())
             return;
 
-        for (int i = 0; i < experiment.getStimuli().size(); i++)
+        for (int i = 0; i < experiment.GetSweeps().size(); i++)
         {
-            const Recording& recording = experiment.getStimuli()[i];
+            const Sweep& sweep = experiment.GetSweeps()[i];
             TraceRenderObject stimTRO;
             TraceRenderObject acqTRO;
 
-            BuildTraceObject(stimTRO, experiment.getStimuli()[i], true);
-            BuildTraceObject(acqTRO, experiment.getAcquisitions()[i], false);
+            BuildTraceObject(stimTRO, sweep.stimulus.GetRecording(), sweep.stimulus.GetStimulusType(), true);
+            BuildTraceObject(acqTRO, sweep.acquisition, sweep.stimulus.GetStimulusType(), false);
             stimTRO.priority = acqTRO.priority;
 
             cro.stimulusObjects.push_back(stimTRO);

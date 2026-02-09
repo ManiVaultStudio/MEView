@@ -474,7 +474,7 @@ void MERenderer::RecalculateTraceBounds()
         {
             const Experiment& experiment = *cell.ephysTraces;
 
-            if (experiment.getStimuli().empty())
+            if (experiment.GetSweeps().empty())
                 continue;
 
             CellRenderObject* cro = _selectedCellRenderObjects[i];
@@ -483,18 +483,19 @@ void MERenderer::RecalculateTraceBounds()
             cro->_acqChartDomainMin = std::numeric_limits<float>::max();
             cro->_acqChartDomainMax = -std::numeric_limits<float>::max();
 
-            for (int j = 0; j < experiment.getStimuli().size(); j++)
+            for (int j = 0; j < experiment.GetSweeps().size(); j++)
             {
-                const Recording& stim = experiment.getStimuli()[j];
-                if (stim.GetStimulusDescription() == _currentStimset)
+                const Sweep& sweep = experiment.GetSweeps()[j];
+                const Recording& stimRec = sweep.stimulus.GetRecording();
+                if (sweep.stimulus.GetStimulusType() == _currentStimType)
                 {
-                    if (stim.GetData().xMin < cro->_stimChartDomainMin) cro->_stimChartDomainMin = stim.GetData().xMin;
-                    if (stim.GetData().xMax > cro->_stimChartDomainMax) cro->_stimChartDomainMax = stim.GetData().xMax;
+                    if (stimRec.GetData().xMin < cro->_stimChartDomainMin) cro->_stimChartDomainMin = stimRec.GetData().xMin;
+                    if (stimRec.GetData().xMax > cro->_stimChartDomainMax) cro->_stimChartDomainMax = stimRec.GetData().xMax;
 
-                    if (stim.GetData().yMin < _stimChartRange.min) _stimChartRange.min = stim.GetData().yMin;
-                    if (stim.GetData().yMax > _stimChartRange.max) _stimChartRange.max = stim.GetData().yMax;
+                    if (stimRec.GetData().yMin < _stimChartRange.min) _stimChartRange.min = stimRec.GetData().yMin;
+                    if (stimRec.GetData().yMax > _stimChartRange.max) _stimChartRange.max = stimRec.GetData().yMax;
 
-                    const Recording& acq = experiment.getAcquisitions()[j];
+                    const Recording& acq = experiment.GetSweeps()[j].acquisition;
 
                     if (acq.GetData().xMin < cro->_acqChartDomainMin) cro->_acqChartDomainMin = acq.GetData().xMin;
                     if (acq.GetData().xMax > cro->_acqChartDomainMax) cro->_acqChartDomainMax = acq.GetData().xMax;
