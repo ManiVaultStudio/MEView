@@ -36,6 +36,8 @@ QStringList includedStimsets = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFI
 *           - stimulus
 *               - xData[]
 *               - yData[]
+*               - stimAmplitude
+*               - stimDesc
 *           - acquisition
 *               - xData[]
 *               - yData[]
@@ -61,6 +63,8 @@ namespace
         acquisitionObj["yData"] = acqYData;
         stimulusObj["xData"] = stimXData;
         stimulusObj["yData"] = stimYData;
+        stimulusObj["stimAmplitude"] = sweep.stimulus.GetStimulusAmplitude();
+        stimulusObj["stimDesc"] = sweep.stimulus.GetStimulusDescription();
 
         QJsonObject sweepObj;
         sweepObj.insert("acquisition", acquisitionObj);
