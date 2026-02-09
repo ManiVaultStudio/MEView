@@ -29,7 +29,7 @@ QStringList includedStimsets = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFI
 *    - cellId
 *    - cluster
 *    - ephys
-*       - stimset
+*       - stimtype
 *       - bounds
 *       - recordings[]
 *           - sweepNumber
@@ -189,8 +189,9 @@ void CellCardWidget::setCell(const Cell& cell)
 
         QJsonObject ephysObj;
 
-        ephysObj["stimset"] = Scene::getInstance().GetCurrentStimset();
-        ephysObj["recordings"] = recordingArray;
+        StimulusType stimType = Scene::getInstance().GetCurrentStimType();
+        ephysObj["stimtype"] = ToString(stimType);
+        ephysObj["recordings"] = sweepArray;
         if (ap) ephysObj["actionPotential"] = actionPotentialObj;
 
         // Store graph extents

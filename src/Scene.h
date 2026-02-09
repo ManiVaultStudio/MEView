@@ -80,8 +80,10 @@ public:
     void offerCandidateDataset(mv::Dataset<mv::DatasetImpl> candidateDataset);
 
 public:
-    QString GetCurrentStimset() { return _currentStimset; }
-    void SetCurrentStimset(QString stimset);
+    //QString GetCurrentStimset() { return _currentStimset; }
+    StimulusType GetCurrentStimType() { return _currentStimType; }
+    //void SetCurrentStimset(QString stimset);
+    void SetCurrentStimType(QString stimType);
 
 public:
     std::vector<Cell> allCells;
@@ -102,5 +104,6 @@ private: // Metadata
     mv::Dataset<Text>               _cellMetadataDataset;           /** Cell metadata */
 
 private: // State
-    QString _currentStimset = "";
+    //QString _currentStimset = "";
+    StimulusType _currentStimType = StimulusType::Unknown;
 };

@@ -90,7 +90,8 @@ void Scene::offerCandidateDataset(Dataset<DatasetImpl> candidateDataset)
     }
 }
 
-void Scene::SetCurrentStimset(QString stimset)
+void Scene::SetCurrentStimType(QString stimType)
 {
-    _currentStimset = stimset;
+    _currentStimType = StimulusTypeFromString(stimType);
+    qDebug() << ToString(_currentStimType);
 }

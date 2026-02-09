@@ -4,6 +4,7 @@
 #include <graphics/Vector3f.h>
 
 #include <CellMorphologyData/CellMorphology.h>
+#include <EphysData/EphysData.h>
 
 #include <QOpenGLFunctions_3_3_Core>
 #include <QHash>
@@ -49,7 +50,7 @@ struct TraceRenderObject
 
     float priority;
 
-    QString stimulusDescription;
+    StimulusType stimulusType;
 };
 
 class CellRenderObject

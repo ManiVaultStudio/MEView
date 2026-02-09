@@ -217,11 +217,11 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
     // qDebug() << "Number of line segments in hash " << lineSegmentsHash.size();
 }
 
-void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recording& recording, bool isStim)
+void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recording& recording, StimulusType stimType, bool isStim)
 {
     Bounds bounds(recording.GetData().xMin, recording.GetData().xMax, recording.GetData().yMin, recording.GetData().yMax);
     tro.extents = bounds;
-    tro.stimulusDescription = recording.GetStimulusDescription();
+    tro.stimulusType = stimType;
 
     // Generate line segments
     const TimeSeries& ts = recording.GetData();

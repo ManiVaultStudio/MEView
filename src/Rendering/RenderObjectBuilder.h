@@ -21,7 +21,7 @@ public:
     void BuildCellRenderObject(CellRenderObject& cro, const Cell& cell);
 
     void BuildMorphologyObject(MorphologyRenderObject& mro, const CellMorphology& cellMorpology);
-    void BuildTraceObject(TraceRenderObject& tro, const Recording& recording, bool isStim);
+    void BuildTraceObject(TraceRenderObject& tro, const Recording& recording, StimulusType stimType, bool isStim);
 
 private:
     QOpenGLFunctions_3_3_Core*  _f;             // Non-owning raw pointer

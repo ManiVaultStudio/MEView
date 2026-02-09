@@ -47,8 +47,8 @@ void MEView::init()
     _primaryToolbarAction.addAction(&_settingsAction.getStimSetsAction());
 
     connect(&_settingsAction.getProcessesOption(), &OptionsAction::selectedOptionsChanged, this, [this](const QStringList& selectedOptions) { _meWidget->GetRenderer().SetEnabledProcesses(selectedOptions); });
-    connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().SetCurrentStimset(_settingsAction.getStimSetsAction().getCurrentText()); });
-    connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { Scene::getInstance().SetCurrentStimset(_settingsAction.getStimSetsAction().getCurrentText()); });
+    connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().SetCurrentStimType(_settingsAction.getStimSetsAction().getCurrentText()); });
+    connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { Scene::getInstance().SetCurrentStimType(_settingsAction.getStimSetsAction().getCurrentText()); });
     connect(&_settingsAction.getShowNoMorphsAction(), &ToggleAction::toggled, this, [this](bool toggled) { onCellSelectionChanged(); });
     _meWidget->GetRenderer().SetEnabledProcesses({ "Axon", "Apical Dendrite", "Basal Dendrite" });
 
@@ -121,25 +121,25 @@ void MEView::setStimulusSetOptions()
     // Find out which stimulus sets are available, and set them in the combobox
     mv::Dataset<EphysExperiments> ephysTraces = _scene.getEphysTraces();
 
-    QSet<QString> stimSets;
+    QSet<QString> stimTypes;
     for (const Experiment& experiment : ephysTraces->getData())
     {
-        const std::vector<Recording>& recordings = experiment.getStimuli();
-        for (const Recording& recording : recordings)
-            stimSets.insert(recording.GetStimulusDescription());
+        const std::vector<Sweep>& sweeps = experiment.GetSweeps();
+        for (const Sweep& sweep : sweeps)
+            stimTypes.insert(ToString(sweep.stimulus.GetStimulusType()));
     }
-    qDebug() << stimSets;
+    qDebug() << stimTypes;
 
-    qDebug() << "setStimulusSetOptions" << stimSets.size();
-    QStringList stimSetList = QStringList(stimSets.begin(), stimSets.end());
-    _settingsAction.getStimSetsAction().setOptions(stimSetList);
+    qDebug() << "setStimulusSetOptions" << stimTypes.size();
+    QStringList stimTypesList = QStringList(stimTypes.begin(), stimTypes.end());
+    _settingsAction.getStimSetsAction().setOptions(stimTypesList);
 
-    // Set initially on suprathresh
-    for (int i = 0; i < stimSetList.size(); i++)
+    // Set initially on Long Square
+    for (int i = 0; i < stimTypesList.size(); i++)
     {
-        if (stimSetList[i] == "X4PS_SupraThresh")
+        if (stimTypesList[i] == "Long Square")
         {
-            _settingsAction.getStimSetsAction().setCurrentText(stimSetList[i]);
+            _settingsAction.getStimSetsAction().setCurrentText(stimTypesList[i]);
         }
     }
 }

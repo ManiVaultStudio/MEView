@@ -20,7 +20,7 @@ namespace
         return maxHeight;
     }
 
-    int FindHighestPriorityStimulus(const CellRenderObject& cro, QString currentStimset)
+    int FindHighestPriorityStimulus(const CellRenderObject& cro, StimulusType currentStimType)
     {
         float maxPriority = -std::numeric_limits<float>::max();
         int stimulusIndex = -1;
@@ -28,7 +28,7 @@ namespace
         {
             const TraceRenderObject& stimRO = cro.stimulusObjects[i];
 
-            if (stimRO.stimulusDescription == currentStimset)
+            if (stimRO.stimulusType == currentStimType)
             {
                 if (stimRO.priority > maxPriority)
                 {
@@ -216,13 +216,13 @@ void MERenderer::RenderTraces()
 
         float xCoord = _context.xCoords[i];
 
-        int stimIndex = FindHighestPriorityStimulus(*cro, _currentStimset);
+        int stimIndex = FindHighestPriorityStimulus(*cro, _currentStimType);
 
         for (int i = 0; i < cro->stimulusObjects.size(); i++)
         {
             TraceRenderObject& stimRO = cro->stimulusObjects[i];
 
-            if (stimRO.stimulusDescription == _currentStimset)
+            if (stimRO.stimulusType == _currentStimType)
             {
                 TraceRenderObject& acqRO = cro->acquisitionsObjects[i];
 
@@ -419,9 +419,9 @@ void MERenderer::SetEnabledProcesses(const QStringList& enabledProcesses)
     RequestNewWidgetWidth();
 }
 
-void MERenderer::SetCurrentStimset(const QString& stimSet)
+void MERenderer::SetCurrentStimType(const QString& stimType)
 {
-    _currentStimset = stimSet;
+    _currentStimType = StimulusTypeFromString(stimType);
 
     RecalculateTraceBounds();
 }

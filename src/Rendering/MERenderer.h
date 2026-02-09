@@ -30,7 +30,7 @@ public:
 
     void SetCortical(bool isCortical);
     void SetEnabledProcesses(const QStringList& enabledProcesses);
-    void SetCurrentStimset(const QString& stimset);
+    void SetCurrentStimType(const QString& stimset);
 
     void BuildRenderObjects(const std::vector<Cell>& cells);
     void ComputeRenderLocations(const std::vector<CellRenderObject*>& cellRenderObjects);
@@ -89,6 +89,6 @@ private: // Render bounds
     Range _acqChartRange;
 
 private: // UI state
-    QString _currentStimset = "";
+    StimulusType _currentStimType = StimulusType::Unknown;
     QStringList _enabledProcesses;
 };
