@@ -197,7 +197,7 @@ function setSweepInfo(ephysObj)
 
   const sweepNum = parseInt(rec["sweepNumber"], 10);
   const stimAmplitude = parseFloat(rec[KEY_STIM]["stimAmplitude"])
-  const spikeCount = 0;
+  const spikeCount = parseInt(rec[KEY_ACQ]["numSpikes"])
 
   const ampText = (stimAmplitude == null) ? "—" : `${stimAmplitude} pA`;
   const numSpikesText = (spikeCount == null) ? "—" : `${spikeCount}`;

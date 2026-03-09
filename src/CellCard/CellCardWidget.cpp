@@ -61,6 +61,9 @@ namespace
 
         acquisitionObj["xData"] = acqXData;
         acquisitionObj["yData"] = acqYData;
+        if (sweep.acquisition.HasAttribute("NumSpikes"))
+            acquisitionObj["numSpikes"] = sweep.acquisition.GetAttribute("NumSpikes");
+
         stimulusObj["xData"] = stimXData;
         stimulusObj["yData"] = stimYData;
         stimulusObj["stimAmplitude"] = sweep.stimulus.GetStimulusAmplitude();
@@ -108,7 +111,7 @@ CellCardWidget::CellCardWidget() :
     setContentsMargins(0, 0, 0, 0);
     layout()->setContentsMargins(0, 0, 0, 0);
 
-    setMinimumHeight(240);
+    setMinimumHeight(520);
 }
 
 CellCardWidget::~CellCardWidget()
