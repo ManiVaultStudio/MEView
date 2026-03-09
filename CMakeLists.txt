@@ -80,6 +80,8 @@ set(CELL_CARD_SOURCES
     src/CellCard/CellCard.cpp
     src/CellCard/CellCardWidget.h
     src/CellCard/CellCardWidget.cpp
+    src/CellCard/CellCardSerializer.h
+    src/CellCard/CellCardSerializer.cpp
 )
 
 set(QRESOURCES

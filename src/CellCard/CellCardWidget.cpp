@@ -8,76 +8,9 @@
 
 #include <QLayout>
 
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QJsonValue>
-#include <QHash>
+#include "CellCardSerializer.h"
 
 #include <iostream>
-
-QStringList newFormatStims = { "X1PS_SubThresh", "X3LP_Rheo", "X4PS_SupraThresh" };
-QStringList oldFormatStims = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO" };
-
-QStringList subStims = { "X1PS_SubThresh" };
-QStringList includedStimsets = { "C1LSFINEST150112", "C1LSCOARSE150216", "C1LSFINESTMICRO", "C1LSCOARSEMICRO", "X3LP_Rheo", "X4PS_SupraThresh" };
-
-/**
-* JSON Structure
-* 
-* - cell
-*    - cellId
-*    - cluster
-*    - ephys
-*       - stimtype
-*       - bounds
-*       - recordings[]
-*           - sweepNumber
-*           - stimulus
-*               - xData[]
-*               - yData[]
-*               - stimAmplitude
-*               - stimDesc
-*           - acquisition
-*               - xData[]
-*               - yData[]
-*/
-
-namespace
-{
-    void addSweepToArray(QJsonArray& sweepArray, const Sweep& sweep, const ActionPotential* ap)
-    {
-        QJsonArray acqXData, acqYData, stimXData, stimYData;
-        QJsonObject acquisitionObj, stimulusObj;
-
-        for (float x : sweep.acquisition.GetData().xSeries)
-            acqXData.append(x);
-        for (float y : sweep.acquisition.GetData().ySeries)
-            acqYData.append(y);
-        for (float x : sweep.stimulus.GetRecording().GetData().xSeries)
-            stimXData.append(x);
-        for (float y : sweep.stimulus.GetRecording().GetData().ySeries)
-            stimYData.append(y);
-
-        acquisitionObj["xData"] = acqXData;
-        acquisitionObj["yData"] = acqYData;
-        if (sweep.acquisition.HasAttribute("NumSpikes"))
-            acquisitionObj["numSpikes"] = sweep.acquisition.GetAttribute("NumSpikes");
-
-        stimulusObj["xData"] = stimXData;
-        stimulusObj["yData"] = stimYData;
-        stimulusObj["stimAmplitude"] = sweep.stimulus.GetStimulusAmplitude();
-        stimulusObj["stimDesc"] = sweep.stimulus.GetStimulusDescription();
-
-        QJsonObject sweepObj;
-        sweepObj.insert("acquisition", acquisitionObj);
-        sweepObj.insert("stimulus", stimulusObj);
-        sweepObj.insert("sweepNumber", sweep.GetSweepNumber());
-        //recordingObj.insert("title", acquisition.GetStimulusDescription());
-
-        sweepArray.append(sweepObj);
-    }
-}
 
 // =============================================================================
 // JSCommunicationObject
@@ -126,98 +59,13 @@ void CellCardWidget::setNumSweeps(int numSweeps)
 
 void CellCardWidget::setCell(const Cell& cell)
 {
-    Timer t("SetData");
+    CellCardSerializer serializer;
+    QJsonDocument doc;
+    serializer.Serialize(cell, doc);
 
-    QJsonObject cellObj;
-    cellObj["cellId"] = cell.cellId;
-    cellObj["cellName"] = cell.cellName;
-    cellObj["cluster"] = cell.cluster;
-    //cellObj["title"] = "Long Square";
+    QString strDoc(doc.toJson(QJsonDocument::Indented));
 
-    if (cell.ephysTraces != nullptr)
-    {
-        const Experiment& experiment = *cell.ephysTraces;
-
-        const std::vector<Sweep>& sweeps = experiment.GetSweeps();
-
-        std::vector<uint32_t> stimSweeps = experiment.GetStimTypeSweeps(Scene::getInstance().GetCurrentStimType());
-        qDebug() << "Get current stim type: " << ToString(Scene::getInstance().GetCurrentStimType());
-        qDebug() << "Stim sweeps length: " << stimSweeps.size();
-        std::sort(stimSweeps.begin(), stimSweeps.end(), [&](uint32_t a, uint32_t b) {
-            return sweeps[a].GetSweepNumber() < sweeps[b].GetSweepNumber();
-        });
-
-        // Build list of sweeps that should be included in the cell's graph
-        QJsonArray sweepArray;
-
-        float axMin = std::numeric_limits<float>::max();
-        float axMax = -std::numeric_limits<float>::max();
-        float ayMin = std::numeric_limits<float>::max();
-        float ayMax = -std::numeric_limits<float>::max();
-
-        float sxMin = std::numeric_limits<float>::max();
-        float sxMax = -std::numeric_limits<float>::max();
-        float syMin = std::numeric_limits<float>::max();
-        float syMax = -std::numeric_limits<float>::max();
-
-        for (uint32_t sweepIndex : stimSweeps)
-        {
-            // Per cell get its acquisitions and stimuli and determine what to render
-            const Sweep& sweep = experiment.GetSweeps()[sweepIndex];
-
-            addSweepToArray(sweepArray, sweep, experiment.getActionPotential());
-
-            if (sweep.acquisition.GetData().xMin < axMin) axMin = sweep.acquisition.GetData().xMin;
-            if (sweep.acquisition.GetData().xMax > axMax) axMax = sweep.acquisition.GetData().xMax;
-            if (sweep.acquisition.GetData().yMin < ayMin) ayMin = sweep.acquisition.GetData().yMin;
-            if (sweep.acquisition.GetData().yMax > ayMax) ayMax = sweep.acquisition.GetData().yMax;
-
-            if (sweep.stimulus.GetRecording().GetData().xMin < sxMin) sxMin = sweep.stimulus.GetRecording().GetData().xMin;
-            if (sweep.stimulus.GetRecording().GetData().xMax > sxMax) sxMax = sweep.stimulus.GetRecording().GetData().xMax;
-            if (sweep.stimulus.GetRecording().GetData().yMin < syMin) syMin = sweep.stimulus.GetRecording().GetData().yMin;
-            if (sweep.stimulus.GetRecording().GetData().yMax > syMax) syMax = sweep.stimulus.GetRecording().GetData().yMax;
-        }
-
-        // Action potential
-        const ActionPotential* ap = experiment.getActionPotential();
-        QJsonObject actionPotentialObj;
-        if (ap)
-        {
-            QJsonArray apXData, apYData;
-            for (float x : ap->getTimeSeries())
-                apXData.append(x);
-            for (float y : ap->getVoltageSeries())
-                apYData.append(y);
-
-            actionPotentialObj["xData"] = apXData;
-            actionPotentialObj["yData"] = apYData;
-            actionPotentialObj["peakIndex"] = ap->getPeakIndex();
-        }
-
-        QJsonObject ephysObj;
-
-        StimulusType stimType = Scene::getInstance().GetCurrentStimType();
-        ephysObj["stimtype"] = ToString(stimType);
-        ephysObj["recordings"] = sweepArray;
-        if (ap) ephysObj["actionPotential"] = actionPotentialObj;
-
-        // Store graph extents
-        ephysObj["stimExtentX"] = QJsonArray{ sxMin, sxMax };
-        ephysObj["stimExtentY"] = QJsonArray{ syMin, syMax };
-        ephysObj["acqExtentX"] = QJsonArray{ axMin, axMax };
-        ephysObj["acqExtentY"] = QJsonArray{ ayMin, ayMax };
-
-        cellObj.insert("ephys", ephysObj);
-    }
-
-    QJsonObject rootObj;
-    rootObj.insert("cell", cellObj);
-
-    QJsonDocument doc(rootObj);
-    QString strJson(doc.toJson(QJsonDocument::Indented));
-
-    t.printElapsedTime("SetData", true);
-    _commObject.setData(strJson);
+    _commObject.setData(strDoc);
 }
 
 void JSCommunicationObject::js_partitionHovered(const QString& data) {
