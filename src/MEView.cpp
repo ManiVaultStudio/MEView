@@ -116,7 +116,7 @@ void MEView::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
-void MEView::setStimulusSetOptions()
+void MEView::populateStimulusTypeOptions()
 {
     // Find out which stimulus sets are available, and set them in the combobox
     mv::Dataset<EphysExperiments> ephysTraces = _scene.getEphysTraces();
@@ -144,31 +144,16 @@ void MEView::setStimulusSetOptions()
     }
 }
 
-void MEView::onInitialLoad()
+void MEView::composeCells()
 {
-    qDebug() << "onInitialLoad";
-
-    QStringList missingDatasets;
-    if (!_scene.hasAllRequiredDatasets(missingDatasets) || !_meWidget->isWidgetInitialized())
-    {
-        qWarning() << "[MEView] is missing datasets: " << missingDatasets << " or the widget was not initialized yet.";
-        return;
-    }
-    
-    if (_scene.hasEphysTraceDataset())
-    {
-        setStimulusSetOptions();
-    }
-
-    // Compose all cells, send them to renderer for uploading to GPU
     mv::Dataset<Text> metaDataset = _scene.getCellMetadataDataset();
+    mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
+    mv::Dataset<EphysExperiments> ephysTraceDataset = _scene.getEphysTraces();
+
+    const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
 
     std::vector<uint32_t> metaIndices(metaDataset->getNumRows());
     std::iota(metaIndices.begin(), metaIndices.end(), 0);
-    
-    mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
-    const std::vector<CellMorphology>& morphologies = morphologyDataset->getData();
-    mv::Dataset<EphysExperiments> ephysTraceDataset = _scene.getEphysTraces();
 
     // Find common selected points
     std::vector<int> morphIndices;
@@ -231,6 +216,28 @@ void MEView::onInitialLoad()
     }
 
     _scene.allCells = cells;
+}
+
+void MEView::onInitialLoad()
+{
+    qDebug() << "onInitialLoad";
+
+    // Find out whether we have all the required data to show things
+    QStringList missingDatasets;
+    if (!_scene.hasAllRequiredDatasets(missingDatasets) || !_meWidget->isWidgetInitialized())
+    {
+        qWarning() << "[MEView] is missing datasets: " << missingDatasets << " or the widget was not initialized yet.";
+        return;
+    }
+    
+    // An ephys dataset is not mandatory, but if it exists populate what stimulus types are in there as options
+    if (_scene.hasEphysTraceDataset())
+    {
+        populateStimulusTypeOptions();
+    }
+
+    // Compose all cells, send them to renderer for uploading to GPU
+    composeCells();
     _meWidget->setCells(_scene.allCells);
 }
 

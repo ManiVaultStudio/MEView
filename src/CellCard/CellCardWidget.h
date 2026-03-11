@@ -45,7 +45,6 @@ public:
 
     JSCommunicationObject& getCommObject() { return _commObject; }
 
-    void setNumSweeps(int numSweeps);
     void setCell(const Cell& cell);
 
 private slots:

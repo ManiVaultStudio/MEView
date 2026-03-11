@@ -154,7 +154,7 @@ void CellCardSerializer::Serialize(const Cell& cell, QJsonDocument& outputDoc)
     rootObj.insert("cell", cellObj);
 
     outputDoc = QJsonDocument(rootObj);
-    QString strJson(outputDoc.toJson(QJsonDocument::Indented));
+    //QString strJson(outputDoc.toJson(QJsonDocument::Indented));
 
     t.printElapsedTime("SetData", true);
 }

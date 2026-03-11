@@ -3,12 +3,11 @@
 #include "MEView.h"
 
 #include "Scene.h"
+#include "CellCardSerializer.h"
 
 #include <util/Timer.h>
 
 #include <QLayout>
-
-#include "CellCardSerializer.h"
 
 #include <iostream>
 
@@ -50,11 +49,6 @@ CellCardWidget::CellCardWidget() :
 CellCardWidget::~CellCardWidget()
 {
 
-}
-
-void CellCardWidget::setNumSweeps(int numSweeps)
-{
-    //_commObject.setNumSweeps(numSweeps);
 }
 
 void CellCardWidget::setCell(const Cell& cell)

@@ -51,7 +51,8 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-    void setStimulusSetOptions();
+    void populateStimulusTypeOptions();
+    void composeCells();
 
     /**
      * Invoked when a data event occurs
