@@ -23,8 +23,4 @@
         <file>web/utils/d3@7.js</file>
         <file>web/utils/bootstrap.min.css</file>
     </qresource>
-    <qresource prefix="me_view">
-        <file>icons/show_axons.png</file>
-        <file>style.qss</file>
-    </qresource>
 </RCC>
