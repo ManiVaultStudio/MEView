@@ -4,6 +4,7 @@
 #include <TextData/TextData.h>
 #include <CellMorphologyData/CellMorphologyData.h>
 #include <EphysData/EphysData.h>
+#include <ClusterData/ClusterData.h>
 
 #include <QObject>
 #include <QHash>
@@ -17,6 +18,7 @@ public:
     QString cellId;
     QString cellName;
     QString cluster;
+    int metadataIndex;
     const CellMorphology* morphology;
     const Experiment* ephysTraces;
 };
@@ -102,6 +104,9 @@ private: // Ephys
 
 private: // Metadata
     mv::Dataset<Text>               _cellMetadataDataset;           /** Cell metadata */
+
+public:
+    mv::Dataset<Clusters>           currentClusterDataset;          /** Cluster data */
 
 private: // State
     //QString _currentStimset = "";

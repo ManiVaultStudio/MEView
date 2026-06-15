@@ -6,7 +6,7 @@ namespace
 {
     bool isMorphologicalData(mv::Dataset<DatasetImpl> dataset)
     {
-        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "M";
+        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "morphology";
     }
 
     bool isMorphologies(mv::Dataset<DatasetImpl> dataset)
@@ -16,7 +16,7 @@ namespace
 
     bool isEphysFeatures(mv::Dataset<DatasetImpl> dataset)
     {
-        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "E";
+        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "ephys";
     }
 
     bool isEphysTraces(mv::Dataset<DatasetImpl> dataset)
@@ -26,7 +26,7 @@ namespace
 
     bool isMetadata(mv::Dataset<DatasetImpl> dataset)
     {
-        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "Metadata";
+        return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "metadata";
     }
 }
 

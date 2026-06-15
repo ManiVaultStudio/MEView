@@ -6,6 +6,7 @@
 #include <SelectionGroup.h>
 
 #include "CellMorphologyData/CellMorphology.h"
+#include <ClusterData/ClusterData.h>
 
 #include <DatasetsMimeData.h>
 
@@ -45,10 +46,32 @@ void MEView::init()
 
     _primaryToolbarAction.addAction(&_settingsAction.getProcessesOption());
     _primaryToolbarAction.addAction(&_settingsAction.getStimSetsAction());
+    _primaryToolbarAction.addAction(&_settingsAction.GetMetadataAction());
 
     connect(&_settingsAction.getProcessesOption(), &OptionsAction::selectedOptionsChanged, this, [this](const QStringList& selectedOptions) { _meWidget->GetRenderer().SetEnabledProcesses(selectedOptions); });
     connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().SetCurrentStimType(_settingsAction.getStimSetsAction().getCurrentText()); });
     connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { Scene::getInstance().SetCurrentStimType(_settingsAction.getStimSetsAction().getCurrentText()); });
+    connect(&_settingsAction.GetMetadataAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index)
+        { 
+            if (_scene.getCellMetadataDataset().isValid())
+            {
+                mv::Dataset<Text> metaDataset = _scene.getCellMetadataDataset();
+
+                // Obtain the data hierarchy item from the source dataset
+                auto* parentItem = dataHierarchy().getItem(metaDataset->getId());
+
+                // Ask for the data hierarchy children of the given dataset
+                DataHierarchyItems childItems = dataHierarchy().getChildren(*parentItem);
+
+                auto item = childItems.at(index);
+                DataType type = item->getDataType();
+
+                if (type == ClusterType)
+                {
+                    _scene.currentClusterDataset = item->getDataset<Clusters>();
+                }
+            }
+        });
     connect(&_settingsAction.getShowNoMorphsAction(), &ToggleAction::toggled, this, [this](bool toggled) { onCellSelectionChanged(); });
     _meWidget->GetRenderer().SetEnabledProcesses({ "Axon", "Apical Dendrite", "Basal Dendrite" });
 
@@ -84,6 +107,9 @@ void MEView::init()
     // Check if any usable datasets are already available, if so, use them
     for (mv::Dataset dataset : mv::data().getAllDatasets())
         _scene.offerCandidateDataset(dataset);
+
+    // Add metadata options
+    PopulateMetadataOptions();
 }
 
 void MEView::onDataEvent(mv::DatasetEvent* dataEvent)
@@ -116,7 +142,35 @@ void MEView::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
-void MEView::populateStimulusTypeOptions()
+void MEView::PopulateMetadataOptions()
+{
+    if (_scene.getCellMetadataDataset().isValid())
+    {
+        mv::Dataset<Text> metaDataset = _scene.getCellMetadataDataset();
+
+        // Obtain the data hierarchy item from the source dataset
+        auto* parentItem = dataHierarchy().getItem(metaDataset->getId());
+
+        // Ask for the data hierarchy children of the given dataset
+        DataHierarchyItems childItems = dataHierarchy().getChildren(*parentItem);
+
+        // Iterate over the children and find the ones of type cluster
+        QStringList metadataItemNames;
+        for (DataHierarchyItem* item : childItems)
+        {
+            DataType type = item->getDataType();
+            if (type == ClusterType)
+            {
+                Dataset<Clusters> clusterDataset = item->getDataset<Clusters>();
+                metadataItemNames.append(clusterDataset->getGuiName());
+            }
+        }
+        _settingsAction.GetMetadataAction().setOptions(metadataItemNames);
+        _settingsAction.GetMetadataAction().setCurrentIndex(0);
+    }
+}
+
+void MEView::PopulateStimulusTypeOptions()
 {
     // Find out which stimulus sets are available, and set them in the combobox
     mv::Dataset<EphysExperiments> ephysTraces = _scene.getEphysTraces();
@@ -144,7 +198,7 @@ void MEView::populateStimulusTypeOptions()
     }
 }
 
-void MEView::composeCells()
+void MEView::ComposeCells()
 {
     mv::Dataset<Text> metaDataset = _scene.getCellMetadataDataset();
     mv::Dataset<CellMorphologies> morphologyDataset = _scene.getMorphologyDataset();
@@ -175,10 +229,22 @@ void MEView::composeCells()
         }
     }
 
-    auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("Cell ID");
+    for (int i = 0; i < _scene.getCellMetadataDataset()->getColumnNames().size(); i++)
+        qDebug() << _scene.getCellMetadataDataset()->getColumnNames()[i];
+
+    auto& cellIdColumn = _scene.getCellMetadataDataset()->getColumn("cell_id");
     // FIXME
-    QString columnName = _scene.getCellMetadataDataset()->hasColumn("Supertype") ? "Supertype" : "Group";
+    //QString columnName = _scene.getCellMetadataDataset()->hasColumn("Supertype") ? "Supertype" : "Group_name";
+    //auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
+    if (!_scene.getCellMetadataDataset()->hasColumn(_settingsAction.GetMetadataAction().getCurrentText()))
+    {
+        qDebug() << "Metadata column: " << _settingsAction.GetMetadataAction().getCurrentText() << "not found.";
+        return;
+    }
+
+    QString columnName = _settingsAction.GetMetadataAction().getCurrentText();
     auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
+
     // Cell names
     bool loadCellNames = _scene.getCellMetadataDataset()->hasColumn("cell_name");
     const std::vector<QString>* cellNameColumn = nullptr;
@@ -192,6 +258,7 @@ void MEView::composeCells()
         Cell cell;
         cell.cellId = cellIdColumn[i];
         cell.cluster = clusterColumn[i];
+        cell.metadataIndex = i;
         cell.cellName = loadCellNames ? (*cellNameColumn)[i] : "Missing";
 
         int morphIndex = morphIndices[i];
@@ -233,11 +300,11 @@ void MEView::onInitialLoad()
     // An ephys dataset is not mandatory, but if it exists populate what stimulus types are in there as options
     if (_scene.hasEphysTraceDataset())
     {
-        populateStimulusTypeOptions();
+        PopulateStimulusTypeOptions();
     }
 
     // Compose all cells, send them to renderer for uploading to GPU
-    composeCells();
+    ComposeCells();
     _meWidget->setCells(_scene.allCells);
 }
 

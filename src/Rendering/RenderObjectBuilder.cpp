@@ -124,6 +124,7 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
             cro.acquisitionsObjects.push_back(acqTRO);
         }
     }
+    cro.cellMetadataIndex = cell.metadataIndex;
 }
 
 void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, const CellMorphology& cellMorphology)

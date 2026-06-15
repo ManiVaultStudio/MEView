@@ -9,7 +9,9 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     _realRendererButton(this, "True Renderer"),
     _processesOption(this, "Displayed processes", QStringList{ "Apical Dendrite", "Basal Dendrite", "Axon" }, QStringList{"Apical Dendrite", "Basal Dendrite", "Axon" }),
     _stimSetsAction(this, "Stim sets"),
+    _metadataAction(this, "Metadata coloring"),
     _showCellsWithoutMorph(this, "Show all cells", false)
 {
 
+    _processesOption.setDefaultWidgetFlags(mv::gui::OptionsAction::ComboBox);
 }

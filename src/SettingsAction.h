@@ -24,6 +24,7 @@ public: // Action getters
 
     mv::gui::OptionsAction& getProcessesOption() { return _processesOption; }
     mv::gui::OptionAction& getStimSetsAction() { return _stimSetsAction; }
+    mv::gui::OptionAction& GetMetadataAction() { return _metadataAction; }
     mv::gui::ToggleAction& getShowNoMorphsAction() { return _showCellsWithoutMorph; }
 
 private:
@@ -34,5 +35,6 @@ private:
 
     mv::gui::OptionsAction  _processesOption;
     mv::gui::OptionAction   _stimSetsAction;
+    mv::gui::OptionAction   _metadataAction;
     mv::gui::ToggleAction   _showCellsWithoutMorph;
 };

@@ -126,6 +126,19 @@ void MERenderer::RenderMorphologies(float t)
     {
         CellRenderObject* cro = _selectedCellRenderObjects[i];
 
+        // Set CRO color
+        // FIXME getGuiName is fragile
+        QString clusterName = _scene.getCellMetadataDataset()->getColumn(_scene.currentClusterDataset->getGuiName())[cro->cellMetadataIndex];
+        auto& clusters = _scene.currentClusterDataset->getClusters();
+        for (const Cluster& cluster : clusters)
+        {
+            if (cluster.getName() == clusterName)
+            {
+                QColor color = cluster.getColor();
+                cro->cellTypeColor = Vector3f(color.redF(), color.greenF(), color.blueF());
+            }
+        }
+
         if (cro->hasMorphology)
         {
             cro->morphologyObject.ComputeExtents(ignoredTypes);
@@ -152,8 +165,10 @@ void MERenderer::RenderMorphologies(float t)
             }
             _lineShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
 
+            // Set cell color
             _lineShader.uniform3f("cellTypeColor", cro->cellTypeColor);
 
+            //
             for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)
             {
                 CellMorphology::Type type = it.key();

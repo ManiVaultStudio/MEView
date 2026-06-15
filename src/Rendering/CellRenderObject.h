@@ -61,6 +61,7 @@ public:
 public:
     // Base color of the whole cell
     mv::Vector3f            cellTypeColor;
+    int                     cellMetadataIndex;
 
     // Sub-render objects
     MorphologyRenderObject  morphologyObject;
