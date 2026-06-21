@@ -94,6 +94,7 @@ void RenderObjectBuilder::BuildCellRenderObjects(const std::vector<Cell>& cells,
 void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cell& cell)
 {
     // Morphology
+    cro.cellMetadataIndex = cell.metadataIndex;
     if (cell.morphology != nullptr)
     {
         const CellMorphology& cellMorphology = *cell.morphology;
@@ -124,7 +125,6 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
             cro.acquisitionsObjects.push_back(acqTRO);
         }
     }
-    cro.cellMetadataIndex = cell.metadataIndex;
 }
 
 void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, const CellMorphology& cellMorphology)

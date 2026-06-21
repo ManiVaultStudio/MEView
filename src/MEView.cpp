@@ -236,14 +236,6 @@ void MEView::ComposeCells()
     // FIXME
     //QString columnName = _scene.getCellMetadataDataset()->hasColumn("Supertype") ? "Supertype" : "Group_name";
     //auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
-    if (!_scene.getCellMetadataDataset()->hasColumn(_settingsAction.GetMetadataAction().getCurrentText()))
-    {
-        qDebug() << "Metadata column: " << _settingsAction.GetMetadataAction().getCurrentText() << "not found.";
-        return;
-    }
-
-    QString columnName = _settingsAction.GetMetadataAction().getCurrentText();
-    auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
 
     // Cell names
     bool loadCellNames = _scene.getCellMetadataDataset()->hasColumn("cell_name");
@@ -257,7 +249,7 @@ void MEView::ComposeCells()
     {
         Cell cell;
         cell.cellId = cellIdColumn[i];
-        cell.cluster = clusterColumn[i];
+        cell.cluster = "";
         cell.metadataIndex = i;
         cell.cellName = loadCellNames ? (*cellNameColumn)[i] : "Missing";
 
@@ -358,6 +350,18 @@ void MEView::onCellSelectionChanged()
     {
         sortedIndices[i] = cellSelectionIndices[sortIndices[i]];
     }
+
+    if (!_scene.getCellMetadataDataset()->hasColumn(_settingsAction.GetMetadataAction().getCurrentText()))
+    {
+        qDebug() << "Metadata column: " << _settingsAction.GetMetadataAction().getCurrentText() << "not found.";
+        return;
+    }
+
+    QString columnName = _settingsAction.GetMetadataAction().getCurrentText();
+    auto& clusterColumn = _scene.getCellMetadataDataset()->getColumn(columnName);
+
+    for (int i = 0; i < _scene.allCells.size(); i++)
+        _scene.allCells[i].cluster = clusterColumn[_scene.allCells[i].metadataIndex];
 
     _meWidget->SetCortical(isCortical);
 
