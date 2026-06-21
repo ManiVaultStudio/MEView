@@ -5,6 +5,7 @@
 #include <actions/ToggleAction.h>
 #include <actions/OptionAction.h>
 #include <actions/OptionsAction.h>
+#include <actions/DecimalAction.h>
 
 class MEView;
 
@@ -25,6 +26,7 @@ public: // Action getters
     mv::gui::OptionsAction& getProcessesOption() { return _processesOption; }
     mv::gui::OptionAction& getStimSetsAction() { return _stimSetsAction; }
     mv::gui::OptionAction& GetMetadataAction() { return _metadataAction; }
+    mv::gui::DecimalAction& GetAxonTransparency() { return _axonTransparency; }
     mv::gui::ToggleAction& getShowNoMorphsAction() { return _showCellsWithoutMorph; }
 
 private:
@@ -36,5 +38,6 @@ private:
     mv::gui::OptionsAction  _processesOption;
     mv::gui::OptionAction   _stimSetsAction;
     mv::gui::OptionAction   _metadataAction;
+    mv::gui::DecimalAction  _axonTransparency;
     mv::gui::ToggleAction   _showCellsWithoutMorph;
 };

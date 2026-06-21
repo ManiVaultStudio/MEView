@@ -167,6 +167,7 @@ void MERenderer::RenderMorphologies(float t)
 
             // Set cell color
             _lineShader.uniform3f("cellTypeColor", cro->cellTypeColor);
+            _lineShader.uniform1f("axonTransparency", _axonTransparency);
 
             //
             for (auto it = cro->morphologyObject.processes.begin(); it != cro->morphologyObject.processes.end(); ++it)

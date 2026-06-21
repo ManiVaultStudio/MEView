@@ -25,6 +25,7 @@ public:
     void setSelectedCells(const std::vector<uint32_t>& indices);
 
     void SetCortical(bool isCortical);
+    void SetAxonTransparency(float alpha) { _meRenderer.SetAxonTransparency(alpha); }
 
 protected: // mv::gui::OpenGLWidget overrides
     virtual void onWidgetInitialized() override;

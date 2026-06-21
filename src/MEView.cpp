@@ -47,6 +47,7 @@ void MEView::init()
     _primaryToolbarAction.addAction(&_settingsAction.getProcessesOption());
     _primaryToolbarAction.addAction(&_settingsAction.getStimSetsAction());
     _primaryToolbarAction.addAction(&_settingsAction.GetMetadataAction());
+    _primaryToolbarAction.addAction(&_settingsAction.GetAxonTransparency());
 
     connect(&_settingsAction.getProcessesOption(), &OptionsAction::selectedOptionsChanged, this, [this](const QStringList& selectedOptions) { _meWidget->GetRenderer().SetEnabledProcesses(selectedOptions); });
     connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().SetCurrentStimType(_settingsAction.getStimSetsAction().getCurrentText()); });
@@ -69,9 +70,11 @@ void MEView::init()
                 if (type == ClusterType)
                 {
                     _scene.currentClusterDataset = item->getDataset<Clusters>();
+                    onCellSelectionChanged();
                 }
             }
         });
+    connect(&_settingsAction.GetAxonTransparency(), &DecimalAction::valueChanged, this, [this](float value) { _meWidget->SetAxonTransparency(value / 100); });
     connect(&_settingsAction.getShowNoMorphsAction(), &ToggleAction::toggled, this, [this](bool toggled) { onCellSelectionChanged(); });
     _meWidget->GetRenderer().SetEnabledProcesses({ "Axon", "Apical Dendrite", "Basal Dendrite" });
 

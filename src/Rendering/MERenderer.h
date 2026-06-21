@@ -31,6 +31,7 @@ public:
     void SetCortical(bool isCortical);
     void SetEnabledProcesses(const QStringList& enabledProcesses);
     void SetCurrentStimType(const QString& stimset);
+    void SetAxonTransparency(float alpha) { _axonTransparency = alpha; }
 
     void BuildRenderObjects(const std::vector<Cell>& cells);
     void ComputeRenderLocations(const std::vector<CellRenderObject*>& cellRenderObjects);
@@ -57,6 +58,7 @@ private:
     Scene& _scene;
 
     RenderContext _context;
+    float _axonTransparency = 0.2f;
 
 private: // Shaders
     /** Renders cell morphologies as a series of lines */
