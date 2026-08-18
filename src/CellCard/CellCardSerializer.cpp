@@ -39,9 +39,9 @@ namespace
         QJsonArray acqXData, acqYData, stimXData, stimYData;
         QJsonObject acquisitionObj, stimulusObj;
 
-        for (float x : sweep.acquisition.GetData().xSeries)
+        for (float x : sweep.acquisition.GetRecording().GetData().xSeries)
             acqXData.append(x);
-        for (float y : sweep.acquisition.GetData().ySeries)
+        for (float y : sweep.acquisition.GetRecording().GetData().ySeries)
             acqYData.append(y);
         for (float x : sweep.stimulus.GetRecording().GetData().xSeries)
             stimXData.append(x);
@@ -50,8 +50,8 @@ namespace
 
         acquisitionObj["xData"] = acqXData;
         acquisitionObj["yData"] = acqYData;
-        if (sweep.acquisition.HasAttribute("NumSpikes"))
-            acquisitionObj["numSpikes"] = sweep.acquisition.GetAttribute("NumSpikes");
+
+        acquisitionObj["numSpikes"] = QString::number(sweep.GetSweepProperties().spikeIndices.size());
 
         stimulusObj["xData"] = stimXData;
         stimulusObj["yData"] = stimYData;
@@ -104,7 +104,7 @@ void CellCardSerializer::Serialize(const Cell& cell, QJsonDocument& outputDoc)
 
             AddSweepToArray(sweepArray, sweep, experiment.getActionPotential());
 
-            const TimeSeries& acquisition = sweep.acquisition.GetData();
+            const TimeSeries& acquisition = sweep.acquisition.GetRecording().GetData();
             const TimeSeries& stimulus = sweep.stimulus.GetRecording().GetData();
 
             if (acquisition.xMin < acqBounds.getLeft()) acqBounds.setLeft(acquisition.xMin);
