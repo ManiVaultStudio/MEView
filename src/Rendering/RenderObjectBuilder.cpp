@@ -111,6 +111,31 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
         if (experiment.GetSweeps().empty())
             return;
 
+        // Find rheo sweep
+        float rheoStimAmplitude = -std::numeric_limits<float>::max();
+        for (int i = 0; i < experiment.GetSweeps().size(); i++)
+        {
+            const Sweep& sweep = experiment.GetSweeps()[i];
+            if (sweep.IsLowestSpikingSweep())
+                rheoStimAmplitude = sweep.stimulus.GetStimulusAmplitude();
+        }
+
+        // Find hero sweep (moderately suprathresh)
+        constexpr float HERO_AMPL = 40;
+        int heroIndex = -1;
+        float minAmplitudeDist = std::numeric_limits<float>::max();
+        for (int i = 0; i < experiment.GetSweeps().size(); i++)
+        {
+            const Sweep& sweep = experiment.GetSweeps()[i];
+            
+            float amplDist = fabs(sweep.stimulus.GetStimulusAmplitude() - (rheoStimAmplitude + HERO_AMPL));
+            if (sweep.stimulus.GetStimulusType() == StimulusType::LongSquare && amplDist < minAmplitudeDist)
+            {
+                heroIndex = i;
+                minAmplitudeDist = amplDist;
+            }
+        }
+
         for (int i = 0; i < experiment.GetSweeps().size(); i++)
         {
             const Sweep& sweep = experiment.GetSweeps()[i];
@@ -118,8 +143,9 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
             TraceRenderObject acqTRO;
 
             BuildTraceObject(stimTRO, sweep.stimulus.GetRecording(), sweep.stimulus.GetStimulusType(), true);
-            BuildTraceObject(acqTRO, sweep.acquisition, sweep.stimulus.GetStimulusType(), false);
-            stimTRO.priority = acqTRO.priority;
+            BuildTraceObject(acqTRO, sweep.acquisition.GetRecording(), sweep.stimulus.GetStimulusType(), false);
+            stimTRO.priority = i == heroIndex ? 1 : 0;
+            acqTRO.priority = i == heroIndex ? 1 : 0;
 
             cro.stimulusObjects.push_back(stimTRO);
             cro.acquisitionsObjects.push_back(acqTRO);
@@ -215,6 +241,7 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
         mpro.numVertices = (int)ls.segments.size();
         mpro.extents = cellMorphology.extents[type];
     }
+    mro.ComputeExtents({});
     // qDebug() << "Number of line segments in hash " << lineSegmentsHash.size();
 }
 
