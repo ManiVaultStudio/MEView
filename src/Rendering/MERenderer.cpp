@@ -214,9 +214,9 @@ void MERenderer::RenderSomas()
 
 void MERenderer::RenderTraces()
 {
-    constexpr float TRACE_WIDTH = 0.8f;
-    constexpr float ACQ_HEIGHT = 0.5f;
-    constexpr float STIM_HEIGHT = 0.4f;
+    constexpr float TRACE_WIDTH = 1.6f;
+    constexpr float ACQ_HEIGHT = 0.6f;
+    constexpr float STIM_HEIGHT = 0.3f;
 
     // TRACES
     glDisable(GL_DEPTH_TEST);
