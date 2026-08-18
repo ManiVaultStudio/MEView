@@ -164,6 +164,7 @@ void MERenderer::RenderMorphologies(float t)
                 _context.modelMatrix.translate(-extent.center.x, -extent.emin.y, -extent.center.z);
             }
             _lineShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
+            //_scene.getCellMetadataDataset()->getColumn()
 
             // Set cell color
             _lineShader.uniform3f("cellTypeColor", cro->cellTypeColor);
@@ -234,49 +235,64 @@ void MERenderer::RenderTraces()
 
         int stimIndex = FindHighestPriorityStimulus(*cro, _currentStimType);
 
-        for (int i = 0; i < cro->stimulusObjects.size(); i++)
+        float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
+
+        auto LRenderTrace = [&](int traceIndex)
         {
-            TraceRenderObject& stimRO = cro->stimulusObjects[i];
+            TraceRenderObject& stimRO = cro->stimulusObjects[traceIndex];
 
-            if (stimRO.stimulusType == _currentStimType)
-            {
-                TraceRenderObject& acqRO = cro->acquisitionsObjects[i];
+            if (stimRO.stimulusType != _currentStimType)
+                return;
 
-                float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
+            TraceRenderObject& acqRO = cro->acquisitionsObjects[traceIndex];
 
-                // Acquisition
-                _context.modelMatrix.setToIdentity();
-                _context.modelMatrix.translate(xCoord * r, 0, 0);
-                _context.modelMatrix.translate(-TRACE_WIDTH * 0.5f, 0.5f, 0);
-                _context.modelMatrix.scale(TRACE_WIDTH, ACQ_HEIGHT, 1);
-                _context.modelMatrix.scale(1.0f / (cro->_acqChartDomainMax - cro->_acqChartDomainMin), 1.0f / (_acqChartRange.max - _acqChartRange.min), 1.0f); // Rescale to [0, 1]
-                _context.modelMatrix.translate(-cro->_acqChartDomainMin, -_acqChartRange.min, 0); // Map bottom-left corner to 0,0
+            const bool isHighlighted = traceIndex == stimIndex;
 
-                _traceShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
+            // Acquisition
+            _context.modelMatrix.setToIdentity();
+            _context.modelMatrix.translate(xCoord * r, 0.0f, 0.0f);
+            _context.modelMatrix.translate(-TRACE_WIDTH * 0.5f, 0.5f, 0.0f);
+            _context.modelMatrix.scale(TRACE_WIDTH, ACQ_HEIGHT, 1.0f);
+            _context.modelMatrix.scale(1.0f / (cro->_acqChartDomainMax - cro->_acqChartDomainMin), 1.0f / (_acqChartRange.max - _acqChartRange.min), 1.0f); // Rescale to [0, 1]
+            _context.modelMatrix.translate(-cro->_acqChartDomainMin, -_acqChartRange.min, 0.0f); // Map bottom-left corner to 0,0
+            _traceShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
 
-                Vector3f acqColor = i == stimIndex ? cro->cellTypeColor : Vector3f(0.5f);
-                _traceShader.uniform3f("lineColor", acqColor);
-                _traceShader.uniform1f("alpha", i == stimIndex ? 1.0f : 0.1f);
+            const Vector3f acqColor = isHighlighted ? cro->cellTypeColor : Vector3f(0.7f);
 
-                glBindVertexArray(acqRO.vao);
-                glDrawArrays(GL_LINE_STRIP, 0, acqRO.numVertices);
+            _traceShader.uniform3f("lineColor", acqColor);
+            _traceShader.uniform1f("alpha", isHighlighted ? 1.0f : 0.05f);
 
-                // Stimulus
-                _context.modelMatrix.setToIdentity();
-                _context.modelMatrix.translate(xCoord * r, 0, 0);
-                _context.modelMatrix.translate(-TRACE_WIDTH * 0.5f, 0, 0);
-                _context.modelMatrix.scale(TRACE_WIDTH / (cro->_stimChartDomainMax - cro->_stimChartDomainMin), STIM_HEIGHT / (_stimChartRange.max - _stimChartRange.min), 1);
-                _context.modelMatrix.translate(-cro->_stimChartDomainMin, -_stimChartRange.min, 0);
-                _traceShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
+            glBindVertexArray(acqRO.vao);
+            glDrawArrays(GL_LINE_STRIP, 0, acqRO.numVertices);
 
-                Vector3f stimColor = i == stimIndex ? Vector3f(0.2f, 0.2f, 0.2f) : Vector3f(0.5f);
-                _traceShader.uniform3f("lineColor", stimColor);
+            // Stimulus
+            _context.modelMatrix.setToIdentity();
+            _context.modelMatrix.translate(xCoord * r, 0.0f, 0.0f);
+            _context.modelMatrix.translate(-TRACE_WIDTH * 0.5f, 0.0f, 0.0f);
+            _context.modelMatrix.scale(TRACE_WIDTH / (cro->_stimChartDomainMax - cro->_stimChartDomainMin), STIM_HEIGHT / (_stimChartRange.max - _stimChartRange.min), 1);
+            _context.modelMatrix.translate(-cro->_stimChartDomainMin, -_stimChartRange.min, 0);
+            _traceShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
 
-                glBindVertexArray(stimRO.vao);
-                glDrawArrays(GL_LINE_STRIP, 0, stimRO.numVertices);
-            }
+            const Vector3f stimColor = isHighlighted ? Vector3f(0.2f) : Vector3f(0.5f);
+
+            _traceShader.uniform3f("lineColor", stimColor);
+
+            glBindVertexArray(stimRO.vao);
+            glDrawArrays(GL_LINE_STRIP, 0, stimRO.numVertices);
+        };
+
+        // Draw all unhighlighted traces first
+        for (int traceIndex = 0; traceIndex < cro->stimulusObjects.size(); ++traceIndex)
+        {
+            if (traceIndex != stimIndex)
+                LRenderTrace(traceIndex);
         }
+
+        // Draw the highlighted trace last so it appears on top
+        if (stimIndex >= 0 && stimIndex < cro->stimulusObjects.size())
+            LRenderTrace(stimIndex);
     }
+
     glDisable(GL_BLEND);
 
     glBindVertexArray(0);
@@ -383,7 +399,7 @@ void MERenderer::ComputeRenderLocations(const std::vector<CellRenderObject*>& ce
         {
             cro->morphologyObject.ComputeExtents(ignoredTypes);
             const CellMorphology::Extent& extent = cro->morphologyObject.totalExtent;
-
+            qDebug() << "Extent: " << extent.emin.str() << extent.emax.str();
             mv::Vector3f dimensions = extent.emax - extent.emin;
             float maxWidth = sqrtf(powf(dimensions.x, 2) + powf(dimensions.z, 2)) * 1.2f;
 
@@ -393,17 +409,11 @@ void MERenderer::ComputeRenderLocations(const std::vector<CellRenderObject*>& ce
             else
                 height = maxCellHeight;
 
-            if (_isCortical)
-            {
-                float depthRange = _scene.getCortexStructure().getDepthRange();
-                xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / depthRange);
-                xOffset += std::max(minWidth, maxWidth / depthRange);
-            }
-            else
-            {
-                xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / maxCellHeight);
-                xOffset += std::max(minWidth, maxWidth / maxCellHeight);
-            }
+            xCoord = xOffset + std::max(minWidth / 2, (maxWidth / 2) / height);
+            xOffset += std::max(minWidth, maxWidth / height);
+
+            qDebug() << "xCoord c: " << xCoord << height;
+            qDebug() << "xOffset: " << xOffset;
         }
         else
         {
@@ -511,7 +521,7 @@ void MERenderer::RecalculateTraceBounds()
                     if (stimRec.GetData().yMin < _stimChartRange.min) _stimChartRange.min = stimRec.GetData().yMin;
                     if (stimRec.GetData().yMax > _stimChartRange.max) _stimChartRange.max = stimRec.GetData().yMax;
 
-                    const Recording& acq = experiment.GetSweeps()[j].acquisition;
+                    const Recording& acq = experiment.GetSweeps()[j].acquisition.GetRecording();
 
                     if (acq.GetData().xMin < cro->_acqChartDomainMin) cro->_acqChartDomainMin = acq.GetData().xMin;
                     if (acq.GetData().xMax > cro->_acqChartDomainMax) cro->_acqChartDomainMax = acq.GetData().xMax;
@@ -543,6 +553,9 @@ void MERenderer::RequestNewWidgetWidth()
     if (_context.xCoords.empty())
         return;
 
+    for (int i = 0; i < _context.xCoords.size(); i++)
+        qDebug() << "xCoord:" << _context.xCoords[i];
+
     // Compute new widget width
     float newWidgetWidthToRequest = _context.xCoords[_context.xCoords.size() - 1] + 0.6; // FIXME little hack for extra space
 
@@ -550,7 +563,7 @@ void MERenderer::RequestNewWidgetWidth()
         return;
 
     QMatrix4x4& projMatrix = _morphologyViewport.GetProjectionMatrix();
-
+    qDebug() << "pre new width: " << newWidgetWidthToRequest;
     //float morphHeight = _isCortical ? _scene.getCortexStructure().getDepthRange() : computeMaxCellHeight(cellRenderObjects);
     QVector4D clipSpace = (projMatrix * QVector4D(newWidgetWidthToRequest, 0, 0, 1));
     QVector4D ndc(clipSpace.x() / clipSpace.w(), clipSpace.y() / clipSpace.w(), clipSpace.z() / clipSpace.w(), 1);
@@ -560,6 +573,9 @@ void MERenderer::RequestNewWidgetWidth()
     GLint maxTextureSize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
     newWidgetWidthToRequest = newWidgetWidthToRequest > maxTextureSize ? maxTextureSize : newWidgetWidthToRequest;
+
+    qDebug() << "Max tex size: " << maxTextureSize;
+    qDebug() << "New framebuffer size requested: " << newWidgetWidthToRequest;
 
     float aspectRatioRequest = newWidgetWidthToRequest / _fullViewport.GetHeight();
 
