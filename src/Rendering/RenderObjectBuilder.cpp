@@ -14,15 +14,60 @@ namespace
         std::vector<float>          segmentRadii;
     };
 
+    // Temporary function while this is not done before
+    std::vector<int> DetectSpikes(const TimeSeries& timeSeries)
+    {
+        int windowSize = 10;
+        float threshold = 3.0f;
+
+        const std::vector<float>& y = timeSeries.ySeries;
+        std::vector<int> spikes;
+
+        if (y.size() < windowSize * 2)
+            return spikes;
+
+        for (size_t i = windowSize; i < y.size() - windowSize; ++i)
+        {
+            float mean = 0.0f;
+            float var = 0.0f;
+
+            // Compute mean
+            for (int j = -windowSize; j <= windowSize; ++j)
+                mean += y[i + j];
+
+            mean /= (2 * windowSize + 1);
+
+            // Compute variance
+            for (int j = -windowSize; j <= windowSize; ++j)
+            {
+                float diff = y[i + j] - mean;
+                var += diff * diff;
+            }
+
+            float stddev = std::sqrt(var / (2 * windowSize + 1));
+
+            if ((y[i] - mean) > threshold * stddev)
+                spikes.push_back(i);
+        }
+
+        return spikes;
+    }
+
+
     float ComputeTracePriority(const TimeSeries& ts)
     {
-        // Compute amount of variation in the acquisition
-        float variation = 0;
-        for (int i = 1; i < ts.xSeries.size(); i++)
-        {
-            variation += fabs(ts.ySeries[i] - ts.ySeries[i - 1]);
-        }
-        return variation;
+        std::vector<int> spikes = DetectSpikes(ts);
+
+        //// Compute amount of variation in the acquisition
+        //float variation = 0;
+        //for (int i = 1; i < ts.xSeries.size(); i++)
+        //{
+        //    variation += fabs(ts.ySeries[i] - ts.ySeries[i - 1]);
+        //}
+        //return variation;
+        if (spikes.size() < 3)
+            return 0;
+        return 1000 - spikes.size(); // Temporarily give most priority to traces with least amount of spikes > 3
     }
 }
 
