@@ -44,10 +44,7 @@ void MEView::init()
     connect(&_scene, &Scene::allRequiredDatasetsLoaded, this, &MEView::onInitialLoad);
     connect(_meWidget, &MEWidget::widgetInitialized, this, &MEView::onInitialLoad);
 
-    _primaryToolbarAction.addAction(&_settingsAction.getProcessesOption());
-    _primaryToolbarAction.addAction(&_settingsAction.getStimSetsAction());
-    _primaryToolbarAction.addAction(&_settingsAction.GetMetadataAction());
-    _primaryToolbarAction.addAction(&_settingsAction.GetAxonTransparency());
+    _primaryToolbarAction.addAction(&_settingsAction);
 
     connect(&_settingsAction.getProcessesOption(), &OptionsAction::selectedOptionsChanged, this, [this](const QStringList& selectedOptions) { _meWidget->GetRenderer().SetEnabledProcesses(selectedOptions); });
     connect(&_settingsAction.getStimSetsAction(), &OptionAction::currentIndexChanged, this, [this](const int32_t& index) { _meWidget->GetRenderer().SetCurrentStimType(_settingsAction.getStimSetsAction().getCurrentText()); });

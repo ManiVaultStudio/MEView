@@ -1,6 +1,7 @@
 #pragma once
 
 #include <actions/GroupAction.h>
+#include <actions/HorizontalGroupAction.h>
 #include <actions/TriggerAction.h>
 #include <actions/ToggleAction.h>
 #include <actions/OptionAction.h>
@@ -9,7 +10,7 @@
 
 class MEView;
 
-class SettingsAction : public mv::gui::GroupAction
+class SettingsAction : public mv::gui::HorizontalGroupAction
 {
 public:
     /**
