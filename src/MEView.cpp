@@ -180,7 +180,7 @@ void MEView::PopulateStimulusTypeOptions()
     {
         const std::vector<Sweep>& sweeps = experiment.GetSweeps();
         for (const Sweep& sweep : sweeps)
-            stimTypes.insert(ToString(sweep.stimulus.GetStimulusType()));
+            stimTypes.insert(ToString(sweep.stimulus.GetType()));
     }
     qDebug() << stimTypes;
 

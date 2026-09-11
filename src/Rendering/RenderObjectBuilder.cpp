@@ -162,7 +162,7 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
         {
             const Sweep& sweep = experiment.GetSweeps()[i];
             if (sweep.IsLowestSpikingSweep())
-                rheoStimAmplitude = sweep.stimulus.GetStimulusAmplitude();
+                rheoStimAmplitude = sweep.stimulus.GetPeakAmplitude();
         }
 
         // Find hero sweep (moderately suprathresh)
@@ -173,8 +173,8 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
         {
             const Sweep& sweep = experiment.GetSweeps()[i];
             
-            float amplDist = fabs(sweep.stimulus.GetStimulusAmplitude() - (rheoStimAmplitude + HERO_AMPL));
-            if (sweep.stimulus.GetStimulusType() == StimulusType::LongSquare && amplDist < minAmplitudeDist)
+            float amplDist = fabs(sweep.stimulus.GetPeakAmplitude() - (rheoStimAmplitude + HERO_AMPL));
+            if (sweep.stimulus.GetType() == StimulusType::LongSquare && amplDist < minAmplitudeDist)
             {
                 heroIndex = i;
                 minAmplitudeDist = amplDist;
@@ -187,8 +187,8 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
             TraceRenderObject stimTRO;
             TraceRenderObject acqTRO;
 
-            BuildTraceObject(stimTRO, sweep.stimulus.GetRecording(), sweep.stimulus.GetStimulusType(), true);
-            BuildTraceObject(acqTRO, sweep.acquisition.GetRecording(), sweep.stimulus.GetStimulusType(), false);
+            BuildStimulusObject(stimTRO, sweep.stimulus);
+            BuildTraceObject(acqTRO, sweep.acquisition.GetRecording(), sweep.stimulus.GetType(), false);
             stimTRO.priority = i == heroIndex ? 1 : 0;
             acqTRO.priority = i == heroIndex ? 1 : 0;
 
@@ -319,4 +319,33 @@ void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recordi
     _f->glEnableVertexAttribArray(0);
 
     tro.numVertices = vertices.size();
+}
+
+void RenderObjectBuilder::BuildStimulusObject(TraceRenderObject& tro, const Stimulus& stimulus)
+{
+    const TimeSeries& data = stimulus.GetTimeSeries();
+
+    if (data.xSeries.empty() || data.ySeries.empty())
+        return;
+
+    std::vector<mv::Vector3f> vertices;
+    vertices.reserve(data.xSeries.size());
+
+    for (size_t i = 0; i < data.xSeries.size(); ++i)
+        vertices.emplace_back(data.xSeries[i], data.ySeries[i], 0.0f);
+
+    tro.extents = mv::Bounds(data.xMin, data.xMax, data.yMin, data.yMax);
+    tro.stimulusType = stimulus.GetType();
+
+    _f->glGenVertexArrays(1, &tro.vao);
+    _f->glBindVertexArray(tro.vao);
+
+    _f->glGenBuffers(1, &tro.vbo);
+    _f->glBindBuffer(GL_ARRAY_BUFFER, tro.vbo);
+    _f->glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(mv::Vector3f), vertices.data(), GL_STATIC_DRAW);
+
+    _f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    _f->glEnableVertexAttribArray(0);
+
+    tro.numVertices = static_cast<int>(vertices.size());
 }

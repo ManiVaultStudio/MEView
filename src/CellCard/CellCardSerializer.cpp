@@ -43,9 +43,9 @@ namespace
             acqXData.append(x);
         for (float y : sweep.acquisition.GetRecording().GetData().ySeries)
             acqYData.append(y);
-        for (float x : sweep.stimulus.GetRecording().GetData().xSeries)
+        for (float x : sweep.stimulus.GetTimeSeries().xSeries)
             stimXData.append(x);
-        for (float y : sweep.stimulus.GetRecording().GetData().ySeries)
+        for (float y : sweep.stimulus.GetTimeSeries().ySeries)
             stimYData.append(y);
 
         acquisitionObj["xData"] = acqXData;
@@ -55,8 +55,8 @@ namespace
 
         stimulusObj["xData"] = stimXData;
         stimulusObj["yData"] = stimYData;
-        stimulusObj["stimAmplitude"] = sweep.stimulus.GetStimulusAmplitude();
-        stimulusObj["stimDesc"] = sweep.stimulus.GetStimulusDescription();
+        stimulusObj["stimAmplitude"] = sweep.stimulus.GetPeakAmplitude();
+        stimulusObj["stimDesc"] = sweep.stimulus.GetDescription();
 
         QJsonObject sweepObj;
         sweepObj.insert("acquisition", acquisitionObj);
@@ -105,17 +105,17 @@ void CellCardSerializer::Serialize(const Cell& cell, QJsonDocument& outputDoc)
             AddSweepToArray(sweepArray, sweep, experiment.getActionPotential());
 
             const TimeSeries& acquisition = sweep.acquisition.GetRecording().GetData();
-            const TimeSeries& stimulus = sweep.stimulus.GetRecording().GetData();
+            //const TimeSeries& stimulus = sweep.stimulus.GetRecording().GetData();
 
             if (acquisition.xMin < acqBounds.getLeft()) acqBounds.setLeft(acquisition.xMin);
             if (acquisition.xMax > acqBounds.getRight()) acqBounds.setRight(acquisition.xMax);
             if (acquisition.yMin < acqBounds.getBottom()) acqBounds.setBottom(acquisition.yMin);
             if (acquisition.yMax > acqBounds.getTop()) acqBounds.setTop(acquisition.yMax);
 
-            if (stimulus.xMin < stimBounds.getLeft()) stimBounds.setLeft(stimulus.xMin);
-            if (stimulus.xMax > stimBounds.getRight()) stimBounds.setRight(stimulus.xMax);
-            if (stimulus.yMin < stimBounds.getBottom()) stimBounds.setBottom(stimulus.yMin);
-            if (stimulus.yMax > stimBounds.getTop()) stimBounds.setTop(stimulus.yMax);
+            if (sweep.stimulus.GetWindowStart() < stimBounds.getLeft()) stimBounds.setLeft(sweep.stimulus.GetWindowStart());
+            if (sweep.stimulus.GetWindowEnd() > stimBounds.getRight()) stimBounds.setRight(sweep.stimulus.GetWindowEnd());
+            if (sweep.stimulus.GetYMin() < stimBounds.getBottom()) stimBounds.setBottom(sweep.stimulus.GetYMin());
+            if (sweep.stimulus.GetYMax() > stimBounds.getTop()) stimBounds.setTop(sweep.stimulus.GetYMax());
         }
 
         // Action potential
