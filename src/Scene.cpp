@@ -4,33 +4,33 @@
 
 namespace
 {
-    bool isMorphologicalData(mv::Dataset<DatasetImpl> dataset)
+    bool isMorphologicalData(mv::Dataset<mv::DatasetImpl> dataset)
     {
         return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "morphology";
     }
 
-    bool isMorphologies(mv::Dataset<DatasetImpl> dataset)
+    bool isMorphologies(mv::Dataset<mv::DatasetImpl> dataset)
     {
         return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "Morphologies";
     }
 
-    bool isEphysFeatures(mv::Dataset<DatasetImpl> dataset)
+    bool isEphysFeatures(mv::Dataset<mv::DatasetImpl> dataset)
     {
         return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "ephys";
     }
 
-    bool isEphysTraces(mv::Dataset<DatasetImpl> dataset)
+    bool isEphysTraces(mv::Dataset<mv::DatasetImpl> dataset)
     {
         return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "EphysTraces";
     }
 
-    bool isMetadata(mv::Dataset<DatasetImpl> dataset)
+    bool isMetadata(mv::Dataset<mv::DatasetImpl> dataset)
     {
         return dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType").toString() == "metadata";
     }
 }
 
-QMatrix4x4 CortexStructure::mapCellToStructure(Vector3f somaPosition, Vector3f center) const
+QMatrix4x4 CortexStructure::mapCellToStructure(mv::Vector3f somaPosition, mv::Vector3f center) const
 {
     // We want to map the soma from [-maxDepth, -minDepth] to [0, 1], depths are >0, while soma position is <0
     // So therefore to map -maxDepth to 0, translate by +maxDepth, then scale by 1/depth range.
@@ -68,7 +68,7 @@ bool Scene::hasEphysTraceDataset()
     return _ephysTraces.isValid();
 }
 
-void Scene::offerCandidateDataset(Dataset<DatasetImpl> candidateDataset)
+void Scene::offerCandidateDataset(mv::Dataset<mv::DatasetImpl> candidateDataset)
 {
     if (isMorphologicalData(candidateDataset))
         _morphologyFeatureDataset = candidateDataset;

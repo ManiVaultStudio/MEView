@@ -94,8 +94,8 @@ void CellCardSerializer::Serialize(const Cell& cell, QJsonDocument& outputDoc)
         // Build list of sweeps that should be included in the cell's graph
         QJsonArray sweepArray;
 
-        Bounds acqBounds = Bounds::Max;
-        Bounds stimBounds = Bounds::Max;
+        mv::Bounds acqBounds = mv::Bounds::Max;
+        mv::Bounds stimBounds = mv::Bounds::Max;
 
         for (uint32_t sweepIndex : stimSweeps)
         {

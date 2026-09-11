@@ -35,7 +35,7 @@ public:
     /**
      * Map cell from local coordinates to cortex coordinates with y:[-1, 1]
      */
-    QMatrix4x4 mapCellToStructure(Vector3f somaPosition, Vector3f center) const;
+    QMatrix4x4 mapCellToStructure(mv::Vector3f somaPosition, mv::Vector3f center) const;
 
     float getLayerDepth(int layer) const { return _layerDepths[layer]; }
     float getMinDepth() const { return _layerDepths[0]; }

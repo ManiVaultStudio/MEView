@@ -78,8 +78,8 @@ void MERenderer::Resize(int w, int h, float pixelRatio)
     int division = h * DIVISION_F;
 
     // left, right, bottom, top
-    Bounds morphologyBounds(48 * pixelRatio, w, division, h - 32 * pixelRatio);
-    Bounds traceBounds(48 * pixelRatio, w, 8 * pixelRatio, morphologyBounds.getBottom() - (8 * pixelRatio));
+    mv::Bounds morphologyBounds(48 * pixelRatio, w, division, h - 32 * pixelRatio);
+    mv::Bounds traceBounds(48 * pixelRatio, w, 8 * pixelRatio, morphologyBounds.getBottom() - (8 * pixelRatio));
 
     _morphologyViewport.Set(morphologyBounds);
     _traceViewport.Set(traceBounds);
@@ -135,7 +135,7 @@ void MERenderer::RenderMorphologies(float t)
             if (cluster.getName() == clusterName)
             {
                 QColor color = cluster.getColor();
-                cro->cellTypeColor = Vector3f(color.redF(), color.greenF(), color.blueF());
+                cro->cellTypeColor = mv::Vector3f(color.redF(), color.greenF(), color.blueF());
             }
         }
 
@@ -185,7 +185,7 @@ void MERenderer::RenderMorphologies(float t)
 
             // Save soma positions
             QVector4D somaPosition = _context.modelMatrix * QVector4D(cro->morphologyObject.somaPosition.x, cro->morphologyObject.somaPosition.y, cro->morphologyObject.somaPosition.z, 1);
-            _context.somaPositions.push_back(Vector3f(somaPosition.x(), somaPosition.y(), somaPosition.z()));
+            _context.somaPositions.push_back(mv::Vector3f(somaPosition.x(), somaPosition.y(), somaPosition.z()));
         }
     }
     _lineShader.release();
@@ -202,7 +202,7 @@ void MERenderer::RenderSomas()
     _somaShader.uniformMatrix4f("projMatrix", _morphologyViewport.GetProjectionMatrix().constData());
     glBindVertexArray(_somaVAO);
 
-    for (const Vector3f& somaPosition : _context.somaPositions)
+    for (const mv::Vector3f& somaPosition : _context.somaPositions)
     {
         _somaShader.uniform3f("somaPosition", somaPosition);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -257,7 +257,7 @@ void MERenderer::RenderTraces()
             _context.modelMatrix.translate(-cro->_acqChartDomainMin, -_acqChartRange.min, 0.0f); // Map bottom-left corner to 0,0
             _traceShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
 
-            const Vector3f acqColor = isHighlighted ? cro->cellTypeColor : Vector3f(0.7f);
+            const mv::Vector3f acqColor = isHighlighted ? cro->cellTypeColor : mv::Vector3f(0.7f);
 
             _traceShader.uniform3f("lineColor", acqColor);
             _traceShader.uniform1f("alpha", isHighlighted ? 1.0f : 0.05f);
@@ -273,7 +273,7 @@ void MERenderer::RenderTraces()
             _context.modelMatrix.translate(-cro->_stimChartDomainMin, -_stimChartRange.min, 0);
             _traceShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
 
-            const Vector3f stimColor = isHighlighted ? Vector3f(0.2f) : Vector3f(0.5f);
+            const mv::Vector3f stimColor = isHighlighted ? mv::Vector3f(0.2f) : mv::Vector3f(0.5f);
 
             _traceShader.uniform3f("lineColor", stimColor);
 

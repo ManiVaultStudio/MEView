@@ -93,20 +93,20 @@ GLuint RenderObjectBuilder::BuildCellSoma()
     _f->glGenVertexArrays(1, &vao);
     _f->glBindVertexArray(vao);
 
-    std::vector<Vector3f> vertices
+    std::vector<mv::Vector3f> vertices
     {
-        Vector3f(-1, -1, 0),
-        Vector3f(1, -1, 0),
-        Vector3f(-1, 1, 0),
-        Vector3f(1, 1, 0)
+        mv::Vector3f(-1, -1, 0),
+        mv::Vector3f(1, -1, 0),
+        mv::Vector3f(-1, 1, 0),
+        mv::Vector3f(1, 1, 0)
     };
 
-    std::vector<Vector2f> textureCoords
+    std::vector<mv::Vector2f> textureCoords
     {
-        Vector2f(0, 0),
-        Vector2f(1, 0),
-        Vector2f(0, 1),
-        Vector2f(1, 1)
+        mv::Vector2f(0, 0),
+        mv::Vector2f(1, 0),
+        mv::Vector2f(0, 1),
+        mv::Vector2f(1, 1)
     };
     qDebug() << vertices.size();
     _f->glGenBuffers(1, &vbo);
@@ -292,14 +292,14 @@ void RenderObjectBuilder::BuildMorphologyObject(MorphologyRenderObject& mro, con
 
 void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recording& recording, StimulusType stimType, bool isStim)
 {
-    Bounds bounds(recording.GetData().xMin, recording.GetData().xMax, recording.GetData().yMin, recording.GetData().yMax);
+    mv::Bounds bounds(recording.GetData().xMin, recording.GetData().xMax, recording.GetData().yMin, recording.GetData().yMax);
     tro.extents = bounds;
     tro.stimulusType = stimType;
 
     // Generate line segments
     const TimeSeries& ts = recording.GetData();
 
-    std::vector<Vector3f> vertices;
+    std::vector<mv::Vector3f> vertices;
     for (int i = 0; i < ts.xSeries.size(); i++)
     {
         vertices.emplace_back(ts.xSeries[i], ts.ySeries[i], 0);
@@ -314,7 +314,7 @@ void RenderObjectBuilder::BuildTraceObject(TraceRenderObject& tro, const Recordi
 
     _f->glGenBuffers(1, &tro.vbo);
     _f->glBindBuffer(GL_ARRAY_BUFFER, tro.vbo);
-    _f->glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vector3f), vertices.data(), GL_STATIC_DRAW);
+    _f->glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(mv::Vector3f), vertices.data(), GL_STATIC_DRAW);
     _f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     _f->glEnableVertexAttribArray(0);
 
