@@ -19,8 +19,8 @@ public:
     QString cellName;
     QString cluster;
     int metadataIndex;
-    const CellMorphology* morphology;
-    const Experiment* ephysTraces;
+    const CellMorphology* morphology = nullptr;
+    const Experiment* ephysTraces = nullptr;
 };
 
 class CortexStructure
