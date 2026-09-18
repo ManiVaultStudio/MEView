@@ -5,6 +5,7 @@
 #include "Rendering/RenderRegion.h"
 
 #include "graphics/Shader.h"
+#include "graphics/Texture.h"
 
 #include <QOpenGLFunctions_3_3_Core>
 
@@ -50,6 +51,7 @@ private:
     void RenderMorphologies(float t);
     void RenderSomas();
     void RenderTraces();
+    void RenderMissingTraces();
 
 signals:
     void RequestNewAspectRatio(float aspectRatio);
@@ -70,8 +72,15 @@ private: // Shaders
     /** Renders electrophysiology sweeps */
     mv::ShaderProgram _traceShader;
 
+    /** Renders images */
+    mv::ShaderProgram _texShader;
+
+private: // Textures
+    mv::Texture2D _noSweepsTex;
+
 private: // Objects
     GLuint _somaVAO = 0;
+    GLuint _imageVAO = 0;
 
     RenderObjectBuilder _renderObjectBuilder;
 

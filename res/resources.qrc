@@ -8,6 +8,8 @@
         <file>shaders/Trace.frag</file>
         <file>shaders/Quad.vert</file>
         <file>shaders/Quad.frag</file>
+        <file>shaders/Texture.vert</file>
+        <file>shaders/Texture.frag</file>
         <file>human_average_layer_depths.json</file>
     </qresource>
     <qresource prefix="me_view">
@@ -22,5 +24,8 @@
         <file>web/utils/qwebchannel.tools.js</file>
         <file>web/utils/d3@7.js</file>
         <file>web/utils/bootstrap.min.css</file>
+    </qresource>
+    <qresource prefix="me_view">
+        <file>images/SweepNotAvailable.png</file>
     </qresource>
 </RCC>

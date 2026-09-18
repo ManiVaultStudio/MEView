@@ -60,12 +60,16 @@ void MERenderer::Init()
     loaded &= _lineShader.loadShaderFromFile(":me_view/shaders/PassThrough.vert", ":me_view/shaders/Lines.frag");
     loaded &= _somaShader.loadShaderFromFile(":me_view/shaders/Soma.vert", ":me_view/shaders/Soma.frag");
     loaded &= _traceShader.loadShaderFromFile(":me_view/shaders/Trace.vert", ":me_view/shaders/Trace.frag");
+    loaded &= _texShader.loadShaderFromFile(":me_view/shaders/Texture.vert", ":me_view/shaders/Texture.frag");
 
     if (!loaded) {
         qCritical() << "Failed to load one of the morphology shaders";
     }
 
+    _noSweepsTex.loadFromFile(":me_view/images/SweepNotAvailable.png");
+
     _somaVAO = _renderObjectBuilder.BuildCellSoma();
+    glGenVertexArrays(1, &_imageVAO);
 
     glEnable(GL_LINE_SMOOTH);
 }
@@ -99,6 +103,8 @@ void MERenderer::Update(float t, QPainter& painter)
     RenderMorphologies(t);
     RenderSomas();
     RenderTraces();
+    RenderMissingTraces();
+    glDisable(GL_BLEND);
 
     _fullViewport.End();
 }
@@ -293,10 +299,59 @@ void MERenderer::RenderTraces()
             LRenderTrace(stimIndex);
     }
 
-    glDisable(GL_BLEND);
-
     glBindVertexArray(0);
     _traceShader.release();
+}
+
+void MERenderer::RenderMissingTraces()
+{
+    glDisable(GL_DEPTH_TEST);
+    _traceViewport.Begin();
+
+    _texShader.bind();
+
+    _texShader.uniformMatrix4f("projMatrix", _traceViewport.GetProjectionMatrix().constData());
+
+    for (int i = 0; i < _selectedCellRenderObjects.size(); i++)
+    {
+        CellRenderObject* cro = _selectedCellRenderObjects[i];
+
+        float xCoord = _context.xCoords[i];
+
+        float r = _traceViewport.GetAspectRatio() / _morphologyViewport.GetAspectRatio();
+
+        // Find out whether there are any sweeps available for the given stimulus type
+        int sweepsAvailable = 0;
+        for (int traceIndex = 0; traceIndex < cro->stimulusObjects.size(); ++traceIndex)
+        {
+            TraceRenderObject& stimRO = cro->stimulusObjects[traceIndex];
+
+            if (stimRO.stimulusType != _currentStimType)
+                continue;
+
+            sweepsAvailable++;
+        }
+
+        if (sweepsAvailable == 0)
+        {
+            _noSweepsTex.bind(0);
+            _texShader.uniform1i("tex", 0);
+
+            // Image transformation
+            _context.modelMatrix.setToIdentity();
+            _context.modelMatrix.translate(xCoord * r, 0.0f, 0.0f);
+            _context.modelMatrix.translate(-0.5f, 0.0f, 0.0f);
+            _context.modelMatrix.scale(0.5f, 0.5f, 1.0f); // Rescale to [0, 1]
+            _context.modelMatrix.translate(1.0f, 1.0f, 0.0f); // Map bottom-left corner to 0,0
+            _texShader.uniformMatrix4f("modelMatrix", _context.modelMatrix.constData());
+
+            glBindVertexArray(_imageVAO);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
+    }
+
+    glBindVertexArray(0);
+    _texShader.release();
 }
 
 void MERenderer::RenderLabels(QPainter& painter)
