@@ -1,105 +1,107 @@
 #pragma once
 
-#include "Rendering/RenderContext.h"
 #include "Rendering/RenderObjectBuilder.h"
-#include "Rendering/RenderRegion.h"
-
 #include "graphics/Shader.h"
 #include "graphics/Texture.h"
 
+#include <QHash>
+#include <QMatrix4x4>
 #include <QOpenGLFunctions_3_3_Core>
 
-#include <QHash>
-
 class QPainter;
-
-struct Range
-{
-    float min;
-    float max;
-};
 
 class MERenderer : public QObject, protected QOpenGLFunctions_3_3_Core
 {
     Q_OBJECT
+
 public:
     MERenderer();
 
     void Init();
-    void Resize(int w, int h, float pixelRatio);
-    void Update(float t, QPainter& painter);
+    void Resize(int width, int height, float pixelRatio);
+    void Update(float rotation, QPainter& painter);
 
-    void SetCortical(bool isCortical);
+    void SetCortical(bool cortical);
     void SetEnabledProcesses(const QStringList& enabledProcesses);
-    void SetCurrentStimType(const QString& stimset);
+    void SetCurrentStimType(const QString& stimulusType);
     void SetAxonTransparency(float alpha) { _axonTransparency = alpha; }
 
     void BuildRenderObjects(const std::vector<Cell>& cells);
-    void ComputeRenderLocations(const std::vector<CellRenderObject*>& cellRenderObjects);
-    std::vector<float> GetHorizontalCellLocations();
-    void CompileSelectedCellRenderObjects(const std::vector<Cell>& cells);
     void SetSelectedCellIds(const std::vector<uint32_t>& indices);
-    void RecalculateTraceBounds();
-    void RequestNewWidgetWidth();
 
-public: // Rendering
     void RenderLabels(QPainter& painter);
-    void RenderVerticalLine(QPainter& painter, float x);
     void RenderSeparations(QPainter& painter);
 
-private:
-    void RenderMorphologies(float t);
-    void RenderSomas();
-    void RenderTraces();
-    void RenderMissingTraces();
+    std::vector<float> GetHorizontalCellLocations() const;
 
 signals:
     void RequestNewAspectRatio(float aspectRatio);
 
 private:
+    struct Range
+    {
+        float min = 0.0f;
+        float max = 1.0f;
+    };
+
+    struct Band
+    {
+        int left = 0;
+        int bottom = 0;
+        int width = 1;
+        int height = 1;
+    };
+
+    struct CellSlot
+    {
+        int cellIndex = -1;
+        CellRenderObject* renderObject = nullptr;
+        float leftPx = 0.0f;
+        float centerPx = 0.0f;
+        float rightPx = 0.0f;
+    };
+
+    void RebuildLayout();
+    void RecalculateTraceRanges();
+    void RequestWidgetWidth();
+
+    std::vector<CellMorphology::Type> IgnoredMorphologyTypes() const;
+    QMatrix4x4 ProjectionFor(const Band& band) const;
+
+    void RenderMorphologies(float rotation);
+    void RenderEphys();
+
     Scene& _scene;
+    RenderObjectBuilder _renderObjectBuilder;
 
-    RenderContext _context;
-    float _axonTransparency = 0.2f;
+    QHash<QString, CellRenderObject> _cellRenderObjects;
+    std::vector<CellSlot> _slots;
+    std::vector<mv::Vector3f> _somaPositions;
 
-private: // Shaders
-    /** Renders cell morphologies as a series of lines */
     mv::ShaderProgram _lineShader;
-
-    /** Renders cell soma as a dot */
     mv::ShaderProgram _somaShader;
-
-    /** Renders electrophysiology sweeps */
     mv::ShaderProgram _traceShader;
-
-    /** Renders images */
     mv::ShaderProgram _texShader;
-
-private: // Textures
     mv::Texture2D _noSweepsTex;
 
-private: // Objects
     GLuint _somaVAO = 0;
     GLuint _imageVAO = 0;
 
-    RenderObjectBuilder _renderObjectBuilder;
+    Band _morphologyBand;
+    Band _traceBand;
 
-    QHash<QString, CellRenderObject>    _cellRenderObjects;
-    std::vector<CellRenderObject*>      _selectedCellRenderObjects;
+    Range _stimulusRange;
+    Range _acquisitionRange;
 
-private: // Render regions
-    RenderRegion _fullViewport;
-    RenderRegion _morphologyViewport;
-    RenderRegion _traceViewport;
-    float        _pixelRatio;
+    int _widgetWidth = 1;
+    int _widgetHeight = 1;
+
+    float _morphologyReferenceHeight = 1.0f;
+    float _contentRightPx = 0.0f;
+    float _pixelRatio = 1.0f;
+    float _axonTransparency = 0.2f;
 
     bool _isCortical = false;
-
-private: // Render bounds
-    Range _stimChartRange;
-    Range _acqChartRange;
-
-private: // UI state
     StimulusType _currentStimType = StimulusType::Unknown;
     QStringList _enabledProcesses;
 };
