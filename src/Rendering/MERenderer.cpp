@@ -12,6 +12,7 @@ namespace
     constexpr float STANDARD_MIN_CELL_WIDTH = 0.6f;
     constexpr float CORTICAL_MIN_CELL_WIDTH = 0.3f;
     constexpr float MORPHOLOGY_WIDTH_PADDING = 1.0f;
+    constexpr float NON_CORTICAL_MORPHOLOGY_SCALE = 0.7f;
     constexpr float TRACE_WIDTH = 1.0f;
     constexpr float MISSING_TRACE_IMAGE_SIZE = 1.0f;
     constexpr float SLOT_PADDING = 0.03f;
@@ -220,7 +221,8 @@ void MERenderer::RebuildLayout()
         {
             const CellMorphology::Extent& extent = slot.renderObject->morphologyObject.totalExtent;
             const mv::Vector3f dimensions = extent.emax - extent.emin;
-            morphologyWidthPx = std::hypot(dimensions.x, dimensions.z) / _morphologyReferenceHeight * MORPHOLOGY_WIDTH_PADDING * _morphologyBand.height;
+            const float morphologyScale = _isCortical ? 1.0f : NON_CORTICAL_MORPHOLOGY_SCALE;
+            morphologyWidthPx = std::hypot(dimensions.x, dimensions.z) / _morphologyReferenceHeight * MORPHOLOGY_WIDTH_PADDING * morphologyScale * _morphologyBand.height;
         }
 
         const float widthPx = std::max(minimumWidthPx, morphologyWidthPx);
@@ -332,7 +334,12 @@ void MERenderer::RenderMorphologies(float rotation)
         if (_isCortical) model *= _scene.getCortexStructure().mapCellToStructure(cell.morphologyObject.somaPosition, extent.center);
         else
         {
-            model.scale(1.0f / _morphologyReferenceHeight);
+            const float morphologyHeight = (extent.emax - extent.emin).y;
+            const float scaledHeight = morphologyHeight * NON_CORTICAL_MORPHOLOGY_SCALE / _morphologyReferenceHeight;
+            const float verticalOffset = (1.0f - scaledHeight) * 0.5f;
+
+            model.translate(0.0f, verticalOffset, 0.0f);
+            model.scale(NON_CORTICAL_MORPHOLOGY_SCALE / _morphologyReferenceHeight);
             model.translate(-extent.center.x, -extent.emin.y, -extent.center.z);
         }
 

@@ -312,7 +312,7 @@ void MEView::onCellSelectionChanged()
 
     bool isCortical = false;
     if (_scene.getMorphologyDataset()->hasProperty("isCortical"))
-        isCortical = true;
+        isCortical = _scene.getMorphologyDataset()->getProperty("isCortical").toBool();
 
     // Find cell IDs
     mv::Dataset<Text> metaDataset = _scene.getCellMetadataDataset();
