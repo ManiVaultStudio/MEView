@@ -4,6 +4,7 @@
 
 #include <event/Event.h>
 #include <SelectionGroup.h>
+#include <util/Serialization.h>
 
 #include "CellMorphologyData/CellMorphology.h"
 #include <ClusterData/ClusterData.h>
@@ -366,6 +367,24 @@ void MEView::onCellSelectionChanged()
     _meWidget->SetCortical(isCortical);
 
     _meWidget->setSelectedCells(sortedIndices);
+}
+
+void MEView::fromVariantMap(const QVariantMap& variantMap)
+{
+    ViewPlugin::fromVariantMap(variantMap);
+
+    mv::util::variantMapMustContain(variantMap, "SettingsAction");
+
+    _settingsAction.fromVariantMap(variantMap["SettingsAction"].toMap());
+}
+
+QVariantMap MEView::toVariantMap() const
+{
+    QVariantMap variantMap = ViewPlugin::toVariantMap();
+
+    _settingsAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }
 
 ViewPlugin* CellMorphologyPluginFactory::produce()

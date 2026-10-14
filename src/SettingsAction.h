@@ -30,6 +30,19 @@ public: // Action getters
     mv::gui::DecimalAction& GetAxonTransparency() { return _axonTransparency; }
     mv::gui::ToggleAction& getShowNoMorphsAction() { return _showCellsWithoutMorph; }
 
+public: // Serialization
+    /**
+     * Load plugin from variant map
+     * @param Variant map representation of the plugin
+     */
+    void fromVariantMap(const QVariantMap& variantMap) override;
+
+    /**
+     * Save plugin to variant map
+     * @return Variant map representation of the plugin
+     */
+    QVariantMap toVariantMap() const override;
+
 private:
     MEView*     _plugin;
 

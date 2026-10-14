@@ -20,3 +20,25 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     addAction(&GetMetadataAction());
     addAction(&GetAxonTransparency());
 }
+
+void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
+{
+    WidgetAction::fromVariantMap(variantMap);
+
+    _processesOption.fromParentVariantMap(variantMap);
+    _stimSetsAction.fromParentVariantMap(variantMap);
+    _metadataAction.fromParentVariantMap(variantMap);
+    _axonTransparency.fromParentVariantMap(variantMap);
+}
+
+QVariantMap SettingsAction::toVariantMap() const
+{
+    QVariantMap variantMap = WidgetAction::toVariantMap();
+
+    _processesOption.insertIntoVariantMap(variantMap);
+    _stimSetsAction.insertIntoVariantMap(variantMap);
+    _metadataAction.insertIntoVariantMap(variantMap);
+    _axonTransparency.insertIntoVariantMap(variantMap);
+
+    return variantMap;
+}
