@@ -22,10 +22,31 @@ endif(MSVC)
 # -----------------------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------------------
-#find_package(OpenSSL REQUIRED)
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets OpenGLWidgets REQUIRED)
-
 find_package(ManiVault COMPONENTS Core PointData TextData CONFIG REQUIRED)
+
+# Default to the ManiVault installation if no dependency-specific
+# installation directory was provided.
+if(NOT MV_CMD_INSTALL_DIR)
+    set(MV_CMD_INSTALL_DIR "${ManiVault_INSTALL_DIR}" CACHE PATH "CellMorphologyData installation directory" FORCE)
+endif()
+
+if(NOT MV_EPD_INSTALL_DIR)
+    set(MV_EPD_INSTALL_DIR "${ManiVault_INSTALL_DIR}" CACHE PATH "EphysData installation directory" FORCE)
+endif()
+
+# Validate paths early
+if("${MV_CMD_INSTALL_DIR}" STREQUAL "")
+    message(FATAL_ERROR "MV_CMD_INSTALL_DIR is empty!")
+endif()
+
+if("${MV_EPD_INSTALL_DIR}" STREQUAL "")
+    message(FATAL_ERROR "MV_EPD_INSTALL_DIR is empty!")
+endif()
+
+message(STATUS "ManiVault_INSTALL_DIR: ${ManiVault_INSTALL_DIR}")
+message(STATUS "MV_CMD_INSTALL_DIR: ${MV_CMD_INSTALL_DIR}")
+message(STATUS "MV_EPD_INSTALL_DIR: ${MV_EPD_INSTALL_DIR}")
 
 # -----------------------------------------------------------------------------
 # Source files
