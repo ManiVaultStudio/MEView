@@ -99,7 +99,7 @@ private:
     float _morphologyReferenceHeight = 1.0f;
     float _contentRightPx = 0.0f;
     float _pixelRatio = 1.0f;
-    float _axonTransparency = 0.2f;
+    float _axonTransparency = 0.6f;
 
     bool _isCortical = false;
     StimulusType _currentStimType = StimulusType::Unknown;
