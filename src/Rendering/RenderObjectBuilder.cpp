@@ -174,7 +174,7 @@ void RenderObjectBuilder::BuildCellRenderObject(CellRenderObject& cro, const Cel
             const Sweep& sweep = experiment.GetSweeps()[i];
             
             float amplDist = fabs(sweep.stimulus.GetPeakAmplitude() - (rheoStimAmplitude + HERO_AMPL));
-            if (sweep.stimulus.GetType() == StimulusType::LongSquare && amplDist < minAmplitudeDist)
+            if (sweep.stimulus.GetType() == StimulusType::LongSquare && amplDist < minAmplitudeDist && sweep.GetSweepProperties().GetSpikeCount() > 0)
             {
                 heroIndex = i;
                 minAmplitudeDist = amplDist;
